@@ -10,18 +10,20 @@ export interface AgentStats {
   weapon: WeaponKey;
 }
 
-export type WeaponKey = 'ak47' | 'deagle' | 'minigun';
+export type WeaponKey = 'ak47' | 'deagle' | 'minigun' | 'sword';
 
 export const AGENT_STATS: Readonly<Record<AgentKey, AgentStats>> = {
-  fable: { hp: 100, armor: 0,  weapon: 'ak47'    },
-  fate:  { hp: 100, armor: 30, weapon: 'deagle'   },
-  foul:  { hp: 100, armor: 60, weapon: 'minigun'  },
+  fable:  { hp: 100, armor: 0,  weapon: 'ak47'    },
+  fate:   { hp: 100, armor: 30, weapon: 'deagle'   },
+  foul:   { hp: 100, armor: 60, weapon: 'minigun'  },
+  nykora: { hp: 100, armor: 0,  weapon: 'sword'    },
 };
 
 export const WEAPON_MAG: Readonly<Record<WeaponKey, number>> = {
   ak47:    30,
   deagle:  7,
   minigun: 150,
+  sword:   1, // Melee weapon doesn't really use mag, but needs a value
 };
 
 export const MATCH_TIME_S    = 180;
@@ -50,6 +52,7 @@ export const SHOT_COOLDOWN_MS: Readonly<Record<WeaponKey, number>> = {
   ak47:    90,   // ≈ 11 shots/s
   deagle:  380,  // ≈  2.6 shots/s
   minigun: 55,   // ≈ 18 shots/s
+  sword:   400,  // ≈ 2.5 swings/s
 };
 
 export const DMG_RANGES: Readonly<Record<string, [number, number]>> = {
@@ -60,6 +63,8 @@ export const DMG_RANGES: Readonly<Record<string, [number, number]>> = {
   TORRE:     [6,  75],
   REFLEX:    [1,  82],
   FLASH:     [0,  0],
+  DASH:      [0,  0],
+  SPIN:      [30, 60],
 };
 
 export const SPAWN_POINTS = [

@@ -511,6 +511,7 @@ const WEAPONS = Object.freeze({
   deagle:{name:'DESERT EAGLE',mode:'SEMI · WALL PEN',damage:75,fireRate:2.5,magazineMax:7,reloadTime:2.0,automatic:false,spread:0.008,spreadMove:0.05,bulletSpeed:2200,bulletRange:1100,bulletColor:'#ffe0b0',recoilShake:5.5,muzzleLen:1.6,wallPen:true,wallPenFactor:0.75},
   minigun:{name:'MINIGUN',mode:'SPINUP 0.8s',damage:18,fireRate:20,magazineMax:200,reloadTime:4.0,automatic:true,spread:0.0,spreadMove:0.0,bulletSpeed:1600,bulletRange:750,bulletColor:'#ff9944',recoilShake:1.0,muzzleLen:2.2,spinUp:0.8,spinDown:1.2},
   knife:{name:'FACA',mode:'LMB · SLICE',damage:40,backstabDamage:120,backstabAngle:Math.PI*0.55,range:62,attackTime:0.25,cooldown:0.4},
+  sword:{name:'ESPADA',mode:'LMB · LONG REACH',damage:50,backstabDamage:150,backstabAngle:Math.PI*0.55,range:124,attackTime:0.35,cooldown:0.5},
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -522,6 +523,8 @@ const ABILITIES = Object.freeze({
   camera:{type:'camera',label:'CÂMERA',hint:'Q · COLOCAR',fovAngle:180,fovDist:800,duration:20,rechargeTime:15,staminaCost:30,hp:1,projectileSpeed:420,projectileMaxTime:1.0,viewSwitchCooldown:0.65},
   tower:{type:'tower',label:'TORRE',hint:'T · COLOCAR',hp:50,maxAmmo:50,damage:10,fireRate:10,range:350,duration:15,autoDmg:68,autoRadius:180,staminaCost:30,rechargeTime:18,bulletSpeed:1800,bulletColor:'#f1c40f'},
   shield:{type:'shield',label:'ESCUDO',hint:'Q · ATIVAR',duration:7.5,cooldown:12,staminaCost:20},
+  dash:{type:'dash',label:'DASH',hint:'Q · AVANÇAR',range:42,maxResets:2,cooldown:8,staminaCost:15},
+  spin:{type:'spin',label:'CORTE GIRATÓRIO',hint:'E · GIRAR',damage:45,radius:100,maxCharges:2,rechargeTime:12,staminaCost:25},
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -558,6 +561,16 @@ const AGENTS = Object.freeze({
        dead: { src: 'agents/foul_dead.png', frames: 1, speed: 0 }
     }
   },
+  nykora:{
+    name:'NYKORA',color:'#9b59b6',radius:14,zoom:750,speed:240,runSpeed:360,crouchSpeed:120,
+    staminaDrain:15,staminaRegen:18,staminaMax:180,fovAngle:360,fovAngleRun:360,fovAngleCrouch:360,fovDist:42,
+    hp:100,armor:0,weapon:'sword',slot_e:'spin',slot_q:'dash',slot_t:null,
+    sprite: {
+       idle: { src: 'agents/fable_idle.png', frames: 4, speed: 0.15 },
+       walk: { src: 'agents/fable_walk.png', frames: 8, speed: 0.1 },
+       dead: { src: 'agents/fable_dead.png', frames: 1, speed: 0 }
+    }
+  },
 });
 
 
@@ -579,7 +592,23 @@ const SPAWN_POINTS=[{x:160,y:160},{x:1888,y:160},{x:160,y:1888},{x:1888,y:1888}]
 const Physics = Object.freeze({
   hitWalls(cx,cy,r){for(const w of WALLS){const nx=Math.max(w.x,Math.min(cx,w.x+w.w)),ny=Math.max(w.y,Math.min(cy,w.y+w.h));if((cx-nx)**2+(cy-ny)**2<r*r)return true;}return false;},
   wallExit(ox,oy,vx,vy,maxDist=200){const len=Math.hypot(vx,vy);if(len<0.001)return null;const nx=vx/len,ny=vy/len;for(let d=4;d<=maxDist;d+=4){if(!Physics.hitWalls(ox+nx*d,oy+ny*d,2))return{x:ox+nx*d,y:oy+ny*d};}return null;},
-  buildFOV(px,py,ac,fovDeg,dist){const fr=fovDeg*Math.PI/180,half=fr/2,pts=[{x:px,y:py}];for(let i=0;i<=90;i++){const a=ac-half+fr*i/90;pts.push(Physics.castRay(px,py,px+Math.cos(a)*dist,py+Math.sin(a)*dist));}return pts;},
+  buildFOV(px,py,ac,fovDeg,dist,noWalls=false){
+    const fr=fovDeg*Math.PI/180,half=fr/2,pts=[{x:px,y:py}];
+    for(let i=0;i<=90;i++){
+      const a=ac-half+fr*i/90;
+      if(noWalls) pts.push({x:px+Math.cos(a)*dist,y:py+Math.sin(a)*dist});
+      else pts.push(Physics.castRay(px,py,px+Math.cos(a)*dist,py+Math.sin(a)*dist));
+    }
+    return pts;
+  },
+  buildCircleFOV(px,py,dist){
+    const pts=[];
+    for(let i=0;i<=64;i++){
+      const a=(i/64)*Math.PI*2;
+      pts.push({x:px+Math.cos(a)*dist,y:py+Math.sin(a)*dist});
+    }
+    return pts;
+  },
   castRay(ox,oy,ex,ey){let bT=1,bX=ex,bY=ey;for(const w of WALLS){const c=[{x:w.x,y:w.y},{x:w.x+w.w,y:w.y},{x:w.x+w.w,y:w.y+w.h},{x:w.x,y:w.y+w.h}];for(const[a,b]of[[0,1],[1,2],[2,3],[3,0]]){const h=Physics.ssect(ox,oy,ex,ey,c[a].x,c[a].y,c[b].x,c[b].y);if(h&&h.t<bT){bT=h.t;bX=h.x;bY=h.y;}}}for(const[ax,ay,bx,by]of[[0,0,WORLD,0],[WORLD,0,WORLD,WORLD],[WORLD,WORLD,0,WORLD],[0,WORLD,0,0]]){const h=Physics.ssect(ox,oy,ex,ey,ax,ay,bx,by);if(h&&h.t<bT){bT=h.t;bX=h.x;bY=h.y;}}return{x:bX,y:bY};},
   ssect(ox,oy,ex,ey,ax,ay,bx,by){const dx=ex-ox,dy=ey-oy,fx=bx-ax,fy=by-ay,d=dx*fy-dy*fx;if(Math.abs(d)<1e-10)return null;const t=((ax-ox)*fy-(ay-oy)*fx)/d,u=((ax-ox)*dy-(ay-oy)*dx)/d;if(t>=0&&t<=1&&u>=0&&u<=1)return{x:ox+dx*t,y:oy+dy*t,t};return null;},
 });
@@ -666,6 +695,8 @@ const player={
   viewMode:0,camRecharging:false,cam2Recharging:false,towerRecharging:false,
   // Foul
   shieldActive:false,
+  // Nykora
+  dashResets:0,spinCharges:2,spinRechargeDeadline:null,
   // Hit
   hitFlash:0,shakeX:0,shakeY:0,
   // Zoom suave baseado em direcção
@@ -906,6 +937,11 @@ function applyAgent(key,btn){
   player.cam2Recharging=false;player.cam2RechargeDeadline=null;
   player.towerRecharging=false;player.towerRechargeDeadline=null;
   player.shieldActive=false;player.shieldDeadline=null;player.shieldCooldownDeadline=null;
+  player.dashResets=0;
+  player.spinCharges=key==='nykora'?2:0;
+  player.spinRechargeDeadline=null;
+  player.abilityCharges=(a.slot_e && ABILITIES[a.slot_e].type==='grenade') ? ABILITIES[a.slot_e].maxCharges : (key==='nykora'?1:0);
+  player.abilityRechargeDeadline=null;
   player._currentZoom=a.zoom; // seed zoom para evitar lurch ao trocar agente
   fateCam=null;fateCamProj=null;fateCam2=null;fateCamProj2=null;fateTower=null;towerBlasts=[];
   document.getElementById('wp-reload-track').style.display='none';
@@ -1155,6 +1191,8 @@ function updatePlayer(dt){
   if(p.shieldActive&&Clock.expired(p.shieldDeadline)){p.shieldActive=false;p.shieldDeadline=null;p.shieldCooldownDeadline=Clock.deadline(ABILITIES.shield.cooldown);}
   if(p.shieldCooldownDeadline&&Clock.expired(p.shieldCooldownDeadline))p.shieldCooldownDeadline=null;
   if(p.camViewCooldownDeadline&&Clock.expired(p.camViewCooldownDeadline))p.camViewCooldownDeadline=null;
+  // Nykora Spin Recharge
+  if(p.agentKey==='nykora'&&p.spinCharges<2){if(!p.spinRechargeDeadline)p.spinRechargeDeadline=Clock.deadline(ABILITIES.spin.rechargeTime);if(Clock.expired(p.spinRechargeDeadline)){p.spinCharges++;p.spinRechargeDeadline=p.spinCharges<2?Clock.deadline(ABILITIES.spin.rechargeTime):null;}}
   // Minigun
   const wd=WEAPONS[p.activeWeapon];
   if(p.activeWeapon==='minigun'){
@@ -1206,7 +1244,81 @@ function tryUseAbility(abilKey){
     const tx=p.x+Math.cos(p.angle)*(p.agent.radius+20),ty=p.y+Math.sin(p.angle)*(p.agent.radius+20);
     fateTower={x:tx,y:ty,angle:p.angle,hp:def.hp,maxHp:def.hp,ammo:def.maxAmmo,fireCooldown:0,timer:def.duration,maxTimer:def.duration};
     if(socket&&socket.connected)socket.emit('deployable',{action:'place',type:'tower',obj:{x:tx,y:ty,angle:p.angle}});
+  }else if(def.type==='dash'){
+    tryNykoraDash();
+  }else if(def.type==='spin'){
+    tryNykoraSpin();
   }
+}
+
+function tryNykoraDash(){
+  const p=player;if(p.dead||p.agentKey!=='nykora')return;
+  const def=ABILITIES.dash;
+  if(p.abilityUseCooldown>0||p.stamina<def.staminaCost)return;
+  // Dash uses charges (resets)
+  if(p.abilityCharges<=0 && p.dashResets<=0)return; 
+
+  const dist=p.agent.fovDist;
+  const nx=p.x+Math.cos(p.angle)*dist,ny=p.y+Math.sin(p.angle)*dist;
+  
+  // Physics.wallExit style to find the furthest point before wall
+  let finalX=p.x,finalY=p.y;
+  for(let d=8;d<=dist;d+=8){
+    const tx=p.x+Math.cos(p.angle)*d,ty=p.y+Math.sin(p.angle)*d;
+    if(Physics.hitWalls(tx,ty,p.agent.radius)){break;}
+    finalX=tx;finalY=ty;
+  }
+  
+  p.x=finalX;p.y=finalY;
+  p.stamina=Math.max(0,p.stamina-def.staminaCost);
+  p.abilityUseCooldown=0.2; // short lockout
+  
+  if(p.dashResets>0)p.dashResets--;
+  else p.abilityCharges--;
+
+  if(socket&&socket.connected)socket.emit('vfx',{type:'dash',x:p.x,y:p.y});
+  playSound('shoot_knife', 0.6); // temp sound
+  spawnDashParticles(p.x,p.y,p.angle);
+}
+
+function tryNykoraSpin(){
+  const p=player;if(p.dead||p.agentKey!=='nykora')return;
+  const def=ABILITIES.spin;
+  if(p.spinCharges<=0||p.stamina<def.staminaCost)return;
+  
+  p.spinCharges--;
+  p.stamina=Math.max(0,p.stamina-def.staminaCost);
+  p.meleeTimer=0.3; // animation duration
+  
+  let hitEnemy=false;
+  if(socket&&socket.connected){
+    for(const[rid,rs]of Object.entries(remotePlayers)){
+      if(!rs||rs.dead)continue;
+      const d=Math.hypot(rs.x-p.x,rs.y-p.y);
+      if(d<def.radius+(AGENTS[rs.agentKey]?.radius||14)){
+        socket.emit('dmg',{to:rid,dmg:Math.round(def.damage),cause:'SPIN'});
+        hitEnemy=true;
+      }
+    }
+  }
+  
+  if(hitEnemy){
+    // Reset Dash (Q) - give 1 reset charge
+    p.dashResets=Math.min(2,p.dashResets+1);
+    addKF('RESET DASH');
+    showHitMark(false);
+  }
+  
+  if(socket&&socket.connected)socket.emit('vfx',{type:'spin',x:p.x,y:p.y,r:def.radius});
+  playSound('shoot_knife', 0.8);
+  spawnSpinParticles(p.x,p.y,def.radius);
+}
+
+function spawnDashParticles(x,y,angle){
+  for(let i=0;i<12;i++){const a=angle+Math.PI+(Math.random()-.5),s=50+Math.random()*150;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.2+Math.random()*.2,maxLife:.4,color:'#9b59b6',r:2+Math.random()*2});}
+}
+function spawnSpinParticles(x,y,r){
+  for(let i=0;i<24;i++){const a=(i/24)*Math.PI*2,s=r*2;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.2+Math.random()*.1,maxLife:.3,color:'#9b59b6',r:1.5+Math.random()*2});}
 }
 function tryPlaceCam(slot){
   const p=player,camDef=ABILITIES.camera;
@@ -1302,11 +1414,30 @@ function fireBullet(){
 }
 function barrelTip(p,a){const ml=(WEAPONS[p.activeWeapon]?.muzzleLen||1.7)*a.radius;return{x:p.x+Math.cos(p.angle)*(a.radius+ml),y:p.y+Math.sin(p.angle)*(a.radius+ml)};}
 function tryMelee(){
-  const p=player;if(p.dead||p.meleeCooldown>0)return;const kd=WEAPONS.knife;p.meleeTimer=kd.attackTime;p.meleeCooldown=kd.cooldown;
-  if(socket&&socket.connected){for(const[rid,rs]of Object.entries(remotePlayers)){if(!rs||rs.dead)continue;if(Math.hypot(rs.x-p.x,rs.y-p.y)>kd.range+(AGENTS[rs.agentKey]?.radius||14))continue;const bs=isBackstab(p,rs);socket.emit('dmg',{to:rid,dmg:bs?kd.backstabDamage:kd.damage,cause:bs?'BACKSTAB':'MELEE'});showHitMark(bs);}}
-  if(fateCam&&Math.hypot(fateCam.x-p.x,fateCam.y-p.y)<kd.range+8)fateCam.hp=0;if(fateCam2&&Math.hypot(fateCam2.x-p.x,fateCam2.y-p.y)<kd.range+8)fateCam2.hp=0;if(fateTower&&Math.hypot(fateTower.x-p.x,fateTower.y-p.y)<kd.range+14)fateTower.hp=0;
+  const p=player;if(p.dead||p.meleeCooldown>0)return;
+  const wd=WEAPONS[p.activeWeapon];
+  if(!wd || (p.activeWeapon!=='knife' && p.activeWeapon!=='sword'))return;
+  p.meleeTimer=wd.attackTime;p.meleeCooldown=wd.cooldown;
+  if(socket&&socket.connected){
+    for(const[rid,rs]of Object.entries(remotePlayers)){
+      if(!rs||rs.dead)continue;
+      if(Math.hypot(rs.x-p.x,rs.y-p.y)>wd.range+(AGENTS[rs.agentKey]?.radius||14))continue;
+      const bs=isBackstab(p,rs);
+      socket.emit('dmg',{to:rid,dmg:bs?wd.backstabDamage:wd.damage,cause:bs?'BACKSTAB':'MELEE'});
+      showHitMark(bs);
+    }
+  }
+  const r=wd.range;
+  if(fateCam&&Math.hypot(fateCam.x-p.x,fateCam.y-p.y)<r+8)fateCam.hp=0;
+  if(fateCam2&&Math.hypot(fateCam2.x-p.x,fateCam2.y-p.y)<r+8)fateCam2.hp=0;
+  if(fateTower&&Math.hypot(fateTower.x-p.x,fateTower.y-p.y)<r+14)fateTower.hp=0;
 }
-function isBackstab(att,tgt){let d=Math.atan2(att.y-tgt.y,att.x-tgt.x)-tgt.angle;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;return Math.abs(d)>WEAPONS.knife.backstabAngle;}
+function isBackstab(att,tgt){
+  const wd = WEAPONS[att.activeWeapon] || WEAPONS.knife;
+  let d=Math.atan2(att.y-tgt.y,att.x-tgt.x)-tgt.angle;
+  while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;
+  return Math.abs(d)>(wd.backstabAngle||Math.PI*0.55);
+}
 function startReload(){
   const p=player,wd=WEAPONS[p.activeWeapon];
   if(!wd||p.reloading||p.activeWeapon==='knife')return;
@@ -1323,7 +1454,19 @@ function startReload(){
   // When reload completes (checked in updatePlayer), apply tactical reload
   p._tacticalReload=true; // flag consumed in reload completion
 }
-function switchWeapon(slot){const p=player;if(p.dead||p.reloading)return;if(slot==='primary'){const pr=AGENTS[p.agentKey].weapon;if(p.activeWeapon===pr)return;p.activeWeapon=pr;p.ammo=WEAPONS[pr].magazineMax;p.fireCooldown=0;p.spinLevel=0;p.spinHeat=0;}else{p.activeWeapon='knife';p.fireCooldown=0;}}
+function switchWeapon(slot){
+  const p=player,a=p.agent;if(p.dead||p.reloading)return;
+  if(slot==='primary'){
+    const pr=a.weapon;if(p.activeWeapon===pr)return;
+    p.activeWeapon=pr;
+    if(WEAPONS[pr].magazineMax) p.ammo=WEAPONS[pr].magazineMax;
+    p.fireCooldown=0;p.spinLevel=0;p.spinHeat=0;
+  }else{
+    const mw=a.weapon==='sword'?'sword':'knife';
+    if(p.activeWeapon===mw)return;
+    p.activeWeapon=mw;p.fireCooldown=0;
+  }
+}
 function flashEmptyClip(){const el=document.getElementById('wp-state');el.style.color='#ff2222';setTimeout(()=>{el.style.color='#555';},150);}
 
 // Bullet system
@@ -1575,19 +1718,21 @@ function render(){
 
     let fovDeg = 360;
     if (!p.dead) {
+      const isNykora = p.agentKey==='nykora';
       fovDeg=p._running?a.fovAngleRun:p._crouching?a.fovAngleCrouch:a.fovAngle;
-      const actDeg=p.lightOn?fovDeg:360,actDist=p.lightOn?a.fovDist:a.radius*4.4;
-      const localFov=Physics.buildFOV(p.x,p.y,p.angle,actDeg,actDist);
-      fovsData.push({fov: localFov, x: p.x, y: p.y, lightOn: p.lightOn, dist: actDist});
+      const actDeg=isNykora?360:(p.lightOn?fovDeg:360),actDist=p.lightOn?a.fovDist:a.radius*4.4;
+      const localFov=Physics.buildFOV(p.x,p.y,p.angle,actDeg,actDist,isNykora);
+      fovsData.push({fov: localFov, x: p.x, y: p.y, lightOn: p.lightOn, dist: actDist, agentKey: p.agentKey});
     } else if (specSt && !specSt.dead) {
       const sa = AGENTS[specSt.agentKey] || AGENTS['fable'];
+      const isNykora = specSt.agentKey==='nykora';
       fovDeg=specSt._running?sa.fovAngleRun:specSt._crouching?sa.fovAngleCrouch:sa.fovAngle;
-      const actDeg=specSt.lightOn?fovDeg:360,actDist=specSt.lightOn?sa.fovDist:sa.radius*4.4;
-      const specFov=Physics.buildFOV(specSt.x,specSt.y,specSt.angle,actDeg,actDist);
-      fovsData.push({fov: specFov, x: specSt.x, y: specSt.y, lightOn: specSt.lightOn, dist: actDist});
+      const actDeg=isNykora?360:(specSt.lightOn?fovDeg:360),actDist=specSt.lightOn?sa.fovDist:sa.radius*4.4;
+      const specFov=Physics.buildFOV(specSt.x,specSt.y,specSt.angle,actDeg,actDist,isNykora);
+      fovsData.push({fov: specFov, x: specSt.x, y: specSt.y, lightOn: specSt.lightOn, dist: actDist, agentKey: specSt.agentKey});
     } else {
       const localFov=Physics.buildFOV(p.x,p.y,p.angle,360,400);
-      fovsData.push({fov: localFov, x: p.x, y: p.y, lightOn: false, dist: 400});
+      fovsData.push({fov: localFov, x: p.x, y: p.y, lightOn: false, dist: 400, agentKey: p.agentKey});
     }
 
     for(const [rid, rs] of Object.entries(remotePlayers)) {
@@ -1601,8 +1746,8 @@ function render(){
         const rfovDeg = rs._running ? ra.fovAngleRun : rs._crouching ? ra.fovAngleCrouch : ra.fovAngle;
         // The enemy's main flashlight cone
         fovsData.push({
-          fov: Physics.buildFOV(rs.x, rs.y, rs.angle, rfovDeg, ra.fovDist),
-          x: rs.x, y: rs.y, lightOn: true, dist: ra.fovDist
+          fov: Physics.buildFOV(rs.x, rs.y, rs.angle, rfovDeg, ra.fovDist, rs.agentKey==='nykora'),
+          x: rs.x, y: rs.y, lightOn: true, dist: ra.fovDist, agentKey: rs.agentKey
         });
       }
     }
@@ -1617,9 +1762,22 @@ function render(){
       }
     }
     ctx.clip();
-
     drawChecker(camX,camY,sc);
+    
+    // Second clip block for Walls: Nykora only sees them if close
+    ctx.save();
+    ctx.beginPath();
+    for(const fd of fovsData){
+      if(fd.agentKey==='nykora'){
+        const hf=Physics.buildCircleFOV(fd.x,fd.y,fd.dist/2);
+        if(hf.length>0){ctx.moveTo(hf[0].x,hf[0].y);for(let i=1;i<hf.length;i++)ctx.lineTo(hf[i].x,hf[i].y);ctx.closePath();}
+      }else{
+        if(fd.fov.length>0){ctx.moveTo(fd.fov[0].x,fd.fov[0].y);for(let i=1;i<fd.fov.length;i++)ctx.lineTo(fd.fov[i].x,fd.fov[i].y);ctx.closePath();}
+      }
+    }
+    ctx.clip();
     drawWalls();
+    ctx.restore();
 
     for(const fd of fovsData) {
       if(fd.fov.length > 0) {
@@ -1954,8 +2112,30 @@ function updateHUDDOM(){
       p.shieldActive?'ESCUDO ATIVO':'PRONTO';
     document.getElementById('wp-mode').textContent=wd.mode;
   }
-  updateAbilityPanel(p,a);updateFatePanels(p,a);updateFoulPanel(p,a);
+  updateAbilityPanel(p,a);updateFatePanels(p,a);updateFoulPanel(p,a);updateNykoraPanels(p,a);
   document.getElementById('cam-view-banner').style.display=(p.viewMode!==0)?'block':'none';
+}
+function updateNykoraPanels(p,a){
+  const $dash=document.getElementById('cam-panel'),$spin=document.getElementById('tower-panel'); // Reuse panels
+  if(p.agentKey!=='nykora'){return;} // They will be hidden by other panel updates if not Nykora
+  $dash.style.display='flex';$spin.style.display='flex';
+  const dd=ABILITIES.dash,sd=ABILITIES.spin;
+  
+  // Dash Panel (reusing cam-panel IDs for convenience or updating them)
+  document.getElementById('cam-label').textContent='DASH';
+  document.getElementById('cam-label').style.color='#9b59b6';
+  const dashCount = p.abilityCharges + p.dashResets;
+  document.getElementById('cam-state').textContent='Q · '+dashCount+' USOS';
+  document.getElementById('cam-fill').style.width='100%';
+  document.getElementById('cam-fill').style.background='#9b59b6';
+  
+  // Spin Panel (reusing tower-panel IDs)
+  document.getElementById('tower-label').textContent='GIRO';
+  document.getElementById('tower-label').style.color='#8e44ad';
+  document.getElementById('tower-state').textContent='E · '+p.spinCharges+' CARGAS';
+  const sprog = p.spinCharges<2 && p.spinRechargeDeadline ? 1-Clock.pct(p.spinRechargeDeadline, sd.rechargeTime) : p.spinCharges>=2?1:0;
+  document.getElementById('tower-fill').style.width=(sprog*100)+'%';
+  document.getElementById('tower-fill').style.background='#8e44ad';
 }
 function updateAbilityPanel(p,a){
   const panel=document.getElementById('ability-panel'),abilKey=a.slot_e,def=abilKey?ABILITIES[abilKey]:null;
@@ -2004,6 +2184,7 @@ const LOBBY_AGENTS = [
   { key:'fable', name:'FABLE', role:'Assalto',       color:'#e74c3c', icon:'🟥', weapon:'AK-47',        equip:'Granada HE ×4'        },
   { key:'fate',  name:'FATE',  role:'Inteligência',  color:'#3498db', icon:'🟦', weapon:'Desert Eagle',  equip:'Câmera · Drone · Torre'},
   { key:'foul',  name:'FOUL',  role:'Tanque',        color:'#2ecc71', icon:'🟩', weapon:'Minigun',       equip:'Escudo · Flash ×2'    },
+  { key:'nykora',name:'NYKORA',role:'Velocidade',      color:'#9b59b6', icon:'🟪', weapon:'Espada',        equip:'Dash · Giro'          },
 ];
 
 // ── Lobby state ─────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 // Domain Entity: Player
 // ═══════════════════════════════════════════════════════
 
-export type AgentKey = 'fable' | 'fate' | 'foul';
+export type AgentKey = 'fable' | 'fate' | 'foul' | 'nykora';
 
 /** In-lobby status (public, shared with all clients) */
 export interface PublicPlayer {

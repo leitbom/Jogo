@@ -92,7 +92,7 @@ export class LobbyService {
     const room   = this.rooms.findBySocketId(socketId);
     const player = room?.players.get(socketId);
     if (!player || player.ready) return;
-    const valid: AgentKey[] = ['fable', 'fate', 'foul'];
+    const valid: AgentKey[] = ['fable', 'fate', 'foul', 'nykora'];
     if (!valid.includes(agentKey)) return;
     player.agentKey = agentKey;
     this.emitter.toRoom(room!.code, 'lobby:agent_changed', { id: socketId, agentKey });
