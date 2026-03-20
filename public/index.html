@@ -523,8 +523,8 @@ const ABILITIES = Object.freeze({
   camera:{type:'camera',label:'CÂMERA',hint:'Q · COLOCAR',fovAngle:180,fovDist:800,duration:20,rechargeTime:15,staminaCost:30,hp:1,projectileSpeed:420,projectileMaxTime:1.0,viewSwitchCooldown:0.65},
   tower:{type:'tower',label:'TORRE',hint:'T · COLOCAR',hp:50,maxAmmo:50,damage:10,fireRate:10,range:350,duration:15,autoDmg:68,autoRadius:180,staminaCost:30,rechargeTime:18,bulletSpeed:1800,bulletColor:'#f1c40f'},
   shield:{type:'shield',label:'ESCUDO',hint:'Q · ATIVAR',duration:7.5,cooldown:12,staminaCost:20},
-  dash:{type:'dash',label:'DASH',hint:'Q · AVANÇAR',range:42,maxResets:2,cooldown:8,staminaCost:15},
-  spin:{type:'spin',label:'CORTE GIRATÓRIO',hint:'E · GIRAR',damage:45,radius:100,maxCharges:2,rechargeTime:12,staminaCost:25},
+  dash:{type:'dash',label:'DASH',hint:'Q · AVANÇAR',range:105,maxResets:2,cooldown:8,staminaCost:15},
+  spin:{type:'spin',label:'CORTE GIRATÓRIO',hint:'E · GIRAR',damage:50,radius:120,maxCharges:2,rechargeTime:12,staminaCost:25,cooldown:0.5},
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -563,7 +563,7 @@ const AGENTS = Object.freeze({
   },
   nykora:{
     name:'NYKORA',color:'#9b59b6',radius:14,zoom:750,speed:240,runSpeed:360,crouchSpeed:120,
-    staminaDrain:15,staminaRegen:18,staminaMax:180,fovAngle:360,fovAngleRun:360,fovAngleCrouch:360,fovDist:42,
+    staminaDrain:15,staminaRegen:18,staminaMax:180,fovAngle:360,fovAngleRun:360,fovAngleCrouch:360,fovDist:105,
     hp:100,armor:0,weapon:'sword',slot_e:'spin',slot_q:'dash',slot_t:null,
     sprite: {
        idle: { src: 'agents/fable_idle.png', frames: 4, speed: 0.15 },
@@ -925,7 +925,7 @@ function applyAgent(key,btn){
   player.agentKey=key;player.maxHp=a.hp;
   if(!player.dead)player.hp=a.hp;
   player.stamina=a.staminaMax;player.canRun=true;player.staminaIdleTimer=0;
-  player.lightOn=true;player.activeWeapon=a.weapon;player.ammo=wd.magazineMax;
+  player.lightOn=key==='nykora'?false:true;player.activeWeapon=a.weapon;player.ammo=wd.magazineMax;
   player.reloading=false;player.reloadDeadline=null;
   player.fireCooldown=0;player.spinLevel=0;player.spinHeat=0;
   player.meleeTimer=0;player.meleeCooldown=0;player.shotFired=false;
@@ -942,6 +942,7 @@ function applyAgent(key,btn){
   player.spinRechargeDeadline=null;
   player.abilityCharges=(a.slot_e && ABILITIES[a.slot_e].type==='grenade') ? ABILITIES[a.slot_e].maxCharges : (key==='nykora'?1:0);
   player.abilityRechargeDeadline=null;
+  player.nykoraSpinning=0;
   player._currentZoom=a.zoom; // seed zoom para evitar lurch ao trocar agente
   fateCam=null;fateCamProj=null;fateCam2=null;fateCamProj2=null;fateTower=null;towerBlasts=[];
   document.getElementById('wp-reload-track').style.display='none';
@@ -1122,8 +1123,7 @@ function loop(ts){
 // ═══════════════════════════════════════════════════════════════
 function update(dt){updatePlayer(dt);updateBullets(dt);updateGrenades(dt);updateParticles(dt);updateHitNums(dt);updateDeployables(dt);updateTimedLists(dt);updateScreenShake(dt);updateBlind(dt);}
 
-function updatePlayer(dt){
-  const p=player;
+function updatePlayer(dt){const p=player;if(p.nykoraSpinning>0)p.nykoraSpinning-=dt;
   // Survival: dead players do NOT respawn — enter spectator mode instead
   if(p.dead){
     // No respawn countdown in Survival
@@ -1255,13 +1255,11 @@ function tryNykoraDash(){
   const p=player;if(p.dead||p.agentKey!=='nykora')return;
   const def=ABILITIES.dash;
   if(p.abilityUseCooldown>0||p.stamina<def.staminaCost)return;
-  // Dash uses charges (resets)
-  if(p.abilityCharges<=0 && p.dashResets<=0)return; 
-
-  const dist=p.agent.fovDist;
-  const nx=p.x+Math.cos(p.angle)*dist,ny=p.y+Math.sin(p.angle)*dist;
   
-  // Physics.wallExit style to find the furthest point before wall
+  // Use dash if we have a charge (abilityCharges=1)
+  if(p.abilityCharges<=0)return; 
+
+  const dist=def.range;
   let finalX=p.x,finalY=p.y;
   for(let d=8;d<=dist;d+=8){
     const tx=p.x+Math.cos(p.angle)*d,ty=p.y+Math.sin(p.angle)*d;
@@ -1271,24 +1269,23 @@ function tryNykoraDash(){
   
   p.x=finalX;p.y=finalY;
   p.stamina=Math.max(0,p.stamina-def.staminaCost);
-  p.abilityUseCooldown=0.2; // short lockout
-  
-  if(p.dashResets>0)p.dashResets--;
-  else p.abilityCharges--;
+  p.abilityUseCooldown=0.2; 
+  p.abilityCharges=0; // consume base charge
 
   if(socket&&socket.connected)socket.emit('vfx',{type:'dash',x:p.x,y:p.y});
-  playSound('shoot_knife', 0.6); // temp sound
+  playSound('shoot_knife', 0.6); 
   spawnDashParticles(p.x,p.y,p.angle);
 }
 
 function tryNykoraSpin(){
   const p=player;if(p.dead||p.agentKey!=='nykora')return;
   const def=ABILITIES.spin;
-  if(p.spinCharges<=0||p.stamina<def.staminaCost)return;
+  if(p.spinCharges<=0||p.abilityUseCooldown>0||p.stamina<def.staminaCost)return;
   
   p.spinCharges--;
+  p.abilityUseCooldown=0.5; // as requested
   p.stamina=Math.max(0,p.stamina-def.staminaCost);
-  p.meleeTimer=0.3; // animation duration
+  p.nykoraSpinning=0.3; 
   
   let hitEnemy=false;
   if(socket&&socket.connected){
@@ -1303,10 +1300,13 @@ function tryNykoraSpin(){
   }
   
   if(hitEnemy){
-    // Reset Dash (Q) - give 1 reset charge
-    p.dashResets=Math.min(2,p.dashResets+1);
-    addKF('RESET DASH');
-    showHitMark(false);
+    // Reset Dash (Q) - give 1 base charge back if we have resets left
+    if(p.dashResets < ABILITIES.dash.maxResets){
+        p.dashResets++;
+        p.abilityCharges=1;
+        addKF('RESET DASH');
+        showHitMark(false);
+    }
   }
   
   if(socket&&socket.connected)socket.emit('vfx',{type:'spin',x:p.x,y:p.y,r:def.radius});
@@ -1742,12 +1742,12 @@ function render(){
       const ra = AGENTS[rs.agentKey];
       if(!ra) continue;
       
-      if(rs.lightOn) {
-        const rfovDeg = rs._running ? ra.fovAngleRun : rs._crouching ? ra.fovAngleCrouch : ra.fovAngle;
+      if(rs.lightOn && rs.agentKey !== 'nykora') {
+        const rfovDeg = rs.agentKey === 'nykora' ? 360 : (rs._running ? ra.fovAngleRun : rs._crouching ? ra.fovAngleCrouch : ra.fovAngle);
         // The enemy's main flashlight cone
         fovsData.push({
           fov: Physics.buildFOV(rs.x, rs.y, rs.angle, rfovDeg, ra.fovDist, rs.agentKey==='nykora'),
-          x: rs.x, y: rs.y, lightOn: true, dist: ra.fovDist, agentKey: rs.agentKey
+          x: rs.x, y: rs.y, lightOn: rs.lightOn, dist: ra.fovDist, agentKey: rs.agentKey
         });
       }
     }
@@ -1915,12 +1915,13 @@ function drawRemoteDeployables(scale){
   for(const[,rs]of Object.entries(remotePlayers)){if(!rs)continue;if(rs.cam1)drawCameraEntity(rs.cam1,scale,false);if(rs.cam2)drawCameraEntity(rs.cam2,scale,true);if(rs.tower)drawTowerEntity(rs.tower,scale);}
 }
 
-function drawSpriteAligned(ctx, img, frames, currentFrame, x, y, angle, r) {
+function drawSpriteAligned(ctx, img, frames, currentFrame, x, y, angle, r, spinning = false) {
   const sw = img.width / frames;
   const sh = img.height;
   ctx.save();
   ctx.translate(x, y);
-  ctx.rotate(angle);
+  if(spinning) ctx.rotate(Clock.now()/40);
+  else ctx.rotate(angle);
   ctx.drawImage(img, currentFrame * sw, 0, sw, sh, -r, -r, r * 2, r * 2);
   ctx.restore();
 }
@@ -1935,11 +1936,12 @@ function drawPlayer(p,a,scale){
 
   if (img) {
     const frame = spDef.speed > 0 ? Math.floor((performance.now() / 1000) / spDef.speed) % spDef.frames : 0;
-    drawSpriteAligned(ctx, img, spDef.frames, frame, p.x, p.y, p.angle, r * 1.5);
+    drawSpriteAligned(ctx, img, spDef.frames, frame, p.x, p.y, p.angle, r * 1.5, (p.agentKey==='nykora'&&p.nykoraSpinning>0));
     return; // Pula o desenho vetorial se o sprite funcionar
   }
 
   ctx.save();ctx.translate(p.x,p.y);
+  if(p.agentKey==='nykora' && p.nykoraSpinning > 0) ctx.rotate(Clock.now()/40);
   if(p.hitFlash>0){ctx.save();ctx.globalAlpha=Math.min(1,p.hitFlash*8);ctx.beginPath();ctx.arc(0,0,r+4,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.7)';ctx.fill();ctx.restore();}
   ctx.save();ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(2,4,r*.9,r*.55,0,0,Math.PI*2);ctx.fill();ctx.restore();
   drawBarrel(p,a,r,scale);
@@ -1956,6 +1958,10 @@ function drawBarrel(p,a,r,scale){
   else if(wd==='deagle'){const L=r*1.4,BW=r*.7;ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(r*.1+1,-BW/2+1,L,BW);ctx.fillStyle='#333';ctx.fillRect(r*.1,-BW/2,L,BW);ctx.fillStyle='#555';ctx.fillRect(r*.1,-BW/2,L,BW*.4);}
   else if(wd==='minigun'){const L=r*2.2,BW=r*.32,rot=(performance.now()/1000)*p.spinLevel*20;for(let i=0;i<6;i++){const off=(i/6)*Math.PI*2+rot,ox=Math.cos(off)*r*.35,oy=Math.sin(off)*r*.35;ctx.save();ctx.translate(ox,oy);ctx.fillStyle='#666';ctx.fillRect(r*.1,-BW/2,L,BW);ctx.restore();}ctx.fillStyle='#444';ctx.beginPath();ctx.arc(0,0,r*.5,0,Math.PI*2);ctx.fill();}
   else if(wd==='knife'){ctx.fillStyle='#aaa';ctx.beginPath();ctx.moveTo(r*.2,-r*.12);ctx.lineTo(r*1.6,-r*.05);ctx.lineTo(r*1.6,r*.05);ctx.lineTo(r*.2,r*.16);ctx.closePath();ctx.fill();}
+  else if(wd==='sword'){
+    ctx.fillStyle='#ccc';ctx.beginPath();ctx.moveTo(r*.2,-r*.1);ctx.lineTo(r*2.4,-r*.04);ctx.lineTo(r*2.4,r*.04);ctx.lineTo(r*.2,r*.12);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#444';ctx.fillRect(r*.1,-r*.2,r*.3,r*.4); // guarda
+  }
   ctx.restore();
 }
 function drawShield(p,scale){
@@ -2181,10 +2187,10 @@ window.addEventListener('load',()=>{
 
 // ── Agent definitions for lobby UI ─────────────────────────────
 const LOBBY_AGENTS = [
-  { key: 'fable',  name: 'FABLE',  role: 'Assalto',     color: '#e74c3c', icon: 'R', weapon: 'AK-47',        equip: 'Granada HE x4'        },
-  { key: 'fate',   name: 'FATE',   role: 'Intel',       color: '#3498db', icon: 'B', weapon: 'Desert Eagle', equip: 'Cam . Drone . Torre'  },
-  { key: 'foul',   name: 'FOUL',   role: 'Tanque',      color: '#2ecc71', icon: 'G', weapon: 'Minigun',       equip: 'Escudo . Flash x2'   },
-  { key: 'nykora', name: 'NYKORA', role: 'Velocidade',  color: '#9b59b6', icon: 'P', weapon: 'Espada',        equip: 'Dash . Giro'         },
+  { key: 'fable', name: 'FABLE', role: 'Assalto', color: '#e74c3c', icon: 'R', weapon: 'AK-47', equip: 'Granada HE x4' },
+  { key: 'fate', name: 'FATE', role: 'Intel', color: '#3498db', icon: 'B', weapon: 'Desert Eagle', equip: 'Cam . Drone . Torre' },
+  { key: 'foul', name: 'FOUL', role: 'Tanque', color: '#2ecc71', icon: 'G', weapon: 'Minigun', equip: 'Escudo . Flash x2' },
+  { key: 'nykora', name: 'NYKORA', role: 'Velocidade', color: '#9b59b6', icon: 'P', weapon: 'Espada', equip: 'Dash . Giro' },
 ];
 
 // ── Lobby state ─────────────────────────────────────────────────
@@ -2278,8 +2284,8 @@ function updateLobbyAgentUI(){
   document.getElementById('lca-name').textContent=a.name;
   document.getElementById('lca-name').style.color=a.color;
   document.getElementById('lca-role').textContent=a.role;
-  document.getElementById('lca-weapon').textContent='⚔ '+a.weapon;
-  document.getElementById('lca-equip').textContent='◈ '+a.equip;
+  document.getElementById('lca-weapon').textContent='Wep: '+a.weapon;
+  document.getElementById('lca-equip').textContent='Eqp: '+a.equip;
   // Keep menuAgentKey in sync so startGame() uses correct agent
   menuAgentKey=a.key;
 }
@@ -2324,7 +2330,7 @@ function refreshStartBtn(){
   const btn=document.getElementById('lc-start');
   btn.style.display=me?.isHost?'':'none';
   if(!me?.isHost)return;
-  const ok=lobbyPlayers.length>=4&&lobbyPlayers.every(p=>p.ready);
+  const ok=lobbyPlayers.length>=1&&lobbyPlayers.every(p=>p.ready);
   btn.disabled=!ok;
   document.getElementById('lc-hint').style.display=lobbyPlayers.length>=4?'none':'';
 }
