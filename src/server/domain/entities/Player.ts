@@ -56,7 +56,7 @@ export function createPlayer(id: string, name: string): Player {
   return {
     id,
     name,
-    agentKey: 'fable',
+    agentKey: 'nykora',
     ready: false,
     isHost: false,
     alive: true,

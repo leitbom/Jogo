@@ -82,7 +82,7 @@ export class LobbyService {
       myName:   playerName,
     });
     this.emitter.toRoomExcept(room.code, socketId, 'lobby:player_joined', {
-      id: socketId, name: playerName, agentKey: 'fable', ready: false, isHost: false,
+      id: socketId, name: playerName, agentKey: 'nykora', ready: false, isHost: false,
     });
     this.logger.info(`[room] ${room.code} +${socketId.slice(0,6)} ${room.players.size}/${MAX_ROOM_SIZE}`);
   }

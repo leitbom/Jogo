@@ -863,7 +863,7 @@ function startGame(data){
       'agents/foul_idle.png', 'agents/foul_walk.png', 'agents/foul_dead.png'
     ],
     sounds: [
-      'shoot_ak47', 'shoot_deagle', 'shoot_minigun', 'shoot_knife',
+      'shoot_ak47', 'shoot_deagle', 'shoot_minigun', 'shoot_knife', 'shoot_sword',
       'he_explode', 'flash_bang'
     ]
   });
@@ -2181,10 +2181,10 @@ window.addEventListener('load',()=>{
 
 // ── Agent definitions for lobby UI ─────────────────────────────
 const LOBBY_AGENTS = [
-  { key:'fable', name:'FABLE', role:'Assalto',       color:'#e74c3c', icon:'🟥', weapon:'AK-47',        equip:'Granada HE ×4'        },
-  { key:'fate',  name:'FATE',  role:'Inteligência',  color:'#3498db', icon:'🟦', weapon:'Desert Eagle',  equip:'Câmera · Drone · Torre'},
-  { key:'foul',  name:'FOUL',  role:'Tanque',        color:'#2ecc71', icon:'🟩', weapon:'Minigun',       equip:'Escudo · Flash ×2'    },
-  { key:'nykora',name:'NYKORA',role:'Velocidade',      color:'#9b59b6', icon:'🟪', weapon:'Espada',        equip:'Dash · Giro'          },
+  { key: 'fable',  name: 'FABLE',  role: 'Assalto',     color: '#e74c3c', icon: 'R', weapon: 'AK-47',        equip: 'Granada HE x4'        },
+  { key: 'fate',   name: 'FATE',   role: 'Intel',       color: '#3498db', icon: 'B', weapon: 'Desert Eagle', equip: 'Cam . Drone . Torre'  },
+  { key: 'foul',   name: 'FOUL',   role: 'Tanque',      color: '#2ecc71', icon: 'G', weapon: 'Minigun',       equip: 'Escudo . Flash x2'   },
+  { key: 'nykora', name: 'NYKORA', role: 'Velocidade',  color: '#9b59b6', icon: 'P', weapon: 'Espada',        equip: 'Dash . Giro'         },
 ];
 
 // ── Lobby state ─────────────────────────────────────────────────
