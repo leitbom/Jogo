@@ -523,8 +523,8 @@ const ABILITIES = Object.freeze({
   camera:{type:'camera',label:'CÂMERA',hint:'Q · COLOCAR',fovAngle:180,fovDist:800,duration:20,rechargeTime:15,staminaCost:30,hp:1,projectileSpeed:420,projectileMaxTime:1.0,viewSwitchCooldown:0.65},
   tower:{type:'tower',label:'TORRE',hint:'T · COLOCAR',hp:50,maxAmmo:50,damage:10,fireRate:10,range:350,duration:15,autoDmg:68,autoRadius:180,staminaCost:30,rechargeTime:18,bulletSpeed:1800,bulletColor:'#f1c40f'},
   shield:{type:'shield',label:'ESCUDO',hint:'Q · ATIVAR',duration:7.5,cooldown:12,staminaCost:20},
-  dash:{type:'dash',label:'DASH',hint:'Q · AVANÇAR',range:105,maxResets:2,cooldown:8,staminaCost:15},
-  spin:{type:'spin',label:'CORTE GIRATÓRIO',hint:'E · GIRAR',damage:75,radius:120,maxCharges:2,rechargeTime:12,staminaCost:25,cooldown:0.5},
+  dash:{type:'dash',label:'DASH',hint:'RMB · AVANÇAR',range:105,maxResets:2,cooldown:10,staminaCost:15},
+  spin:{type:'spin',label:'CORTE GIRATÓRIO',hint:'E · GIRAR',damage:75,radius:120,maxCharges:2,rechargeTime:8,staminaCost:25,cooldown:0.5},
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -674,6 +674,18 @@ let fateTower=null,towerBlasts=[];
 let bullets=[],particles=[],hitNums=[],grenades=[],explosions=[],flashRings=[],muzzFX=null;
 let screenShake=0,playerBlind=0,playerSlow=0,playerSlowDeadline=null,playerBlindDeadline=null;
 let remoteFlashEffects={}; // {rid: {slow:bool, blind:bool, deadline:ts}}
+let remoteBleedTimers={};
+
+function applySwordBleed(rid){
+  if(remoteBleedTimers[rid])clearInterval(remoteBleedTimers[rid].interval);
+  let ticks=0;
+  const interval=setInterval(()=>{
+    if(!socket||!socket.connected||!remotePlayers[rid]||remotePlayers[rid].dead){clearInterval(interval);return;}
+    socket.emit('dmg',{to:rid,dmg:5,cause:'SANGRAMENTO'});
+    ticks++;if(ticks>=3)clearInterval(interval);
+  },1000);
+  remoteBleedTimers[rid]={interval};
+}
 
 // Jogador local — todos os timers de duração usam Clock.deadline()
 const player={
@@ -722,7 +734,7 @@ function setupInput(){
     if(gameState!=='playing')return;
     keys[e.code]=true;
     if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
-    if(e.code==='KeyF')player.lightOn=!player.lightOn;
+    if(e.code==='KeyF'&&player.agentKey!=='nykora')player.lightOn=!player.lightOn;
     if(e.code==='KeyR')startReload();
     if(e.code==='Digit1')switchWeapon('primary');
     if(e.code==='Digit2')switchWeapon('knife');
@@ -938,6 +950,8 @@ function applyAgent(key,btn){
   player.towerRecharging=false;player.towerRechargeDeadline=null;
   player.shieldActive=false;player.shieldDeadline=null;player.shieldCooldownDeadline=null;
   player.dashResets=0;
+  player.dashCharges=key==='nykora'?1:0;
+  player.dashCooldownDeadline=null;
   player.spinCharges=key==='nykora'?2:0;
   player.spinRechargeDeadline=null;
   player.abilityCharges=(a.slot_e && ABILITIES[a.slot_e].type==='grenade') ? ABILITIES[a.slot_e].maxCharges : (key==='nykora'?1:0);
@@ -1171,7 +1185,7 @@ function updatePlayer(dt){const p=player;if(p.nykoraSpinning>0)p.nykoraSpinning-
     p.x=Math.max(a.radius,Math.min(WORLD-a.radius,p.x));p.y=Math.max(a.radius,Math.min(WORLD-a.radius,p.y));
     p._running=running&&len>0;p._crouching=crouch;
   }else{p._running=false;}
-  p.angle=Math.atan2(mouseWorld.y-p.y,mouseWorld.x-p.x);
+  if (!(p.dashRemaining > 0)) p.angle=Math.atan2(mouseWorld.y-p.y,mouseWorld.x-p.x);
   // Recarga via Clock
   if(p.reloading){
     if(Clock.expired(p.reloadDeadline)){
@@ -1197,8 +1211,12 @@ function updatePlayer(dt){const p=player;if(p.nykoraSpinning>0)p.nykoraSpinning-
   if(p.shieldActive&&Clock.expired(p.shieldDeadline)){p.shieldActive=false;p.shieldDeadline=null;p.shieldCooldownDeadline=Clock.deadline(ABILITIES.shield.cooldown);}
   if(p.shieldCooldownDeadline&&Clock.expired(p.shieldCooldownDeadline))p.shieldCooldownDeadline=null;
   if(p.camViewCooldownDeadline&&Clock.expired(p.camViewCooldownDeadline))p.camViewCooldownDeadline=null;
-  // Nykora Spin Recharge
-  if(p.agentKey==='nykora'&&p.spinCharges<2){if(!p.spinRechargeDeadline)p.spinRechargeDeadline=Clock.deadline(ABILITIES.spin.rechargeTime);if(Clock.expired(p.spinRechargeDeadline)){p.spinCharges++;p.spinRechargeDeadline=p.spinCharges<2?Clock.deadline(ABILITIES.spin.rechargeTime):null;}}
+  // Nykora Recharge
+  if(p.agentKey==='nykora'){
+    if(p.spinCharges<2){if(!p.spinRechargeDeadline)p.spinRechargeDeadline=Clock.deadline(ABILITIES.spin.rechargeTime);if(Clock.expired(p.spinRechargeDeadline)){p.spinCharges++;p.spinRechargeDeadline=p.spinCharges<2?Clock.deadline(ABILITIES.spin.rechargeTime):null;}}
+    if(p.dashCharges<1&&!p.dashCooldownDeadline)p.dashCooldownDeadline=Clock.deadline(ABILITIES.dash.cooldown);
+    if(p.dashCooldownDeadline&&Clock.expired(p.dashCooldownDeadline)){p.dashCharges++;p.dashCooldownDeadline=null;}
+  }
   // Minigun
   const wd=WEAPONS[p.activeWeapon];
   if(p.activeWeapon==='minigun'){
@@ -1262,12 +1280,17 @@ function tryNykoraDash(){
   const def=ABILITIES.dash;
   if(p.abilityUseCooldown>0||p.stamina<def.staminaCost)return;
   
-  // Use dash if we have a charge (abilityCharges=1)
-  if(p.abilityCharges<=0)return; 
+  // Ensure we have a dash charge or reset
+  if(p.dashCharges<=0&&p.dashResets<=0)return; 
+  if(p.dashResets>0)p.dashResets--;
+  else p.dashCharges--;
 
+  const a=p.agent;
+  const ang=Math.atan2(mouseWorld.y-p.y,mouseWorld.x-p.x);
+  p.angle=ang;
   let dst=a.fovDist;
-  p.dashTargetX=p.x+Math.cos(p.angle)*dst;
-  p.dashTargetY=p.y+Math.sin(p.angle)*dst;
+  p.dashTargetX=p.x+Math.cos(ang)*dst;
+  p.dashTargetY=p.y+Math.sin(ang)*dst;
   p.dashTargetX=Math.max(a.radius,Math.min(WORLD-a.radius,p.dashTargetX));
   p.dashTargetY=Math.max(a.radius,Math.min(WORLD-a.radius,p.dashTargetY));
   
@@ -1277,7 +1300,6 @@ function tryNykoraDash(){
   
   p.stamina=Math.max(0,p.stamina-def.staminaCost);
   p.abilityUseCooldown=0.2; 
-  p.abilityCharges=0; // consume base charge
 
   if(socket&&socket.connected)socket.emit('vfx',{type:'dash',x:p.x,y:p.y});
   playSound('shoot_knife', 0.6); 
@@ -1301,6 +1323,7 @@ function tryNykoraSpin(){
       const d=Math.hypot(rs.x-p.x,rs.y-p.y);
       if(d<def.radius+(AGENTS[rs.agentKey]?.radius||14)){
         socket.emit('dmg',{to:rid,dmg:Math.round(def.damage),cause:'SPIN'});
+        applySwordBleed(rid);
         hitEnemy=true;
       }
     }
@@ -1437,9 +1460,7 @@ function tryMelee(){
         while(diff>Math.PI)diff-=Math.PI*2;while(diff<-Math.PI)diff+=Math.PI*2;
         if(Math.abs(diff)>1.0)continue;
         socket.emit('dmg',{to:rid,dmg:wd.damage,cause:'MELEE'});
-        setTimeout(()=>socket&&socket.connected&&socket.emit('dmg',{to:rid,dmg:5,cause:'SANGRAMENTO'}),1000);
-        setTimeout(()=>socket&&socket.connected&&socket.emit('dmg',{to:rid,dmg:5,cause:'SANGRAMENTO'}),2000);
-        setTimeout(()=>socket&&socket.connected&&socket.emit('dmg',{to:rid,dmg:5,cause:'SANGRAMENTO'}),3000);
+        applySwordBleed(rid);
       } else {
         bs=isBackstab(p,rs);
         socket.emit('dmg',{to:rid,dmg:bs?wd.backstabDamage:wd.damage,cause:bs?'BACKSTAB':'MELEE'});
@@ -2150,9 +2171,10 @@ function updateNykoraPanels(p,a){
   // Dash Panel (reusing cam-panel IDs for convenience or updating them)
   document.getElementById('cam-label').textContent='DASH';
   document.getElementById('cam-label').style.color='#9b59b6';
-  const dashCount = p.abilityCharges + p.dashResets;
-  document.getElementById('cam-state').textContent='Q · '+dashCount+' USOS';
-  document.getElementById('cam-fill').style.width='100%';
+  const dashCount = p.dashCharges + p.dashResets;
+  document.getElementById('cam-state').textContent='RMB · '+dashCount+' USOS';
+  const dprog = p.dashCharges<1 && p.dashCooldownDeadline ? 1-Clock.pct(p.dashCooldownDeadline, dd.cooldown) : 1;
+  document.getElementById('cam-fill').style.width=(dprog*100)+'%';
   document.getElementById('cam-fill').style.background='#9b59b6';
   
   // Spin Panel (reusing tower-panel IDs)

@@ -36,9 +36,9 @@ interface PosSnapshot {
 const MAP_MIN = -200;
 const MAP_MAX = 4_200;
 
-const VALID_AGENTS: ReadonlySet<string> = new Set(['fable', 'fate', 'foul']);
+const VALID_AGENTS: ReadonlySet<string> = new Set(['fable', 'fate', 'foul', 'nykora']);
 const VALID_CAUSES: ReadonlySet<string> = new Set([
-  'BALA', 'BACKSTAB', 'MELEE', 'EXPLOSÃO', 'TORRE', 'REFLEX', 'FLASH',
+  'BALA', 'BACKSTAB', 'MELEE', 'EXPLOSÃO', 'TORRE', 'REFLEX', 'FLASH', 'SPIN', 'SANGRAMENTO'
 ]);
 
 // ── SecurityGuard ───────────────────────────────────────────────

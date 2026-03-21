@@ -45,7 +45,7 @@ export const MAX_ACTION_PER_SECOND = 20;
 /** Max lobby events (create_room, join_room, start…) per second */
 export const MAX_LOBBY_PER_SECOND = 5;
 /** Maximum player movement speed in pixels/second (anti-speedhack) */
-export const MAX_PLAYER_SPEED_PPS = 600;
+export const MAX_PLAYER_SPEED_PPS = 1600;
 
 /** Minimum milliseconds between shots, per weapon (anti-rapid-fire) */
 export const SHOT_COOLDOWN_MS: Readonly<Record<WeaponKey, number>> = {
@@ -64,7 +64,8 @@ export const DMG_RANGES: Readonly<Record<string, [number, number]>> = {
   REFLEX: [1, 82],
   FLASH: [0, 0],
   DASH: [0, 0],
-  SPIN: [30, 60],
+  SPIN: [30, 80],
+  SANGRAMENTO: [4, 6],
 };
 
 export const SPAWN_POINTS = [
