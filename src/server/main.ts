@@ -126,7 +126,7 @@ io.on('connection', (socket: Socket) => {
 
   socket.on('lobby:select_agent', ({ agentKey }: { agentKey: AgentKey }) => {
     if (!security.checkLobbyRate(socket.id)) return;
-    const validAgents: AgentKey[] = ['fable', 'fate', 'foul'];
+    const validAgents: AgentKey[] = ['fable', 'fate', 'foul', 'nykora'];
     if (!validAgents.includes(agentKey)) return;
     lobbySvc.selectAgent(socket.id, agentKey);
   });
@@ -201,7 +201,7 @@ io.on('connection', (socket: Socket) => {
     if (!security.checkLobbyRate(socket.id)) return;
     const room = roomRepo.findBySocketId(socket.id);
     const p    = room?.players.get(socket.id);
-    const validAgents: AgentKey[] = ['fable', 'fate', 'foul'];
+    const validAgents: AgentKey[] = ['fable', 'fate', 'foul', 'nykora'];
     if (!validAgents.includes(data?.agentKey)) return;
     if (p) p.agentKey = data.agentKey;
     if (room) socket.to(room.code).emit('peer_agent', { id: socket.id, agentKey: data.agentKey });
