@@ -8,17 +8,18 @@
 //   All events are validated by SecurityGuard before processing.
 // ════════════════════════════════════════════════════════════════
 
-import express            from 'express';
-import http               from 'http';
-import path               from 'path';
+import express from 'express';
+import http from 'http';
+import path from 'path';
+import fs from 'fs';
 import { Server, Socket } from 'socket.io';
 
-import { ConsoleLogger }           from './adapters/out/ConsoleLogger';
-import { InMemoryRoomRepository }  from './adapters/out/InMemoryRoomRepository';
-import { SocketIoEmitter }         from './adapters/out/SocketIoEmitter';
-import { LobbyService }            from './application/LobbyService';
-import { SurvivalGameService }     from './application/SurvivalGameService';
-import { SecurityGuard }           from './application/SecurityGuard';
+import { ConsoleLogger } from './adapters/out/ConsoleLogger';
+import { InMemoryRoomRepository } from './adapters/out/InMemoryRoomRepository';
+import { SocketIoEmitter } from './adapters/out/SocketIoEmitter';
+import { LobbyService } from './application/LobbyService';
+import { SurvivalGameService } from './application/SurvivalGameService';
+import { SecurityGuard } from './application/SecurityGuard';
 import type { AgentKey, PlayerStateRelay } from './domain/entities/Player';
 import {
   DISCONNECT_DEAD_MS,
@@ -30,26 +31,26 @@ import {
 import { toPublicPlayer } from './domain/entities/Player';
 
 // ── Infrastructure ──────────────────────────────────────────────
-const app    = express();
+const app = express();
 const server = http.createServer(app);
-const io     = new Server(server, {
-  cors:         { origin: '*' },
+const io = new Server(server, {
+  cors: { origin: '*' },
   pingInterval: 5_000,
-  pingTimeout:  10_000,
+  pingTimeout: 10_000,
 });
 
 app.use(express.static(path.join(__dirname, '..', '..', 'public')));
 
 // ── Adapters ────────────────────────────────────────────────────
-const roomRepo  = new InMemoryRoomRepository();
-const logger    = new ConsoleLogger();
+const roomRepo = new InMemoryRoomRepository();
+const logger = new ConsoleLogger();
 const socketMap = new Map<string, Socket>();
-const emitter   = new SocketIoEmitter(io, socketMap);
+const emitter = new SocketIoEmitter(io, socketMap);
 
 // ── Application services ─────────────────────────────────────────
-const security    = new SecurityGuard(logger);
-const survivalSvc = new SurvivalGameService(roomRepo, emitter, logger);
-const lobbySvc    = new LobbyService(
+const security = new SecurityGuard(logger);
+const survivalSvc = new SurvivalGameService(roomRepo, emitter, logger, security);
+const lobbySvc = new LobbyService(
   roomRepo,
   emitter,
   logger,
@@ -60,25 +61,40 @@ const lobbySvc    = new LobbyService(
 app.get('/status', (_req, res) => {
   res.json({
     rooms: roomRepo.all().map(r => ({
-      code:    r.code,
-      state:   r.state,
-      timer:   r.timerRemaining,
-      alive:   r.aliveCount,
-      total:   r.totalPlayers,
+      code: r.code,
+      state: r.state,
+      timer: r.timerRemaining,
+      alive: r.aliveCount,
+      total: r.totalPlayers,
       players: [...r.players.values()].map(p => ({
-        id:          p.id.slice(0, 8),
-        name:        p.name,
-        agent:       p.agentKey,
-        ready:       p.ready,
-        isHost:      p.isHost,
-        alive:       p.alive,
-        kills:       p.kills,
+        id: p.id.slice(0, 8),
+        name: p.name,
+        agent: p.agentKey,
+        ready: p.ready,
+        isHost: p.isHost,
+        alive: p.alive,
+        kills: p.kills,
         damageDealt: p.damageDealt,
         damageTaken: p.damageTaken,
-        winner:      p.winner,
+        winner: p.winner,
       })),
     })),
   });
+});
+
+app.get('/maps', (_req, res) => {
+  try {
+    const mapsDir = path.join(__dirname, '..', '..', 'public', 'maps');
+    if (!fs.existsSync(mapsDir)) {
+      res.json([]);
+      return;
+    }
+    const files = fs.readdirSync(mapsDir);
+    const maps = files.filter(f => f.endsWith('.json'));
+    res.json(maps);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to read maps' });
+  }
 });
 
 // ── Lobby tick — 10 Hz ──────────────────────────────────────────
@@ -92,8 +108,9 @@ setInterval(() => {
     for (const room of roomRepo.all()) {
       if (room.state === 'lobby') {
         io.to(room.code).emit('lobby:state_sync', {
-          players:  [...room.players.values()].map(toPublicPlayer),
+          players: [...room.players.values()].map(toPublicPlayer),
           roomCode: room.code,
+          selectedMap: room.selectedMap,
         });
       }
     }
@@ -131,6 +148,11 @@ io.on('connection', (socket: Socket) => {
     lobbySvc.selectAgent(socket.id, agentKey);
   });
 
+  socket.on('lobby:select_map', ({ mapName }: { mapName: string }) => {
+    if (!security.checkLobbyRate(socket.id)) return;
+    lobbySvc.selectMap(socket.id, mapName);
+  });
+
   socket.on('lobby:toggle_ready', ({ ready }: { ready: boolean }) => {
     if (!security.checkLobbyRate(socket.id)) return;
     lobbySvc.toggleReady(socket.id, Boolean(ready));
@@ -151,7 +173,7 @@ io.on('connection', (socket: Socket) => {
   // STATE: sanitise + speed-check then buffer; the 30Hz tick broadcasts it.
   socket.on('state', (raw: unknown) => {
     const room = roomRepo.findBySocketId(socket.id);
-    const p    = room?.players.get(socket.id);
+    const p = room?.players.get(socket.id);
     if (!p) return;
 
     const st = security.sanitizeState(raw);
@@ -200,7 +222,7 @@ io.on('connection', (socket: Socket) => {
   socket.on('agent_change', (data: { agentKey: AgentKey }) => {
     if (!security.checkLobbyRate(socket.id)) return;
     const room = roomRepo.findBySocketId(socket.id);
-    const p    = room?.players.get(socket.id);
+    const p = room?.players.get(socket.id);
     const validAgents: AgentKey[] = ['fable', 'fate', 'foul', 'nykora'];
     if (!validAgents.includes(data?.agentKey)) return;
     if (p) p.agentKey = data.agentKey;
@@ -211,10 +233,10 @@ io.on('connection', (socket: Socket) => {
   socket.on('dmg', (data: { to: string; dmg: number; cause: string }) => {
     if (!security.checkActionRate(socket.id)) return;
 
-    const room   = roomRepo.findBySocketId(socket.id);
+    const room = roomRepo.findBySocketId(socket.id);
     if (!room || room.state !== 'in_game') return;
 
-    const from   = room.players.get(socket.id);
+    const from = room.players.get(socket.id);
     const target = room.players.get(data.to);
     if (!from?.alive || !target?.alive) return;
 
@@ -239,12 +261,12 @@ io.on('connection', (socket: Socket) => {
     const fs = from.stateRelay, ts = target.stateRelay;
     if (fs && ts && Math.hypot(fs.x - ts.x, fs.y - ts.y) > MAX_HIT_RANGE) return;
 
-    from.damageDealt   += dmg;
+    from.damageDealt += dmg;
     target.damageTaken += dmg;
     from.shotsHit++;
 
     io.to(data.to).emit('take_dmg', { dmg, cause, from: socket.id });
-    logger.info(`[dmg] ${socket.id.slice(0,6)}→${data.to.slice(0,6)} ${dmg} (${cause})`);
+    logger.info(`[dmg] ${socket.id.slice(0, 6)}→${data.to.slice(0, 6)} ${dmg} (${cause})`);
   });
 
   // DEATH — action-rate-limited; server re-validates alive state
@@ -253,7 +275,7 @@ io.on('connection', (socket: Socket) => {
     survivalSvc.handlePlayerDied(
       socket.id,
       data?.killedBy ?? null,
-      data?.cause    ?? 'BALA',
+      data?.cause ?? 'BALA',
     );
   });
 

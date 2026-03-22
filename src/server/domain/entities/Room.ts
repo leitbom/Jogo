@@ -16,6 +16,8 @@ export interface Room {
   hostId: string | null;
   state: RoomState;
   players: Map<string, Player>;
+  selectedMap: string | null;
+  mapData: any | null;
 
   // Survival in-game data
   timerRemaining: number;
@@ -35,6 +37,8 @@ export function createRoom(code: string): Room {
     hostId: null,
     state: 'lobby',
     players: new Map(),
+    selectedMap: 'default.json',
+    mapData: null,
     timerRemaining: 180,
     timerIntervalId: null,
     stateTickIntervalId: null,

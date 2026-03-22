@@ -4,15 +4,17 @@
 //   agent selection, ready toggling, countdown start.
 // ═══════════════════════════════════════════════════════
 
-import type { IRoomRepository }   from '../domain/ports/out/IRoomRepository';
+import type { IRoomRepository } from '../domain/ports/out/IRoomRepository';
 import type { IGameEventEmitter } from '../domain/ports/out/IGameEventEmitter';
-import type { ILogger }           from '../domain/ports/out/ILogger';
-import { createRoom }             from '../domain/entities/Room';
+import type { ILogger } from '../domain/ports/out/ILogger';
+import { createRoom } from '../domain/entities/Room';
 import { createPlayer, toPublicPlayer } from '../domain/entities/Player';
-import type { AgentKey }          from '../domain/entities/Player';
-import { MIN_TO_START, MAX_ROOM_SIZE } from '../domain/entities/AgentStats';
+import type { AgentKey } from '../domain/entities/Player';
+import { MIN_TO_START, MAX_ROOM_SIZE } from '../domain/entities/AgentStats.js';
+import fs from 'fs';
+import path from 'path';
 
-const NAME_ADJ = ['GHOST','WOLF','VIPER','NIGHT','RAZOR','STORM','ROGUE','COBRA','NOVA','CIPHER'];
+const NAME_ADJ = ['GHOST', 'WOLF', 'VIPER', 'NIGHT', 'RAZOR', 'STORM', 'ROGUE', 'COBRA', 'NOVA', 'CIPHER'];
 
 export class LobbyService {
   constructor(
@@ -20,7 +22,7 @@ export class LobbyService {
     private readonly emitter: IGameEventEmitter,
     private readonly logger: ILogger,
     private readonly onStartCountdown: (roomCode: string) => void,
-  ) {}
+  ) { }
 
   generateName(): string {
     const adj = NAME_ADJ[Math.floor(Math.random() * NAME_ADJ.length)];
@@ -33,11 +35,12 @@ export class LobbyService {
     // Leave any current room first
     this.leaveRoom(socketId);
 
-    const code   = this.rooms.generateCode();
-    const room   = createRoom(code);
+    const code = this.rooms.generateCode();
+    const room = createRoom(code);
+    this.loadMapData(room, 'default.json');
     const player = createPlayer(socketId, playerName);
-    player.isHost  = true;
-    room.hostId    = socketId;
+    player.isHost = true;
+    room.hostId = socketId;
     room.players.set(socketId, player);
 
     this.rooms.save(room);
@@ -46,9 +49,10 @@ export class LobbyService {
 
     this.emitter.toSocket(socketId, 'lobby:state', {
       roomCode: code,
-      players:  [...room.players.values()].map(toPublicPlayer),
-      myId:     socketId,
-      myName:   playerName,
+      players: [...room.players.values()].map(toPublicPlayer),
+      selectedMap: room.selectedMap,
+      myId: socketId,
+      myName: playerName,
     });
     this.logger.info(`[room+] ${code} host=${socketId.slice(0, 6)}`);
   }
@@ -77,19 +81,20 @@ export class LobbyService {
 
     this.emitter.toSocket(socketId, 'lobby:state', {
       roomCode: room.code,
-      players:  [...room.players.values()].map(toPublicPlayer),
-      myId:     socketId,
-      myName:   playerName,
+      players: [...room.players.values()].map(toPublicPlayer),
+      selectedMap: room.selectedMap,
+      myId: socketId,
+      myName: playerName,
     });
     this.emitter.toRoomExcept(room.code, socketId, 'lobby:player_joined', {
       id: socketId, name: playerName, agentKey: 'nykora', ready: false, isHost: false,
     });
-    this.logger.info(`[room] ${room.code} +${socketId.slice(0,6)} ${room.players.size}/${MAX_ROOM_SIZE}`);
+    this.logger.info(`[room] ${room.code} +${socketId.slice(0, 6)} ${room.players.size}/${MAX_ROOM_SIZE}`);
   }
 
   // ── SELECT AGENT ──────────────────────────────────────────────
   selectAgent(socketId: string, agentKey: AgentKey): void {
-    const room   = this.rooms.findBySocketId(socketId);
+    const room = this.rooms.findBySocketId(socketId);
     const player = room?.players.get(socketId);
     if (!player || player.ready) return;
     const valid: AgentKey[] = ['fable', 'fate', 'foul', 'nykora'];
@@ -97,10 +102,36 @@ export class LobbyService {
     player.agentKey = agentKey;
     this.emitter.toRoom(room!.code, 'lobby:agent_changed', { id: socketId, agentKey });
   }
+  
+  selectMap(socketId: string, mapName: string): void {
+    const room = this.rooms.findBySocketId(socketId);
+    if (!room) return;
+    const player = room.players.get(socketId);
+    if (!player || !player.isHost || room.state !== 'lobby') return;
+    
+    room.selectedMap = mapName;
+    this.loadMapData(room, mapName);
+    this.emitter.toRoom(room.code, 'lobby:map_changed', { mapName });
+  }
+
+  private loadMapData(room: any, mapName: string): void {
+    try {
+      const mapsDir = path.resolve(process.cwd(), 'public', 'maps');
+      const filePath = path.join(mapsDir, mapName);
+      if (fs.existsSync(filePath)) {
+        room.mapData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        this.logger.info(`[map:load] ${mapName} into ${room.code}`);
+      } else {
+        this.logger.warn(`[map:fail] ${mapName} not found at ${filePath}`);
+      }
+    } catch (err) {
+      this.logger.error(`[map:err] ${err}`);
+    }
+  }
 
   // ── TOGGLE READY ──────────────────────────────────────────────
   toggleReady(socketId: string, ready: boolean): void {
-    const room   = this.rooms.findBySocketId(socketId);
+    const room = this.rooms.findBySocketId(socketId);
     const player = room?.players.get(socketId);
     if (!player) return;
     player.ready = Boolean(ready);
@@ -109,7 +140,7 @@ export class LobbyService {
 
   // ── START GAME ────────────────────────────────────────────────
   requestStart(socketId: string): void {
-    const room   = this.rooms.findBySocketId(socketId);
+    const room = this.rooms.findBySocketId(socketId);
     const player = room?.players.get(socketId);
     if (!player?.isHost || room!.state !== 'lobby') return;
 
@@ -127,23 +158,24 @@ export class LobbyService {
 
   // ── PLAY AGAIN (host resets room to lobby) ───────────────────
   playAgain(socketId: string): void {
-    const room   = this.rooms.findBySocketId(socketId);
+    const room = this.rooms.findBySocketId(socketId);
     const player = room?.players.get(socketId);
     if (!player?.isHost || room!.state !== 'ended') return;
 
     room!.state = 'lobby';
     room!.timerRemaining = 180;
-    room!.aliveCount     = 0;
-    room!.lastDeadIds    = [];
+    room!.aliveCount = 0;
+    room!.lastDeadIds = [];
 
     for (const p of room!.players.values()) {
-      p.ready  = false;
-      p.alive  = true;
+      p.ready = false;
+      p.alive = true;
       p.winner = false;
     }
     this.emitter.toRoom(room!.code, 'lobby:reset', {
-      players:  [...room!.players.values()].map(toPublicPlayer),
+      players: [...room!.players.values()].map(toPublicPlayer),
       roomCode: room!.code,
+      selectedMap: room!.selectedMap,
     });
     this.logger.info(`[room:reset] ${room!.code}`);
   }
@@ -164,7 +196,7 @@ export class LobbyService {
     this.emitter.removeSocketFromChannel(socketId, room.code);
 
     if (!skipBroadcast) {
-      this.emitter.toRoom(room.code, 'peer_left',         { id: socketId });
+      this.emitter.toRoom(room.code, 'peer_left', { id: socketId });
       this.emitter.toRoom(room.code, 'lobby:player_left', { id: socketId });
     }
 
@@ -188,9 +220,9 @@ export class LobbyService {
   // ── PRIVATE ───────────────────────────────────────────────────
   private transferHostIfNeeded(room: import('../domain/entities/Room.js').Room, oldHostId: string): void {
     if (room.hostId !== oldHostId || room.players.size === 0) return;
-    const newHost  = room.players.values().next().value!;
+    const newHost = room.players.values().next().value!;
     newHost.isHost = true;
-    room.hostId    = newHost.id;
+    room.hostId = newHost.id;
     this.emitter.toRoom(room.code, 'lobby:host_changed', { newHostId: newHost.id });
   }
 }

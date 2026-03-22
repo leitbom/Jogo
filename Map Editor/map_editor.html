@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+
+<title>MAP EDITOR v3 — Tactical Shooter</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
+:root{
+  --bg:#0d0d18;--panel:#12121f;--panel2:#1a1a2e;--border:#0f3460;--border2:#1e3a6e;
+  --accent:#e94560;--text:#e0e0e0;--text2:#8899aa;
+  --cwall:#e74c3c;--cwin:#3498db;--cspawn:#2ecc71;--clow:#f1c40f;--cobj:#9b59b6;--clight:#ffe066;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{height:100%;height:-webkit-fill-available;overflow:hidden;margin:0;padding:0}
+body{height:100%;height:-webkit-fill-available;overflow:hidden;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:14px;
+  display:flex;flex-direction:column;overflow:hidden;user-select:none;-webkit-user-select:none;
+  overscroll-behavior:none;-webkit-tap-highlight-color:transparent;
+  /* Safe area insets push content away from notch/home-bar/Documents toolbar */
+  padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);
+  padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);
+  /* Prevent layout from jumping when browser bar slides in/out */
+  min-height:-webkit-fill-available;
+  will-change:contents;}
+body.fullscreen{padding:0!important;min-height:100%!important;}
+input,select,textarea{user-select:text;-webkit-user-select:text;-webkit-appearance:none}
+
+#topbar{background:var(--panel);border-bottom:1px solid var(--border);display:flex;
+  align-items:center;gap:5px;padding:4px 8px;min-height:44px;flex-shrink:0;
+  overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;white-space:nowrap;touch-action:pan-x;}
+#topbar::-webkit-scrollbar{display:none;}
+#map-name{background:var(--bg);border:1px solid var(--border2);color:var(--text);
+  font-family:'Share Tech Mono',monospace;font-size:13px;padding:4px 10px;width:150px;
+  outline:none;border-radius:2px;letter-spacing:1px}
+#map-name:focus{border-color:var(--accent)}
+.tbsep{width:1px;background:var(--border);height:28px;margin:0 3px}
+.btn{background:var(--panel2);border:1px solid var(--border2);color:var(--text);
+  font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;padding:4px 11px;
+  cursor:pointer;border-radius:2px;transition:all .15s;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.accent:hover{background:#c0334e}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+
+#main{display:flex;flex:1;overflow:hidden;min-height:0;}
+
+#toolbar{background:var(--panel);border-right:1px solid var(--border);display:flex;
+  flex-direction:column;align-items:center;padding:7px 4px;gap:3px;width:52px;flex-shrink:0;
+  overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.tool-btn{width:40px;height:40px;background:var(--panel2);border:1px solid var(--border2);
+  border-radius:3px;cursor:pointer;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:1px;transition:all .15s;flex-shrink:0}
+.tool-btn:hover,.tool-btn:focus{border-color:var(--text2)}
+.tool-btn.active{border-color:var(--accent);background:rgba(233,69,96,.15)}
+.tool-icon{font-size:15px;line-height:1}
+.tool-key{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2)}
+.tool-btn.active .tool-key{color:var(--accent)}
+.toolsep{width:32px;height:1px;background:var(--border);margin:2px 0;flex-shrink:0}
+.shape-row{display:flex;gap:3px}
+.shape-btn{width:18px;height:18px;background:var(--panel2);border:1px solid var(--border2);
+  border-radius:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:11px;transition:all .12s}
+.shape-btn.active{border-color:var(--clight);color:var(--clight)}
+[data-tip]{position:relative}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:110%;top:50%;
+  transform:translateY(-50%);background:#000;color:var(--text);font-family:'Rajdhani',sans-serif;
+  font-size:11px;padding:3px 8px;border-radius:2px;white-space:nowrap;
+  border:1px solid var(--border2);pointer-events:none;z-index:50}
+
+#canvas-wrap{flex:1;overflow:hidden;background:var(--bg);position:relative;cursor:crosshair;
+  touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;
+  /* Isolate canvas from parent reflows caused by browser bar */
+  contain:strict;
+  min-width:0;min-height:0;}
+#canvas-wrap.pan-mode{cursor:grab}
+#canvas-wrap.pan-mode.panning{cursor:grabbing}
+#canvas-wrap.select-mode{cursor:default}
+#canvas-wrap.poly-mode{cursor:crosshair}
+#canvas{display:block}
+
+#right-panel{width:clamp(180px,24vw,260px);background:var(--panel);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;flex-shrink:0;
+  -webkit-overflow-scrolling:touch;touch-action:pan-y}
+#right-panel::-webkit-scrollbar{width:4px}
+#right-panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.rp-section{border-bottom:1px solid var(--border);padding:9px 10px}
+.rp-title{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;
+  color:var(--accent);text-transform:uppercase;margin-bottom:7px}
+.prop-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;gap:5px}
+.prop-label{color:var(--text2);font-size:12px;font-weight:500;min-width:62px;flex-shrink:0}
+.prop-input{background:var(--bg);border:1px solid var(--border2);color:var(--text);
+  font-family:'Share Tech Mono',monospace;font-size:12px;padding:3px 6px;
+  width:100%;outline:none;border-radius:2px;-webkit-appearance:none;appearance:none}
+.prop-input:focus{border-color:var(--accent)}
+.prop-select{background:var(--bg);border:1px solid var(--border2);color:var(--text);
+  font-family:'Rajdhani',sans-serif;font-size:13px;padding:3px 6px;width:100%;
+  outline:none;border-radius:2px;cursor:pointer;-webkit-appearance:none;appearance:none}
+.prop-check-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;cursor:pointer}
+.prop-check-row input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
+.no-sel{color:var(--text2);font-size:12px;font-style:italic;text-align:center;padding:6px 0}
+.el-group-title{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;
+  text-transform:uppercase;margin:4px 0 2px;display:flex;align-items:center;justify-content:space-between}
+.el-group-count{background:var(--border2);color:var(--text);font-family:'Share Tech Mono',monospace;
+  font-size:10px;padding:1px 5px;border-radius:8px}
+.el-item{background:var(--bg);border:1px solid transparent;border-radius:2px;padding:3px 6px;
+  margin-bottom:2px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:var(--text2);transition:all .1s;display:flex;align-items:center;gap:5px}
+.el-item:hover{border-color:var(--border2);color:var(--text)}
+.el-item.selected{border-color:var(--accent);color:var(--text);background:rgba(233,69,96,.08)}
+.el-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.hint-bar{background:rgba(255,204,68,.12);border:1px solid rgba(255,204,68,.3);
+  color:#ffe066;font-family:'Share Tech Mono',monospace;font-size:10px;
+  padding:4px 8px;margin-top:4px;border-radius:2px;text-align:center}
+
+#statusbar{background:var(--panel);border-top:1px solid var(--border);display:flex;
+  align-items:center;gap:18px;padding:3px 14px;min-height:26px;flex-shrink:0;
+  font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text2)}
+#statusbar .sv{color:var(--text)}
+#status-tool{color:var(--accent);font-weight:700;letter-spacing:1px}
+
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;
+  align-items:center;justify-content:center;z-index:100}
+#modal-overlay.show{display:flex}
+#modal-box{background:var(--panel2);border:1px solid var(--border2);
+  border-top:3px solid var(--accent);padding:22px 26px;min-width:340px;max-width:460px;
+  border-radius:3px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+#modal-title{font-family:'Share Tech Mono',monospace;font-size:14px;letter-spacing:2px;
+  color:var(--accent);margin-bottom:14px}
+#modal-body{font-size:13px;line-height:1.6;color:var(--text);margin-bottom:18px}
+#modal-body .warn{color:var(--clow)}
+#modal-body .err{color:var(--accent)}
+#modal-footer{display:flex;gap:8px;justify-content:flex-end}
+
+input[type=color]{-webkit-appearance:none;appearance:none;border:1px solid var(--border2);background:var(--bg);
+  width:100%;height:34px;cursor:pointer;border-radius:2px;padding:2px}
+input[type=range]{width:100%;accent-color:var(--clight);cursor:pointer;height:20px;-webkit-appearance:none;appearance:none;background:var(--border2);border-radius:10px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--clight);cursor:pointer}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <input id="map-name" type="text" placeholder="MAP_NAME" value="Map_01" spellcheck="false">
+  <div class="tbsep"></div>
+  <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text2)">MAPA <span style="color:var(--text)">1024 × 1024</span></span>
+  <div class="tbsep"></div>
+  <button class="btn" onclick="importImage()">📂 Imagem</button>
+  <button class="btn" onclick="importJSON()">📥 JSON</button>
+  <button class="btn accent" onclick="exportJSON()">💾 Salvar JSON</button>
+  <div class="tbsep"></div>
+  <button class="btn" id="btn-undo" onclick="undo()">↩ Undo</button>
+  <button class="btn" id="btn-redo" onclick="redo()">↪ Redo</button>
+  <div class="tbsep"></div>
+  <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer">
+    <input type="checkbox" id="toggle-shadows" checked style="accent-color:var(--clight);width:14px;height:14px">
+    <span style="color:var(--clight)">💡 Sombras</span>
+  </label>
+  <div class="tbsep"></div>
+  <button class="btn" id="btn-fs" onclick="toggleFullscreen()" title="Tela cheia (F)">⛶ Tela Cheia</button>
+  <input type="file" id="file-img" accept="image/png,image/jpeg,image/webp" style="display:none">
+  <input type="file" id="file-json" accept=".json" style="display:none">
+</div>
+
+<div id="main">
+  <div id="toolbar">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:2px">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text2);letter-spacing:1px">FORMA</div>
+      <div class="shape-row">
+        <div class="shape-btn active" id="shape-rect" onclick="setShape('rect')" title="Retângulo">▭</div>
+        <div class="shape-btn" id="shape-circle" onclick="setShape('circle')" title="Círculo">○</div>
+      </div>
+    </div>
+    <div class="toolsep"></div>
+    <div class="tool-btn active" id="tool-wall"          onclick="setTool('wall')"          data-tip="Parede (1)"><span class="tool-icon">🟥</span><span class="tool-key">1</span></div>
+    <div class="tool-btn"        id="tool-window"        onclick="setTool('window')"        data-tip="Janela (2)"><span class="tool-icon">🟦</span><span class="tool-key">2</span></div>
+    <div class="tool-btn"        id="tool-spawn"         onclick="setTool('spawn')"         data-tip="Spawn (3)"><span class="tool-icon">🟢</span><span class="tool-key">3</span></div>
+    <div class="tool-btn"        id="tool-lowObstacle"   onclick="setTool('lowObstacle')"   data-tip="Obst. Baixo (4)"><span class="tool-icon">🟨</span><span class="tool-key">4</span></div>
+    <div class="tool-btn"        id="tool-objectiveZone" onclick="setTool('objectiveZone')" data-tip="Zona Obj. (5)"><span class="tool-icon">🟪</span><span class="tool-key">5</span></div>
+    <div class="toolsep"></div>
+    <div class="tool-btn"        id="tool-pointLight"    onclick="setTool('pointLight')"    data-tip="Luz Pontual (L)"><span class="tool-icon">💡</span><span class="tool-key">L</span></div>
+    <div class="toolsep"></div>
+    <div class="tool-btn"        id="tool-select"        onclick="setTool('select')"        data-tip="Selecionar (V) · Toque longo=pan"><span class="tool-icon">🔘</span><span class="tool-key">V</span></div>
+  </div>
+
+  <div id="canvas-wrap"><canvas id="canvas"></canvas></div>
+
+  <div id="right-panel">
+    <div class="rp-section">
+      <div class="rp-title">◈ Propriedades</div>
+      <div id="props-content"><div class="no-sel">Nenhum elemento selecionado</div></div>
+    </div>
+    <div class="rp-section">
+      <div class="rp-title">◈ Config do Mapa</div>
+      <div class="prop-row"><span class="prop-label">Visão</span>
+        <input class="prop-input" type="number" id="cfg-vd" value="400" min="100" max="1000" step="10" oninput="updateConfig()"></div>
+      <div class="prop-row"><span class="prop-label">FOV°</span>
+        <input class="prop-input" type="number" id="cfg-fov" value="100" min="30" max="360" step="5" oninput="updateConfig()"></div>
+      <div class="prop-row"><span class="prop-label">Som</span>
+        <select class="prop-select" id="cfg-snd" onchange="updateConfig()">
+          <option value="none">— Nenhum</option>
+          <option value="industrial">Industrial</option>
+          <option value="natureza">Natureza</option>
+          <option value="urbano">Urbano</option>
+        </select></div>
+    </div>
+    <div class="rp-section" style="flex:1">
+      <div class="rp-title">◈ Elementos</div>
+      <div id="el-list-content"></div>
+    </div>
+  </div>
+</div>
+
+<div id="statusbar">
+  <span><span>ZOOM </span><span class="sv" id="st-zoom">100%</span></span>
+  <span><span>POS </span><span class="sv" id="st-pos">0, 0</span></span>
+  <span><span>N </span><span class="sv" id="st-count">0</span></span>
+  <span id="status-tool">WALL</span>
+  <span id="st-hint" style="color:var(--clight)"></span>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div id="modal-title">AVISO</div>
+    <div id="modal-body"></div>
+    <div id="modal-footer">
+      <button class="btn" id="modal-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn accent" id="modal-confirm" onclick="confirmModal()">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  CONSTANTS
+// ════════════════════════════════════════════════════════════════
+const WORLD=1024, SPAWN_R=14, TILE=32, CIRC_SEGS=24, MAX_HIST=80;
+
+// ════════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════════
+let elements=[], nextId=1, bgImage=null, bgImageSrc=null; // bgImageSrc = dataURL cache
+let tool='wall', shapeMode='rect', selectedId=null;
+let zoom=1, panX=0, panY=0;
+let drawing=false, drawStart=null, drawCurrent=null;
+let _touchPanMode=false, _longPressTimer=null, _lastPointerType='touch';
+let _clipboard=null; // holds deep-copy of last copied element
+let panning=false, panStart=null, spaceDown=false;
+let dragging=false, dragOffX=0, dragOffY=0;
+let resizing=false, resizeHandle=null, resizeSnap=null;
+let rotating=false;
+let history=[], histIdx=-1;
+let mapConfig={vision_distance:400,vision_fov:100,ambient_sound:'none'};
+let modalCb=null;
+
+// ════════════════════════════════════════════════════════════════
+//  CANVAS
+// ════════════════════════════════════════════════════════════════
+const wrap=document.getElementById('canvas-wrap');
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+const sCanvas=document.createElement('canvas');
+sCanvas.width=WORLD; sCanvas.height=WORLD;
+const sCtx=sCanvas.getContext('2d');
+const gCanvas=document.createElement('canvas');
+gCanvas.width=WORLD; gCanvas.height=WORLD;
+const gCtx=gCanvas.getContext('2d');
+
+let _resizeTimer=null;
+let _lockedVH=0; // tallest viewport height seen — used to lock against browser-bar shrink
+
+function resizeCanvas(){
+  const nw=wrap.clientWidth, nh=wrap.clientHeight;
+  // Only actually resize if dimensions changed — avoids clearing canvas on every scroll
+  if(canvas.width===nw&&canvas.height===nh)return;
+  canvas.width=nw; canvas.height=nh;
+  render();
+}
+
+function _debouncedResize(){
+  // Debounce: wait 120ms after last resize event before applying
+  // This prevents constant redraws as the iOS browser bar slides in/out
+  clearTimeout(_resizeTimer);
+  _resizeTimer=setTimeout(resizeCanvas, 120);
+}
+
+window.addEventListener('resize', _debouncedResize);
+resizeCanvas();
+setTimeout(()=>{panX=(canvas.width-WORLD*zoom)/2;panY=(canvas.height-WORLD*zoom)/2;render();},0);
+
+// ════════════════════════════════════════════════════════════════
+//  COORD HELPERS
+// ════════════════════════════════════════════════════════════════
+function s2w(sx,sy){return{x:(sx-panX)/zoom,y:(sy-panY)/zoom};}
+function clampW(v){return Math.max(0,Math.min(WORLD,v));}
+
+// ════════════════════════════════════════════════════════════════
+//  GEOMETRY HELPERS
+// ════════════════════════════════════════════════════════════════
+function rotPt(px,py,cx,cy,a){
+  const cos=Math.cos(a),sin=Math.sin(a),dx=px-cx,dy=py-cy;
+  return{x:cx+dx*cos-dy*sin,y:cy+dx*sin+dy*cos};
+}
+function rectCorners(el){
+  const cx=el.x+el.w/2,cy=el.y+el.h/2,rot=el.rotation||0;
+  return[
+    rotPt(el.x,el.y,cx,cy,rot),
+    rotPt(el.x+el.w,el.y,cx,cy,rot),
+    rotPt(el.x+el.w,el.y+el.h,cx,cy,rot),
+    rotPt(el.x,el.y+el.h,cx,cy,rot)
+  ];
+}
+function rectCx(el){return el.x+el.w/2;}
+function rectCy(el){return el.y+el.h/2;}
+function hitRotatedRect(el,wx,wy){
+  const cx=rectCx(el),cy=rectCy(el);
+  const lp=rotPt(wx,wy,cx,cy,-(el.rotation||0));
+  return lp.x>=el.x&&lp.x<=el.x+el.w&&lp.y>=el.y&&lp.y<=el.y+el.h;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  TOOL / SHAPE
+// ════════════════════════════════════════════════════════════════
+const TOOL_NAMES={wall:'WALL',window:'WINDOW',spawn:'SPAWN',
+  lowObstacle:'LOW OBS',objectiveZone:'OBJ ZONE',pointLight:'POINT LIGHT',select:'SELECT'};
+
+function setTool(t){
+  tool=t;selectedId=null;
+  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  const b=document.getElementById('tool-'+t);if(b)b.classList.add('active');
+  // Remove mode classes without overwriting the entire className (preserves touch-action etc.)
+  wrap.classList.remove('pan-mode','select-mode','poly-mode','panning');
+  if(t==='select')wrap.classList.add('select-mode');
+  document.getElementById('st-hint').textContent='';
+  updatePropsPanel();updateElementList();render();updateStatus();
+}
+function setShape(s){
+  shapeMode=s;
+  document.getElementById('shape-rect').classList.toggle('active',s==='rect');
+  document.getElementById('shape-circle').classList.toggle('active',s==='circle');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ELEMENT FACTORIES
+// ════════════════════════════════════════════════════════════════
+function makeRect(type,x,y,w,h){
+  const e={id:nextId++,type,shape:'rect',rotation:0,
+    x:Math.round(x),y:Math.round(y),w:Math.round(w),h:Math.round(h)};
+  if(type==='wall')e.penetrable=false;
+  if(type==='objectiveZone'){e.subtype='bomb_site';e.label='A';}
+  return e;
+}
+function makeCircle(type,x,y,r){
+  const e={id:nextId++,type,shape:'circle',
+    x:Math.round(x),y:Math.round(y),r:Math.max(5,Math.round(r))};
+  if(type==='wall')e.penetrable=false;
+  if(type==='objectiveZone'){e.subtype='bomb_site';e.label='A';}
+  return e;
+}
+function makeSpawn(x,y){return{id:nextId++,type:'spawn',x:Math.round(x),y:Math.round(y),team:null};}
+function makePointLight(x,y,r){
+  return{id:nextId++,type:'pointLight',
+    x:Math.round(x),y:Math.round(y),radius:Math.max(20,Math.round(r)),
+    color:'#ffcc44',intensity:0.9,angle:360,direction:0,limit1:0,limit2:0};
+}
+
+// ════════════════════════════════════════════════════════════════
+//  HISTORY
+// ════════════════════════════════════════════════════════════════
+function snapshot(){
+  // Use hasImg flag instead of storing full dataURL in every entry (avoids memory bloat)
+  const s=JSON.stringify({els:elements,hasImg:bgImageSrc!==null});
+  if(histIdx>=0&&history[histIdx]===s)return;
+  history=history.slice(0,histIdx+1);history.push(s);
+  if(history.length>MAX_HIST)history.shift();else histIdx++;
+  updateUndoRedo();
+}
+function _restoreSnapshot(s){
+  const d=JSON.parse(s);
+  elements=d.els||[];
+  if(!d.hasImg){bgImage=null;bgImageSrc=null;}
+  // If hasImg=true, bgImage/bgImageSrc remain as loaded — history tracks presence, not the bytes
+}
+function undo(){if(histIdx<=0)return;histIdx--;_restoreSnapshot(history[histIdx]);selectedId=null;updateAll();updateUndoRedo();}
+function redo(){if(histIdx>=history.length-1)return;histIdx++;_restoreSnapshot(history[histIdx]);selectedId=null;updateAll();updateUndoRedo();}
+function updateUndoRedo(){
+  document.getElementById('btn-undo').disabled=histIdx<=0;
+  document.getElementById('btn-redo').disabled=histIdx>=history.length-1;
+}
+snapshot();
+
+// ════════════════════════════════════════════════════════════════
+//  HIT TESTING + HANDLES
+// ════════════════════════════════════════════════════════════════
+function hitTest(wx,wy){
+  for(let i=elements.length-1;i>=0;i--){
+    const el=elements[i];
+    if(el.type==='spawn'||el.type==='pointLight'){
+      if(Math.hypot(wx-el.x,wy-el.y)<=SPAWN_R+4)return el;
+    }else if(el.shape==='circle'){
+      if(Math.hypot(wx-el.x,wy-el.y)<=el.r+3)return el;
+    }else{
+      if(hitRotatedRect(el,wx,wy))return el;
+    }
+  }
+  return null;
+}
+
+function rotHandlePos(el){
+  const cx=rectCx(el),cy=rectCy(el),rot=el.rotation||0;
+  const dist=el.h/2+22/zoom;
+  return{x:cx+Math.cos(rot-Math.PI/2)*dist,y:cy+Math.sin(rot-Math.PI/2)*dist};
+}
+
+function getHandles(el){
+  if(el.type==='pointLight'){
+    const dir=el.direction*Math.PI/180;
+    const hs=[{id:'radius',x:el.x+Math.cos(dir)*el.radius,y:el.y+Math.sin(dir)*el.radius}];
+    if(el.angle<359)hs.push({id:'dir',x:el.x+Math.cos(dir)*el.radius*0.55,y:el.y+Math.sin(dir)*el.radius*0.55});
+    if(el.limit1>0)hs.push({id:'limit1',x:el.x+Math.cos(dir)*el.limit1,y:el.y+Math.sin(dir)*el.limit1});
+    if(el.limit2>0)hs.push({id:'limit2',x:el.x+Math.cos(dir)*el.limit2,y:el.y+Math.sin(dir)*el.limit2});
+    return hs;
+  }
+  if(el.shape==='circle')return[{id:'r',x:el.x+el.r,y:el.y}];
+  if(el.type==='spawn')return[];
+  const c=rectCorners(el);
+  const cx=rectCx(el),cy=rectCy(el),rot=el.rotation||0;
+  return[
+    {id:'nw',x:c[0].x,y:c[0].y},
+    {id:'n', x:rotPt(el.x+el.w/2,el.y,      cx,cy,rot).x, y:rotPt(el.x+el.w/2,el.y,      cx,cy,rot).y},
+    {id:'ne',x:c[1].x,y:c[1].y},
+    {id:'e', x:rotPt(el.x+el.w, el.y+el.h/2,cx,cy,rot).x, y:rotPt(el.x+el.w, el.y+el.h/2,cx,cy,rot).y},
+    {id:'se',x:c[2].x,y:c[2].y},
+    {id:'s', x:rotPt(el.x+el.w/2,el.y+el.h, cx,cy,rot).x, y:rotPt(el.x+el.w/2,el.y+el.h, cx,cy,rot).y},
+    {id:'sw',x:c[3].x,y:c[3].y},
+    {id:'w', x:rotPt(el.x,       el.y+el.h/2,cx,cy,rot).x, y:rotPt(el.x,       el.y+el.h/2,cx,cy,rot).y},
+    {id:'rot',...rotHandlePos(el)},
+  ];
+}
+
+function hitHandle(el,wx,wy){
+  // Use larger tolerance for finger touch than for pen/mouse
+  const tol=(_lastPointerType==='touch'?16:9)/zoom;
+  for(const h of getHandles(el)){
+    if(Math.abs(wx-h.x)<=tol&&Math.abs(wy-h.y)<=tol)return h.id;
+  }
+  return null;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  MOUSE EVENTS
+// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+//  POINTER EVENTS — handles mouse AND touch/pen (iPad Chrome compatible)
+//  Uses W3C Pointer Events API — single code path for all input types
+// ════════════════════════════════════════════════════════════════
+const _ptrs=new Map(); // pointerId → {cx,cy} (clientX/Y)
+let _pinchMid=null, _pinchDist=0;
+
+function _off(e){
+  // Safe offsetX/Y for all pointer types (clientX/Y - boundingRect is reliable on iOS)
+  const r=wrap.getBoundingClientRect();
+  return{x:e.clientX-r.left, y:e.clientY-r.top};
+}
+
+wrap.addEventListener('pointermove',e=>{
+  e.preventDefault();
+  _ptrs.set(e.pointerId,{cx:e.clientX,cy:e.clientY});
+  // Cancel long-press if finger moved more than ~8px (check BEFORE updating _ptrs)
+  if(_longPressTimer&&_ptrs.size===1){
+    const prev=_ptrs.get(e.pointerId);
+    if(prev&&Math.hypot(e.clientX-prev.cx,e.clientY-prev.cy)>8){
+      clearTimeout(_longPressTimer);_longPressTimer=null;
+    }
+  }
+
+  // ── Two-pointer: pan + pinch-zoom ──
+  if(_ptrs.size>=2){
+    const [p0,p1]=[..._ptrs.values()];
+    const r=wrap.getBoundingClientRect();
+    const mx=(p0.cx+p1.cx)/2-r.left, my=(p0.cy+p1.cy)/2-r.top;
+    const d=Math.hypot(p1.cx-p0.cx,p1.cy-p0.cy);
+    if(_pinchMid){panX+=mx-_pinchMid.x;panY+=my-_pinchMid.y;}
+    if(_pinchDist>0){
+      const nz=Math.max(0.1,Math.min(6,zoom*d/_pinchDist));
+      panX=mx-(mx-panX)*(nz/zoom);panY=my-(my-panY)*(nz/zoom);zoom=nz;
+      document.getElementById('st-zoom').textContent=Math.round(zoom*100)+'%';
+    }
+    _pinchMid={x:mx,y:my};_pinchDist=d;render();return;
+  }
+
+  // ── Single pointer ──
+  const off=_off(e);
+  const w=s2w(off.x,off.y);
+  document.getElementById('st-pos').textContent=`${Math.round(w.x)}, ${Math.round(w.y)}`;
+
+  if(panning){panX+=off.x-panStart.x;panY+=off.y-panStart.y;panStart={x:off.x,y:off.y};render();return;}
+  if(drawing){drawCurrent={x:w.x,y:w.y};render();return;}
+  if(rotating&&selectedId!==null){
+    const el=elements.find(e2=>e2.id===selectedId);if(!el)return;
+    const cx=rectCx(el),cy=rectCy(el);
+    el.rotation=Math.atan2(w.y-cy,w.x-cx)+Math.PI/2;
+    updatePropsPanel();render();return;
+  }
+  if(dragging&&selectedId!==null){
+    const el=elements.find(e2=>e2.id===selectedId);if(!el)return;
+    if(el.type==='pointLight'){el.x=Math.round(w.x-dragOffX);el.y=Math.round(w.y-dragOffY);}
+    else if(el.shape==='circle'||el.type==='spawn'){el.x=Math.round(clampW(w.x-dragOffX));el.y=Math.round(clampW(w.y-dragOffY));}
+    else{el.x=Math.round(Math.max(0,Math.min(WORLD-el.w,w.x-dragOffX)));el.y=Math.round(Math.max(0,Math.min(WORLD-el.h,w.y-dragOffY)));}
+    updatePropsPanel();render();return;
+  }
+  if(resizing&&selectedId!==null){
+    const el=elements.find(e2=>e2.id===selectedId);if(!el)return;
+    applyResize(el,resizeHandle,w.x,w.y);updatePropsPanel();render();return;
+  }
+  if(tool==='select'){
+    const el=elements.find(e2=>e2.id===selectedId);
+    if(el){const h=hitHandle(el,w.x,w.y);if(h){wrap.style.cursor=hCursor(h);return;}}
+    const hit=hitTest(w.x,w.y);wrap.style.cursor=hit?'move':'default';
+  }
+},{passive:false});
+
+wrap.addEventListener('pointerdown',e=>{
+  e.preventDefault();
+  wrap.setPointerCapture(e.pointerId);
+  _ptrs.set(e.pointerId,{cx:e.clientX,cy:e.clientY});
+  _lastPointerType=e.pointerType||'touch';
+
+  // Second pointer: cancel drawing, start pinch
+  if(_ptrs.size>=2){
+    drawing=false;dragging=false;resizing=false;rotating=false;
+    drawStart=null;drawCurrent=null;panning=false;
+    wrap.classList.add('pan-mode');
+    const [p0,p1]=[..._ptrs.values()];
+    const r=wrap.getBoundingClientRect();
+    _pinchMid={x:(p0.cx+p1.cx)/2-r.left,y:(p0.cy+p1.cy)/2-r.top};
+    _pinchDist=Math.hypot(p1.cx-p0.cx,p1.cy-p0.cy);
+    return;
+  }
+  _pinchMid=null;_pinchDist=0;
+  _touchPanMode=false;
+
+  const off=_off(e);
+  const w=s2w(off.x,off.y);
+
+  // Middle button or space+click = pan (desktop)
+  if(e.button===1||(e.button===0&&spaceDown)){
+    panning=true;panStart={x:off.x,y:off.y};wrap.classList.add('panning');return;
+  }
+
+  // Long-press (500ms) with finger/pen = pan mode (iPad has no Space key)
+  // When the timer fires we START panning from the current pointer position.
+  if(e.pointerType==='touch'||e.pointerType==='pen'){
+    const capturedOff={x:off.x,y:off.y};
+    _longPressTimer=setTimeout(()=>{
+      _touchPanMode=true;
+      panning=true;
+      panStart={x:capturedOff.x,y:capturedOff.y};
+      // Cancel any drawing that may have started
+      drawing=false;dragging=false;resizing=false;rotating=false;
+      drawStart=null;drawCurrent=null;
+      wrap.classList.add('pan-mode','panning');
+      document.getElementById('st-hint').textContent='✋ MODO PAN — arrasta para mover';
+      if(navigator.vibrate) navigator.vibrate(30);
+      render();
+    },500);
+  }
+  // Accept: mouse left click, touch (button=0), Apple Pencil (pointerType='pen', button=-1 or 0)
+  // On iOS touch, button is always 0. Pen can be 0 or -1. Only block right/middle mouse.
+  const isPen=(e.pointerType==='pen');
+  const isTouch=(e.pointerType==='touch');
+  const isMouse=(e.pointerType==='mouse'||e.pointerType==='');
+  if(isMouse&&e.button!==0)return; // block right-click and middle-click only for mouse
+
+  if(tool==='select'){
+    const el=elements.find(e2=>e2.id===selectedId);
+    if(el){
+      const h=hitHandle(el,w.x,w.y);
+      if(h){if(h==='rot')rotating=true;else{resizing=true;resizeHandle=h;resizeSnap=snapEl(el);}return;}
+    }
+    const hit=hitTest(w.x,w.y);
+    if(hit){
+      selectedId=hit.id;dragging=true;
+      // Use element center as drag origin for natural feel on all element types
+      if(hit.type==='pointLight'||hit.type==='spawn'||hit.shape==='circle'){
+        dragOffX=w.x-hit.x;dragOffY=w.y-hit.y;
+      }else{
+        dragOffX=w.x-hit.x;dragOffY=w.y-hit.y;
+      }
+      updatePropsPanel();render();
+    }
+    else{selectedId=null;updatePropsPanel();render();}
+    return;
+  }
+  if(tool==='spawn'){const el=makeSpawn(clampW(w.x),clampW(w.y));elements.push(el);selectedId=el.id;snapshot();updateAll();return;}
+  drawing=true;
+  drawStart={x:tool==='pointLight'?w.x:clampW(w.x),y:tool==='pointLight'?w.y:clampW(w.y)};
+  drawCurrent={...drawStart};
+},{passive:false});
+
+wrap.addEventListener('pointerup',e=>{
+  _ptrs.delete(e.pointerId);
+  if(_ptrs.size<2){
+    _pinchMid=null;_pinchDist=0;
+    // Only remove pan-mode here if not in a long-press pan session
+    if(!_touchPanMode) wrap.classList.remove('pan-mode');
+  }
+  if(_ptrs.size>=1)return; // still more pointers active
+
+  // Cancel long-press timer on any release
+  if(_longPressTimer){clearTimeout(_longPressTimer);_longPressTimer=null;}
+  if(_touchPanMode){document.getElementById('st-hint').textContent='';}
+  _touchPanMode=false;
+
+  if(panning){
+    panning=false;
+    wrap.classList.remove('panning');
+    if(!_touchPanMode) wrap.classList.remove('pan-mode');
+    else wrap.classList.remove('pan-mode'); // long-press pan also fully ends here
+    return;
+  }
+  if(rotating){rotating=false;snapshot();updatePropsPanel();return;}
+  if(dragging){dragging=false;snapshot();return;}
+  if(resizing){resizing=false;resizeHandle=null;snapshot();updatePropsPanel();return;}
+  if(!drawing)return;
+  drawing=false;
+
+  const off=_off(e);
+  const w=s2w(off.x,off.y);
+  const ex=tool==='pointLight'?w.x:clampW(w.x),ey=tool==='pointLight'?w.y:clampW(w.y);
+  const dx=ex-drawStart.x,dy=ey-drawStart.y,dist=Math.hypot(dx,dy);
+  let el=null;
+  if(tool==='pointLight'){
+    if(dist<5){drawStart=null;drawCurrent=null;render();return;}
+    el=makePointLight(drawStart.x,drawStart.y,dist);
+  }else{
+    const RTOOLS=new Set(['wall','window','lowObstacle','objectiveZone']);
+    if(!RTOOLS.has(tool)){drawStart=null;drawCurrent=null;render();return;}
+    if(shapeMode==='circle'){if(dist<5){drawStart=null;drawCurrent=null;render();return;}el=makeCircle(tool,drawStart.x,drawStart.y,dist);}
+    else{const rx=Math.min(drawStart.x,ex),ry=Math.min(drawStart.y,ey),rw=Math.abs(dx),rh=Math.abs(dy);if(rw<5||rh<5){drawStart=null;drawCurrent=null;render();return;}el=makeRect(tool,rx,ry,rw,rh);}
+  }
+  if(el){elements.push(el);selectedId=el.id;snapshot();}
+  drawStart=null;drawCurrent=null;updateAll();
+});
+
+wrap.addEventListener('pointercancel',e=>{
+  _ptrs.delete(e.pointerId);
+  if(_ptrs.size===0){
+    drawing=false;dragging=false;resizing=false;rotating=false;panning=false;
+    drawStart=null;drawCurrent=null;_pinchMid=null;_pinchDist=0;
+    _touchPanMode=false;
+    if(_longPressTimer){clearTimeout(_longPressTimer);_longPressTimer=null;}
+    wrap.classList.remove('pan-mode','panning');
+    render();
+  }
+});
+
+wrap.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const off=_off(e);
+  const f=e.deltaY<0?1.1:0.91,nz=Math.max(0.1,Math.min(6,zoom*f));
+  panX=off.x-(off.x-panX)*(nz/zoom);panY=off.y-(off.y-panY)*(nz/zoom);
+  zoom=nz;document.getElementById('st-zoom').textContent=Math.round(zoom*100)+'%';render();
+},{passive:false});
+window.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
+  if(e.code==='Space'){spaceDown=true;e.preventDefault();return;}
+  if(e.ctrlKey&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo();return;}
+  if(e.ctrlKey&&(e.key==='Z'||e.key==='y')){e.preventDefault();redo();return;}
+  // Cmd+C (Mac/iPad) or Ctrl+C — copy selected element
+  if((e.ctrlKey||e.metaKey)&&e.key==='c'){e.preventDefault();copySelected();return;}
+  // Cmd+V (Mac/iPad) or Ctrl+V — paste copied element
+  if((e.ctrlKey||e.metaKey)&&e.key==='v'){e.preventDefault();pasteElement();return;}
+  // Cmd+D (Mac/iPad) or Ctrl+D — duplicate selected element (copy+paste in one)
+  if((e.ctrlKey||e.metaKey)&&e.key==='d'){e.preventDefault();copySelected();pasteElement();return;}
+  if((e.key==='Delete'||e.key==='Backspace')&&selectedId!==null){e.preventDefault();elements=elements.filter(el=>el.id!==selectedId);selectedId=null;snapshot();updateAll();return;}
+  if(e.key==='f'||e.key==='F'){e.preventDefault();toggleFullscreen();return;}
+  const tm={'1':'wall','2':'window','3':'spawn','4':'lowObstacle','5':'objectiveZone','l':'pointLight','L':'pointLight','v':'select','V':'select'};
+  if(tm[e.key])setTool(tm[e.key]);
+});
+window.addEventListener('keyup',e=>{if(e.code==='Space')spaceDown=false;});
+
+// ════════════════════════════════════════════════════════════════
+//  COPY / PASTE / DUPLICATE
+// ════════════════════════════════════════════════════════════════
+function copySelected(){
+  if(selectedId===null)return;
+  const el=elements.find(e=>e.id===selectedId);
+  if(!el)return;
+  // Deep clone without the id — paste will assign a new one
+  _clipboard=JSON.parse(JSON.stringify(el));
+  delete _clipboard.id;
+  // Flash hint
+  const hint=document.getElementById('st-hint');
+  hint.textContent='📋 Copiado!';
+  setTimeout(()=>{if(hint.textContent==='📋 Copiado!')hint.textContent='';},1500);
+}
+
+function pasteElement(){
+  if(!_clipboard)return;
+  const clone=JSON.parse(JSON.stringify(_clipboard));
+  // Offset paste position by +20,+20 so it doesn't land exactly on top of the original
+  if('x' in clone) clone.x=Math.round(Math.min(WORLD-( clone.w||clone.r*2||20), clone.x+20));
+  if('y' in clone) clone.y=Math.round(Math.min(WORLD-(clone.h||clone.r*2||20), clone.y+20));
+  clone.id=nextId++;
+  elements.push(clone);
+  selectedId=clone.id;
+  // Update clipboard to the newly pasted position so repeated paste cascades
+  _clipboard=JSON.parse(JSON.stringify(clone));
+  delete _clipboard.id;
+  snapshot();
+  setTool('select');
+  updateAll();
+  // Flash hint
+  const hint=document.getElementById('st-hint');
+  hint.textContent='📌 Colado!';
+  setTimeout(()=>{if(hint.textContent==='📌 Colado!')hint.textContent='';},1500);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RESIZE / ROTATE LOGIC
+// ════════════════════════════════════════════════════════════════
+function snapEl(el){
+  if(el.type==='pointLight')return{x:el.x,y:el.y,radius:el.radius,direction:el.direction,limit1:el.limit1,limit2:el.limit2};
+  if(el.shape==='circle')return{x:el.x,y:el.y,r:el.r};
+  return{x:el.x,y:el.y,w:el.w,h:el.h,rotation:el.rotation||0};
+}
+function applyResize(el,handle,wx,wy){
+  if(el.type==='pointLight'){
+    const dist=Math.hypot(wx-el.x,wy-el.y);
+    if(handle==='radius')el.radius=Math.max(10,Math.round(dist));
+    else if(handle==='dir')el.direction=Math.round(((Math.atan2(wy-el.y,wx-el.x)*180/Math.PI)%360+360)%360);
+    else if(handle==='limit1'){const d=el.direction*Math.PI/180;el.limit1=Math.max(0,Math.round((wx-el.x)*Math.cos(d)+(wy-el.y)*Math.sin(d)));}
+    else if(handle==='limit2'){const d=el.direction*Math.PI/180;el.limit2=Math.max(0,Math.round((wx-el.x)*Math.cos(d)+(wy-el.y)*Math.sin(d)));}
+    return;
+  }
+  if(el.shape==='circle'){wx=Math.round(clampW(wx));wy=Math.round(clampW(wy));if(handle==='r')el.r=Math.max(5,Math.round(Math.hypot(wx-el.x,wy-el.y)));return;}
+  // Rotated rect: transform world drag into local space
+  const cx=rectCx(el),cy=rectCy(el),rot=el.rotation||0;
+  const lp=rotPt(wx,wy,cx,cy,-rot);
+  const{x,y,w,h}=resizeSnap,r=x+w,b=y+h,MIN=5;
+  let nx=el.x,ny=el.y,nw=el.w,nh=el.h;
+  if(handle.includes('n')){const v=Math.min(lp.y,b-MIN);ny=v;nh=b-v;}
+  if(handle.includes('s'))nh=Math.max(MIN,lp.y-y);
+  if(handle.includes('w')){const v=Math.min(lp.x,r-MIN);nx=v;nw=r-v;}
+  if(handle.includes('e'))nw=Math.max(MIN,lp.x-x);
+  // Keep center in place after resize
+  const newCx=nx+nw/2,newCy=ny+nh/2,oldCx=x+w/2,oldCy=y+h/2;
+  const d=rotPt(newCx,newCy,oldCx,oldCy,rot);
+  el.x=Math.round(d.x-nw/2);el.y=Math.round(d.y-nh/2);el.w=Math.round(nw);el.h=Math.round(nh);
+}
+function hCursor(h){
+  return{nw:'nw-resize',n:'n-resize',ne:'ne-resize',e:'e-resize',
+         se:'se-resize',s:'s-resize',sw:'sw-resize',w:'w-resize',
+         r:'ew-resize',radius:'ew-resize',dir:'crosshair',
+         limit1:'ns-resize',limit2:'ns-resize',rot:'alias'}[h]||'pointer';
+}
+
+// ════════════════════════════════════════════════════════════════
+//  GEOMETRY — SEGMENTS (uses rotated corners)
+// ════════════════════════════════════════════════════════════════
+function getSegmentsByType(){
+  const hard=[],soft=[];
+  for(const el of elements){
+    if(el.type==='spawn'||el.type==='pointLight'||el.type==='objectiveZone')continue;
+    const isHard=el.type==='wall'&&!el.penetrable;
+    const target=isHard?hard:soft;
+    if(el.shape==='circle'){
+      const N=CIRC_SEGS;
+      for(let i=0;i<N;i++){
+        const a1=i*Math.PI*2/N,a2=(i+1)*Math.PI*2/N;
+        target.push({x1:el.x+Math.cos(a1)*el.r,y1:el.y+Math.sin(a1)*el.r,x2:el.x+Math.cos(a2)*el.r,y2:el.y+Math.sin(a2)*el.r});
+      }
+    }else{
+      const c=rectCorners(el);
+      target.push({x1:c[0].x,y1:c[0].y,x2:c[1].x,y2:c[1].y},{x1:c[1].x,y1:c[1].y,x2:c[2].x,y2:c[2].y},
+                  {x1:c[2].x,y1:c[2].y,x2:c[3].x,y2:c[3].y},{x1:c[3].x,y1:c[3].y,x2:c[0].x,y2:c[0].y});
+    }
+  }
+  hard.push({x1:0,y1:0,x2:WORLD,y2:0},{x1:WORLD,y1:0,x2:WORLD,y2:WORLD},
+            {x1:WORLD,y1:WORLD,x2:0,y2:WORLD},{x1:0,y1:WORLD,x2:0,y2:0});
+  return{hard,soft};
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RAY CASTING — FIXED ANGLE NORMALIZATION
+// The bug: sweep angles were in [0,2π) while ε-triple angles were in [-π,π].
+// Mixed sort produced non-circular ordering, breaking polygons in the lower half.
+// Fix: normalize ALL angles to [base, base+2π) before sorting.
+// ════════════════════════════════════════════════════════════════
+function raySegIntersect(ox,oy,dx,dy,seg){
+  const rx=seg.x2-seg.x1,ry=seg.y2-seg.y1,denom=dx*ry-dy*rx;
+  if(Math.abs(denom)<1e-10)return null;
+  const tx=seg.x1-ox,ty=seg.y1-oy;
+  const t=(tx*ry-ty*rx)/denom,u=(tx*dy-ty*dx)/denom;
+  if(t<-1e-6||u<-1e-6||u>1+1e-6)return null;
+  return t;
+}
+
+function normAngle(a,base){
+  while(a<base)a+=Math.PI*2;
+  while(a>=base+Math.PI*2)a-=Math.PI*2;
+  return a;
+}
+
+function buildVisibilityPoly(light,segs){
+  const{x:ox,y:oy,radius}=light;
+  const dirRad=(light.direction||0)*Math.PI/180;
+  const coneAng=light.angle||360;
+  const isCone=coneAng<359.9;
+  const half=coneAng*Math.PI/180/2;
+
+  // ── L2: inject as a virtual perpendicular wall segment into the raycast.
+  // This means rays stop at L2 exactly like a real wall — objects beyond L2
+  // never receive rays and cast no shadows inside the lit zone.
+  const workSegs=[...segs];
+  if(light.limit2>0){
+    // L2 = virtual perpendicular wall. Rays stop here, producing a hard edge.
+    // No < radius constraint — user may set L2 anywhere along the beam.
+    const nx=Math.cos(dirRad),ny=Math.sin(dirRad);
+    const px=ox+nx*light.limit2, py=oy+ny*light.limit2;
+    const BIG=Math.max(WORLD*4,(radius+light.limit2+1000)*6);
+    const perpX=Math.cos(dirRad+Math.PI/2)*BIG;
+    const perpY=Math.sin(dirRad+Math.PI/2)*BIG;
+    workSegs.push({x1:px-perpX,y1:py-perpY,x2:px+perpX,y2:py+perpY,_l2:true});
+  }
+
+  const base=isCone?dirRad-half-0.01:-Math.PI;
+
+  const angles=[];
+  for(const seg of workSegs){
+    for(const pt of [{x:seg.x1,y:seg.y1},{x:seg.x2,y:seg.y2}]){
+      if(seg._l2)continue; // L2 virtual wall endpoints are at ±infinity — skip
+      const a=normAngle(Math.atan2(pt.y-oy,pt.x-ox),base);
+      angles.push(a-0.00015,a,a+0.00015);
+    }
+  }
+
+  if(isCone){
+    const s=normAngle(dirRad-half,base);
+    angles.push(s,normAngle(dirRad+half,base));
+    for(let i=0;i<=32;i++)angles.push(s+coneAng*Math.PI/180*i/32);
+  }else{
+    for(let i=0;i<48;i++)angles.push(base+i*Math.PI*2/48);
+  }
+
+  const filtered=angles
+    .map(a=>normAngle(a,base))
+    .filter(a=>!isCone||(a>=normAngle(dirRad-half-0.001,base)&&a<=normAngle(dirRad+half+0.001,base)));
+  filtered.sort((a,b)=>a-b);
+
+  const pts=[];
+  if(isCone)pts.push({x:ox,y:oy});
+  for(const angle of filtered){
+    const dx=Math.cos(angle),dy=Math.sin(angle);
+    let minT=radius;
+    for(const seg of workSegs){
+      const t=raySegIntersect(ox,oy,dx,dy,seg);
+      if(t!==null&&t>=0&&t<minT)minT=t;
+    }
+    pts.push({x:ox+dx*minT,y:oy+dy*minT});
+  }
+  if(isCone)pts.push({x:ox,y:oy});
+  return pts;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  POLYGON CLIPPING (L1 / L2)
+// ════════════════════════════════════════════════════════════════
+function clipPolyHalfPlane(pts,px,py,nx,ny,sign){
+  if(pts.length<3)return pts;
+  const out=[],n=pts.length;
+  for(let i=0;i<n;i++){
+    const a=pts[i],b=pts[(i+1)%n];
+    const da=sign*((a.x-px)*nx+(a.y-py)*ny),db=sign*((b.x-px)*nx+(b.y-py)*ny);
+    if(da>=0)out.push({x:a.x,y:a.y});
+    if((da<0)!==(db<0)){const t=da/(da-db);out.push({x:a.x+t*(b.x-a.x),y:a.y+t*(b.y-a.y)});}
+  }
+  return out;
+}
+function clipL1(pts,ox,oy,d,L1){
+  if(L1<=0||pts.length<3)return pts;
+  const nx=Math.cos(d),ny=Math.sin(d);
+  return clipPolyHalfPlane(pts,ox+nx*L1,oy+ny*L1,nx,ny,1);
+}
+function clipL2(pts,ox,oy,d,L2){
+  if(L2<=0||pts.length<3)return pts;
+  const nx=Math.cos(d),ny=Math.sin(d);
+  return clipPolyHalfPlane(pts,ox+nx*L2,oy+ny*L2,nx,ny,-1);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════════════════════════
+const COLORS={
+  wall:{fill:'rgba(231,76,60,0.45)',stroke:'#e74c3c'},
+  window:{fill:'rgba(52,152,219,0.38)',stroke:'#3498db'},
+  spawn:{fill:'rgba(46,204,113,0.55)',stroke:'#2ecc71'},
+  lowObstacle:{fill:'rgba(241,196,15,0.32)',stroke:'#f1c40f'},
+  objectiveZone:{fill:'rgba(155,89,182,0.32)',stroke:'#9b59b6'},
+};
+const DOT_COLORS={wall:'#e74c3c',window:'#3498db',spawn:'#2ecc71',
+  lowObstacle:'#f1c40f',objectiveZone:'#9b59b6',pointLight:'#ffcc44'};
+
+function render(){
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.save();ctx.translate(panX,panY);ctx.scale(zoom,zoom);
+  const bx=Math.floor(-panX/zoom/TILE)*TILE,by=Math.floor(-panY/zoom/TILE)*TILE;
+  for(let cx2=bx;cx2<bx+Math.ceil(W/zoom/TILE+2)*TILE;cx2+=TILE)
+    for(let cy2=by;cy2<by+Math.ceil(H/zoom/TILE+2)*TILE;cy2+=TILE){
+      ctx.fillStyle=(Math.floor(cx2/TILE)+Math.floor(cy2/TILE))%2===0?'#1a1a20':'#1f1f26';
+      ctx.fillRect(cx2,cy2,TILE,TILE);
+    }
+  if(bgImage){ctx.drawImage(bgImage,0,0,WORLD,WORLD);ctx.fillStyle='rgba(0,0,0,0.3)';ctx.fillRect(0,0,WORLD,WORLD);}
+  ctx.strokeStyle='#e94560';ctx.lineWidth=2/zoom;ctx.strokeRect(0,0,WORLD,WORLD);
+  for(const el of elements)if(el.type!=='pointLight')drawElement(el);
+  ctx.restore();
+  if(document.getElementById('toggle-shadows').checked)renderShadows();
+  // Pass A: light effects clipped to map bounds
+  ctx.save();ctx.translate(panX,panY);ctx.scale(zoom,zoom);
+  ctx.beginPath();ctx.rect(0,0,WORLD,WORLD);ctx.clip();
+  for(const el of elements)if(el.type==='pointLight')drawLightEffects(el);
+  ctx.restore();
+  // Pass B: light dot + indicator lines always visible (even outside map)
+  ctx.save();ctx.translate(panX,panY);ctx.scale(zoom,zoom);
+  for(const el of elements)if(el.type==='pointLight')drawLightDot(el);
+  if(selectedId!==null){const el=elements.find(e=>e.id===selectedId);if(el)drawHandles(el);}
+  drawPreview();
+  ctx.restore();
+}
+
+function drawPreview(){
+  if(!drawing||!drawStart||!drawCurrent)return;
+  const dx=drawCurrent.x-drawStart.x,dy=drawCurrent.y-drawStart.y,dist=Math.hypot(dx,dy);
+  const c=tool==='pointLight'?{fill:'rgba(255,204,68,0.15)',stroke:'#ffcc44'}:COLORS[tool]||COLORS.wall;
+  ctx.save();ctx.strokeStyle=c.stroke;ctx.lineWidth=1.5/zoom;ctx.setLineDash([5/zoom,3/zoom]);
+  if(tool==='pointLight'||shapeMode==='circle'){
+    ctx.globalAlpha=0.18;ctx.fillStyle=c.fill;ctx.beginPath();ctx.arc(drawStart.x,drawStart.y,dist,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=0.9;ctx.beginPath();ctx.arc(drawStart.x,drawStart.y,dist,0,Math.PI*2);ctx.stroke();
+    ctx.setLineDash([]);ctx.globalAlpha=1;ctx.fillStyle='#fff';ctx.font=`bold ${11/zoom}px Rajdhani`;ctx.textAlign='center';
+    ctx.fillText(`r=${Math.round(dist)}`,drawStart.x,drawStart.y-dist-5/zoom);
+  }else{
+    const rx=Math.min(drawStart.x,drawCurrent.x),ry=Math.min(drawStart.y,drawCurrent.y),rw=Math.abs(dx),rh=Math.abs(dy);
+    ctx.globalAlpha=0.18;ctx.fillStyle=c.fill;ctx.fillRect(rx,ry,rw,rh);
+    ctx.globalAlpha=0.9;ctx.strokeRect(rx,ry,rw,rh);ctx.setLineDash([]);
+    ctx.globalAlpha=1;ctx.fillStyle='#fff';ctx.font=`bold ${11/zoom}px Rajdhani`;ctx.textAlign='center';
+    ctx.fillText(`${Math.round(rw)}×${Math.round(rh)}`,rx+rw/2,ry+rh/2);
+  }
+  ctx.restore();
+}
+
+function drawElement(el){
+  const c=COLORS[el.type]||COLORS.wall,isSel=el.id===selectedId;
+  ctx.save();
+  if(el.type==='spawn'){
+    ctx.beginPath();ctx.arc(el.x,el.y,SPAWN_R,0,Math.PI*2);ctx.fillStyle=c.fill;ctx.fill();
+    ctx.strokeStyle=isSel?'#fff':c.stroke;ctx.lineWidth=(isSel?2.5:1.5)/zoom;ctx.stroke();
+    if(isSel){ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1/zoom;ctx.setLineDash([4/zoom,3/zoom]);ctx.beginPath();ctx.arc(el.x,el.y,SPAWN_R+5/zoom,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
+    ctx.fillStyle='#fff';ctx.font=`bold ${10/zoom}px Rajdhani`;ctx.textAlign='center';ctx.textBaseline='middle';
+    if(el.team===null){ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=1.5/zoom;const s=SPAWN_R*.55;ctx.beginPath();ctx.moveTo(el.x-s,el.y);ctx.lineTo(el.x+s,el.y);ctx.moveTo(el.x,el.y-s);ctx.lineTo(el.x,el.y+s);ctx.stroke();}
+    else ctx.fillText(el.team,el.x,el.y);
+    ctx.textBaseline='alphabetic';ctx.restore();return;
+  }
+  if(el.shape==='circle'){
+    ctx.beginPath();ctx.arc(el.x,el.y,el.r,0,Math.PI*2);ctx.fillStyle=c.fill;ctx.fill();
+    if(el.type==='wall'&&el.penetrable){ctx.save();ctx.clip();ctx.strokeStyle='rgba(231,76,60,0.35)';ctx.lineWidth=1/zoom;for(let d=-el.r*2;d<el.r*4;d+=10/zoom){ctx.beginPath();ctx.moveTo(el.x-el.r*2+d,el.y-el.r*2);ctx.lineTo(el.x-el.r*2+d+el.r*4,el.y+el.r*2);ctx.stroke();}ctx.restore();}
+    if(el.type==='objectiveZone'&&el.label){ctx.fillStyle='rgba(255,255,255,.9)';ctx.font=`bold ${Math.max(10,el.r*.5)/zoom}px Rajdhani`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(el.label,el.x,el.y);ctx.textBaseline='alphabetic';}
+    if(el.type==='lowObstacle'){ctx.strokeStyle='#f1c40f';ctx.lineWidth=2.5/zoom;ctx.setLineDash([6/zoom,3/zoom]);ctx.beginPath();ctx.arc(el.x,el.y,el.r,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
+    ctx.beginPath();ctx.arc(el.x,el.y,el.r,0,Math.PI*2);ctx.strokeStyle=isSel?'#fff':c.stroke;ctx.lineWidth=(isSel?2.5:1.5)/zoom;ctx.stroke();
+    if(isSel){ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1/zoom;ctx.setLineDash([5/zoom,3/zoom]);ctx.beginPath();ctx.arc(el.x,el.y,el.r+4/zoom,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
+    ctx.restore();return;
+  }
+  // Rotated rect
+  const cx=rectCx(el),cy=rectCy(el),rot=el.rotation||0;
+  ctx.translate(cx,cy);ctx.rotate(rot);ctx.translate(-cx,-cy);
+  const{x,y,w,h}=el;
+  ctx.fillStyle=c.fill;ctx.fillRect(x,y,w,h);
+  if(el.type==='wall'&&el.penetrable){ctx.save();ctx.rect(x,y,w,h);ctx.clip();ctx.strokeStyle='rgba(231,76,60,0.35)';ctx.lineWidth=1/zoom;for(let d=-(h+w);d<w+h;d+=10/zoom){ctx.beginPath();ctx.moveTo(x+d,y);ctx.lineTo(x+d+h,y+h);ctx.stroke();}ctx.restore();}
+  if(el.type==='lowObstacle'){ctx.strokeStyle='#f1c40f';ctx.lineWidth=2.5/zoom;ctx.setLineDash([6/zoom,3/zoom]);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+w,y);ctx.stroke();ctx.setLineDash([]);}
+  if(el.type==='objectiveZone'&&el.label){
+    ctx.fillStyle='rgba(255,255,255,.9)';ctx.font=`bold ${Math.max(12,Math.min(w,h)*.45)/zoom}px Rajdhani`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(el.label,x+w/2,y+h/2);
+    const st={bomb_site:'BOMB',control_zone:'CTRL',extraction_point:'EXTR',flag_base:'FLAG'}[el.subtype]||'';
+    ctx.font=`${Math.max(8,Math.min(w,h)*.18)/zoom}px Share Tech Mono`;ctx.fillStyle='rgba(255,255,255,.5)';ctx.fillText(st,x+w/2,y+h*.78);ctx.textBaseline='alphabetic';
+  }
+  ctx.strokeStyle=isSel?'#fff':c.stroke;ctx.lineWidth=(isSel?2.5:1.5)/zoom;ctx.strokeRect(x,y,w,h);
+  if(isSel){ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1/zoom;ctx.setLineDash([5/zoom,3/zoom]);ctx.strokeRect(x-3/zoom,y-3/zoom,w+6/zoom,h+6/zoom);ctx.setLineDash([]);}
+  ctx.restore();
+}
+
+// Clipped part: cone visualization, radius circle, direction line — only inside map
+function drawLightEffects(el){
+  const dir=el.direction*Math.PI/180,half=el.angle*Math.PI/180/2,isCone=el.angle<359.9;
+  ctx.save();
+  // Dashed radius circle
+  ctx.beginPath();ctx.arc(el.x,el.y,el.radius,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,204,68,0.18)';ctx.lineWidth=1/zoom;ctx.setLineDash([5/zoom,4/zoom]);ctx.stroke();ctx.setLineDash([]);
+  // Cone fill + edges
+  if(isCone){
+    ctx.beginPath();ctx.moveTo(el.x,el.y);ctx.arc(el.x,el.y,el.radius,dir-half,dir+half);ctx.closePath();
+    ctx.fillStyle='rgba(255,204,68,0.05)';ctx.fill();
+    ctx.strokeStyle='rgba(255,204,68,0.38)';ctx.lineWidth=1.5/zoom;
+    ctx.beginPath();ctx.moveTo(el.x,el.y);ctx.lineTo(el.x+Math.cos(dir-half)*el.radius,el.y+Math.sin(dir-half)*el.radius);
+    ctx.moveTo(el.x,el.y);ctx.lineTo(el.x+Math.cos(dir+half)*el.radius,el.y+Math.sin(dir+half)*el.radius);ctx.stroke();
+  }
+  // Direction dashed line
+  ctx.strokeStyle='rgba(255,204,68,.45)';ctx.lineWidth=1.5/zoom;ctx.setLineDash([4/zoom,3/zoom]);
+  ctx.beginPath();ctx.moveTo(el.x,el.y);ctx.lineTo(el.x+Math.cos(dir)*el.radius*.82,el.y+Math.sin(dir)*el.radius*.82);
+  ctx.stroke();ctx.setLineDash([]);
+  ctx.restore();
+}
+
+// Unclipped part: source dot, L1/L2 lines, selection ring — always visible
+function drawLightDot(el){
+  const isSel=el.id===selectedId,dir=el.direction*Math.PI/180;
+  ctx.save();
+  // L1 perpendicular line
+  if(el.limit1>0){
+    const px=el.x+Math.cos(dir)*el.limit1,py=el.y+Math.sin(dir)*el.limit1;
+    const ext=Math.min(el.radius,300)*.55,perpX=Math.cos(dir+Math.PI/2),perpY=Math.sin(dir+Math.PI/2);
+    ctx.strokeStyle='rgba(255,120,60,.8)';ctx.lineWidth=2/zoom;ctx.setLineDash([5/zoom,3/zoom]);
+    ctx.beginPath();ctx.moveTo(px-perpX*ext,py-perpY*ext);ctx.lineTo(px+perpX*ext,py+perpY*ext);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='rgba(255,120,60,.95)';ctx.font=`${9/zoom}px Share Tech Mono`;ctx.textAlign='left';
+    ctx.fillText('L1',px+perpX*ext+3/zoom,py+perpY*ext);
+  }
+  // L2 perpendicular line
+  if(el.limit2>0){
+    const px=el.x+Math.cos(dir)*el.limit2,py=el.y+Math.sin(dir)*el.limit2;
+    const ext=Math.min(el.radius,300)*.55,perpX=Math.cos(dir+Math.PI/2),perpY=Math.sin(dir+Math.PI/2);
+    ctx.strokeStyle='rgba(80,180,255,.8)';ctx.lineWidth=2/zoom;ctx.setLineDash([5/zoom,3/zoom]);
+    ctx.beginPath();ctx.moveTo(px-perpX*ext,py-perpY*ext);ctx.lineTo(px+perpX*ext,py+perpY*ext);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='rgba(80,180,255,.95)';ctx.font=`${9/zoom}px Share Tech Mono`;ctx.textAlign='left';
+    ctx.fillText('L2',px+perpX*ext+3/zoom,py+perpY*ext);
+  }
+  // Source dot (always on top, always visible)
+  const ir=10/zoom;
+  ctx.beginPath();ctx.arc(el.x,el.y,ir,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,220,80,.95)';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5/zoom;ctx.stroke();
+  if(isSel){
+    ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1/zoom;ctx.setLineDash([4/zoom,3/zoom]);
+    ctx.beginPath();ctx.arc(el.x,el.y,ir+4/zoom,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+  }
+  ctx.restore();
+}
+
+function drawHandles(el){
+  ctx.save();const hr=5/zoom;
+  const hcols={radius:'#ffcc44',dir:'#ff9944',limit1:'#ff7744',limit2:'#44aaff',rot:'#44ffaa'};
+  for(const h of getHandles(el)){
+    if(h.id==='rot'){
+      ctx.fillStyle='#44ffaa';ctx.strokeStyle='#1a7a4a';ctx.lineWidth=1.5/zoom;
+      ctx.beginPath();ctx.arc(h.x,h.y,hr+2,0,Math.PI*2);ctx.fill();ctx.stroke();
+      const cx2=el.type==='pointLight'?el.x:rectCx(el),cy2=el.type==='pointLight'?el.y:rectCy(el);
+      ctx.strokeStyle='rgba(68,255,170,.35)';ctx.lineWidth=1/zoom;ctx.setLineDash([3/zoom,2/zoom]);
+      ctx.beginPath();ctx.moveTo(cx2,cy2);ctx.lineTo(h.x,h.y);ctx.stroke();ctx.setLineDash([]);
+    }else if(h.id in hcols){
+      ctx.fillStyle=hcols[h.id];ctx.strokeStyle='#222';ctx.lineWidth=1/zoom;
+      ctx.beginPath();ctx.arc(h.x,h.y,hr+1,0,Math.PI*2);ctx.fill();ctx.stroke();
+    }else{
+      ctx.fillStyle='#fff';ctx.strokeStyle='#e94560';ctx.lineWidth=1.5/zoom;
+      ctx.fillRect(h.x-hr,h.y-hr,hr*2,hr*2);ctx.strokeRect(h.x-hr,h.y-hr,hr*2,hr*2);
+    }
+  }
+  ctx.restore();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  SHADOW RENDERING
+// ════════════════════════════════════════════════════════════════
+function hexToRgb(hex){const r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);return r?`${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}`:'255,200,50';}
+
+function punchPoly(pts,ox,oy,intensity,innerR,outerR){
+  if(pts.length<3)return;
+  sCtx.save();sCtx.globalCompositeOperation='destination-out';
+  const ir=Math.max(0,innerR),or_=Math.max(ir+1,outerR);
+  const g=sCtx.createRadialGradient(ox,oy,ir,ox,oy,or_);
+  g.addColorStop(0,  `rgba(255,255,255,${intensity})`);
+  g.addColorStop(0.8,`rgba(255,255,255,${intensity})`);
+  g.addColorStop(1,  'rgba(255,255,255,0)');
+  sCtx.fillStyle=g;sCtx.beginPath();sCtx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++)sCtx.lineTo(pts[i].x,pts[i].y);
+  sCtx.closePath();sCtx.fill();sCtx.restore();
+}
+
+function renderShadows(){
+  const lights=elements.filter(e=>e.type==='pointLight');
+  if(!lights.length)return;
+  const{hard,soft}=getSegmentsByType();
+  const allSegs=[...hard,...soft];
+  sCtx.clearRect(0,0,WORLD,WORLD);sCtx.fillStyle='rgba(0,0,0,0.97)';sCtx.fillRect(0,0,WORLD,WORLD);
+  gCtx.clearRect(0,0,WORLD,WORLD);
+
+  for(const light of lights){
+    const d=(light.direction||0)*Math.PI/180;
+    const L1=light.limit1||0,L2=light.limit2||0;
+    // outerR drives the gradient fade — use L2 if set (rays already stop there)
+    const outerR=L2>0?Math.min(L2,light.radius):light.radius;
+    const intensity=Math.min(1,light.intensity!==undefined?light.intensity:0.9);
+
+    let allVis=buildVisibilityPoly(light,allSegs);
+    let hardVis=buildVisibilityPoly(light,hard);
+    // L1 poly-clip: cut the near zone out of the polygon
+    if(L1>0){allVis=clipL1(allVis,light.x,light.y,d,L1);hardVis=clipL1(hardVis,light.x,light.y,d,L1);}
+    // L2 is handled inside buildVisibilityPoly as a virtual wall — no poly clip needed
+
+    punchPoly(allVis, light.x,light.y,intensity*0.5,L1,outerR);
+    punchPoly(hardVis,light.x,light.y,intensity*0.5,L1,outerR);
+
+    const vis=allVis.length>=3?allVis:hardVis;
+    if(vis.length<3)continue;
+    const rgb=hexToRgb(light.color||'#ffcc44'),gR=outerR*0.97,ir=Math.max(0,L1*0.9);
+    gCtx.save();
+    gCtx.beginPath();gCtx.moveTo(vis[0].x,vis[0].y);for(let i=1;i<vis.length;i++)gCtx.lineTo(vis[i].x,vis[i].y);gCtx.closePath();gCtx.clip();
+    const gA=Math.min(1,intensity*0.88),box=gR+ir+1;
+    const g1=gCtx.createRadialGradient(light.x,light.y,ir,light.x,light.y,gR);
+    g1.addColorStop(0,`rgba(${rgb},${gA})`);g1.addColorStop(0.4,`rgba(${rgb},${gA*0.7})`);g1.addColorStop(0.85,`rgba(${rgb},${gA*0.2})`);g1.addColorStop(1,`rgba(${rgb},0)`);
+    gCtx.fillStyle=g1;gCtx.fillRect(light.x-box,light.y-box,box*2,box*2);
+    const hotR=ir+(gR-ir)*0.28;
+    const g2=gCtx.createRadialGradient(light.x,light.y,ir,light.x,light.y,hotR);
+    g2.addColorStop(0,`rgba(255,248,215,${Math.min(1,intensity*0.6)})`);g2.addColorStop(1,'rgba(255,248,215,0)');
+    gCtx.fillStyle=g2;gCtx.fillRect(light.x-box,light.y-box,box*2,box*2);
+    gCtx.restore();
+  }
+
+  ctx.save();ctx.translate(panX,panY);ctx.scale(zoom,zoom);
+  // Clip shadow and glow blits to map bounds
+  ctx.beginPath();ctx.rect(0,0,WORLD,WORLD);ctx.clip();
+  ctx.drawImage(sCanvas,0,0);
+  ctx.globalCompositeOperation='lighter';ctx.drawImage(gCanvas,0,0);
+  ctx.globalCompositeOperation='source-over';ctx.restore();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  PROPERTIES PANEL
+// ════════════════════════════════════════════════════════════════
+function updatePropsPanel(){
+  const el=elements.find(e=>e.id===selectedId);
+  const cont=document.getElementById('props-content');
+  if(!el){cont.innerHTML='<div class="no-sel">Nenhum elemento selecionado</div>';return;}
+  let h='';
+  h+=`<div class="prop-row"><span class="prop-label">Tipo</span>
+    <select class="prop-select" onchange="changePropType(this.value)">
+      <option value="wall" ${el.type==='wall'?'selected':''}>Parede</option>
+      <option value="window" ${el.type==='window'?'selected':''}>Janela</option>
+      <option value="spawn" ${el.type==='spawn'?'selected':''}>Spawn</option>
+      <option value="lowObstacle" ${el.type==='lowObstacle'?'selected':''}>Obst. Baixo</option>
+      <option value="objectiveZone" ${el.type==='objectiveZone'?'selected':''}>Zona Obj.</option>
+      <option value="pointLight" ${el.type==='pointLight'?'selected':''}>Luz Pontual</option>
+    </select></div>`;
+  if(el.type==='pointLight'){
+    h+=propN('X',el.x,"setLP('x',+v)");h+=propN('Y',el.y,"setLP('y',+v)");
+    h+=propN('Raio',el.radius,"setLP('radius',Math.max(10,+v))",10,8000);
+    h+=`<div class="prop-row"><span class="prop-label">Cor</span><input type="color" value="${el.color||'#ffcc44'}" oninput="setLP('color',this.value)"></div>`;
+    h+=sliderRow('Intens.',el.intensity||0.9,"setLP('intensity',+v)",0.05,1,0.05);
+    h+=`<div style="border-top:1px solid var(--border);margin:5px 0"></div>`;
+    h+=propN('Ângulo°',el.angle||360,"setLP('angle',Math.min(360,Math.max(5,+v)))",5,360);
+    h+=propN('Direção°',el.direction||0,"setLP('direction',((+v)%360+360)%360)",0,360);
+    h+=`<div style="border-top:1px solid var(--border);margin:5px 0"></div>`;
+    h+=`<div class="hint-bar" style="margin-bottom:5px">L1 apaga origem→L1<br>L2 apaga além de L2<br>Janela=L1+L2 · Porta=L2</div>`;
+    h+=propN('L1 (px)',el.limit1||0,"setLP('limit1',Math.max(0,+v))",0,8000);
+    h+=propN('L2 (px)',el.limit2||0,"setLP('limit2',Math.max(0,+v))",0,8000);
+  }else if(el.type==='spawn'){
+    h+=propN('X',el.x,"setPropXY('x',v)");h+=propN('Y',el.y,"setPropXY('y',v)");
+    h+=`<div class="prop-row"><span class="prop-label">Equipa</span>
+      <select class="prop-select" onchange="setPropTeam(this.value)">
+        <option value="null" ${el.team===null?'selected':''}>FFA</option>
+        <option value="A" ${el.team==='A'?'selected':''}>Time A</option>
+        <option value="B" ${el.team==='B'?'selected':''}>Time B</option>
+      </select></div>`;
+  }else{
+    h+=propN('X',el.x,"setPropXY('x',v)");h+=propN('Y',el.y,"setPropXY('y',v)");
+    if(el.shape==='circle')h+=propN('Raio',el.r,"setCircleR(v)",5,1024);
+    else{
+      h+=propN('W',el.w,"setPropWH('w',v)",5);h+=propN('H',el.h,"setPropWH('h',v)",5);
+      h+=propN('Rot.°',Math.round((el.rotation||0)*180/Math.PI*10)/10,"setPropRot(v)",-360,360);
+      h+=`<div class="hint-bar" style="margin-bottom:5px">🔄 Handle verde = rotacionar</div>`;
+    }
+    if(el.type==='wall')h+=`<label class="prop-check-row"><input type="checkbox" ${el.penetrable?'checked':''} onchange="setPropCheck('penetrable',this.checked)"><span>Penetrável</span></label>`;
+    if(el.type==='objectiveZone'){
+      h+=`<div class="prop-row"><span class="prop-label">Subtipo</span>
+        <select class="prop-select" onchange="setPropStr('subtype',this.value)">
+          <option value="bomb_site" ${el.subtype==='bomb_site'?'selected':''}>Bomb Site</option>
+          <option value="control_zone" ${el.subtype==='control_zone'?'selected':''}>Control Zone</option>
+          <option value="extraction_point" ${el.subtype==='extraction_point'?'selected':''}>Extraction</option>
+          <option value="flag_base" ${el.subtype==='flag_base'?'selected':''}>Flag Base</option>
+        </select></div>`;
+      h+=`<div class="prop-row"><span class="prop-label">Label</span><input class="prop-input" type="text" value="${el.label||''}" maxlength="8" oninput="setPropStr('label',this.value)"></div>`;
+    }
+  }
+  h+=`<div style="display:flex;gap:5px;margin-top:8px">
+    <button class="btn" style="flex:1;font-size:12px" onclick="copySelected()" title="Cmd+C">📋 Copiar</button>
+    <button class="btn" style="flex:1;font-size:12px" onclick="copySelected();pasteElement()" title="Cmd+D">⧉ Duplicar</button>
+  </div>`;
+  h+=`<button class="btn" style="width:100%;margin-top:5px;color:var(--accent);border-color:var(--accent)" onclick="deleteSelected()">🗑 Apagar</button>`;
+  if(_clipboard)h+=`<button class="btn" style="width:100%;margin-top:5px;font-size:12px" onclick="pasteElement()" title="Cmd+V">📌 Colar Último Copiado</button>`;
+  cont.innerHTML=h;
+}
+function propN(label,val,onchange,min='',max=''){
+  return `<div class="prop-row"><span class="prop-label">${label}</span>
+    <input class="prop-input" type="number" value="${val}" ${min!==''?`min="${min}"`:''}${max!==''?` max="${max}"`:''}
+    onchange="const v=this.value;${onchange};snapshot();render();updateElementList()"></div>`;
+}
+function sliderRow(label,val,onchange,min,max,step){
+  return `<div class="prop-row"><span class="prop-label">${label}</span>
+    <div style="display:flex;align-items:center;gap:4px;width:100%">
+      <input type="range" min="${min}" max="${max}" step="${step}" value="${val}"
+        oninput="const v=+this.value;${onchange};render();this.nextElementSibling.textContent=Math.round(v*100)+'%'">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:11px;min-width:34px">${Math.round(val*100)}%</span>
+    </div></div>`;
+}
+function setLP(k,v){const el=elements.find(e=>e.id===selectedId);if(!el)return;el[k]=v;snapshot();render();updateElementList();}
+function changePropType(t){const el=elements.find(e=>e.id===selectedId);if(!el)return;el.type=t;if(t==='wall'&&el.penetrable===undefined)el.penetrable=false;if(t==='objectiveZone'&&!el.subtype){el.subtype='bomb_site';el.label='A';}snapshot();updateAll();}
+function setPropXY(k,v){const el=elements.find(e=>e.id===selectedId);if(!el)return;el[k]=Math.round(+v);snapshot();render();updateElementList();}
+function setPropWH(k,v){const el=elements.find(e=>e.id===selectedId);if(!el)return;el[k]=Math.max(5,Math.round(+v));snapshot();render();updateElementList();}
+function setPropRot(v){const el=elements.find(e=>e.id===selectedId);if(!el)return;el.rotation=(+v)*Math.PI/180;snapshot();render();updateElementList();}
+function setCircleR(v){const el=elements.find(e=>e.id===selectedId);if(!el)return;el.r=Math.max(5,Math.round(+v));snapshot();render();updateElementList();}
+function setPropCheck(k,v){const el=elements.find(e=>e.id===selectedId);if(!el)return;el[k]=v;snapshot();render();}
+function setPropTeam(v){const el=elements.find(e=>e.id===selectedId);if(!el)return;el.team=v==='null'?null:v;snapshot();render();updateElementList();}
+function setPropStr(k,v){const el=elements.find(e=>e.id===selectedId);if(!el)return;el[k]=v;snapshot();render();}
+function deleteSelected(){if(selectedId===null)return;elements=elements.filter(e=>e.id!==selectedId);selectedId=null;snapshot();updateAll();}
+
+// ════════════════════════════════════════════════════════════════
+//  ELEMENT LIST
+// ════════════════════════════════════════════════════════════════
+function updateElementList(){
+  const g={wall:{l:'Paredes',i:[]},window:{l:'Janelas',i:[]},lowObstacle:{l:'Obst. Baixos',i:[]},
+    objectiveZone:{l:'Zonas Obj.',i:[]},pointLight:{l:'Luzes',i:[]},
+    spawnA:{l:'Spawns A',i:[]},spawnB:{l:'Spawns B',i:[]},spawnFFA:{l:'Spawns FFA',i:[]}};
+  for(const el of elements){
+    if(el.type==='spawn'){const k=el.team==='A'?'spawnA':el.team==='B'?'spawnB':'spawnFFA';g[k].i.push(el);}
+    else if(g[el.type])g[el.type].i.push(el);
+  }
+  let h='';
+  for(const[k,grp]of Object.entries(g)){
+    if(!grp.i.length)continue;
+    const tkey=k.startsWith('spawn')?'spawn':k,col=DOT_COLORS[tkey]||'#888';
+    h+=`<div class="el-group-title"><span>${grp.l}</span><span class="el-group-count">${grp.i.length}</span></div>`;
+    for(const el of grp.i){
+      const isSel=el.id===selectedId;
+      let info=el.type==='spawn'?`${el.x},${el.y}`:el.shape==='circle'?`${el.x},${el.y} r=${el.r}`:el.type==='pointLight'?`${el.x},${el.y} r=${el.radius}`:`${el.x},${el.y} ${el.w}×${el.h}`;
+      h+=`<div class="el-item${isSel?' selected':''}" onclick="selectFromList(${el.id})"><span class="el-dot" style="background:${col}"></span>${info}</div>`;
+    }
+  }
+  if(!h)h='<div class="no-sel">Sem elementos</div>';
+  document.getElementById('el-list-content').innerHTML=h;
+}
+function selectFromList(id){
+  selectedId=id;setTool('select');
+  const el=elements.find(e=>e.id===id);
+  if(el){const cx=el.type==='pointLight'?el.x:el.shape==='circle'?el.x:rectCx(el),cy=el.type==='pointLight'?el.y:el.shape==='circle'?el.y:rectCy(el);panX=canvas.width/2-cx*zoom;panY=canvas.height/2-cy*zoom;}
+  updatePropsPanel();updateElementList();render();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CONFIG / STATUS / UPDATE
+// ════════════════════════════════════════════════════════════════
+function updateConfig(){mapConfig.vision_distance=parseInt(document.getElementById('cfg-vd').value)||400;mapConfig.vision_fov=parseInt(document.getElementById('cfg-fov').value)||100;mapConfig.ambient_sound=document.getElementById('cfg-snd').value;}
+function updateStatus(){document.getElementById('st-count').textContent=elements.length;document.getElementById('status-tool').textContent=TOOL_NAMES[tool]||tool.toUpperCase();}
+function updateAll(){render();updatePropsPanel();updateElementList();updateStatus();}
+
+// ════════════════════════════════════════════════════════════════
+//  IMPORT / EXPORT
+// ════════════════════════════════════════════════════════════════
+function importImage(){document.getElementById('file-img').click();}
+document.getElementById('file-img').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      if(img.width!==1024||img.height!==1024)showModal('AVISO',`<span class="warn">⚠ Imagem ${img.width}×${img.height}px — será esticada para 1024×1024.</span>`,null,'OK',false);
+      bgImage=img;bgImageSrc=ev.target.result;snapshot();render();
+    };
+    img.src=ev.target.result; // dataURL — serializable for history
+  };
+  reader.readAsDataURL(f);
+  e.target.value='';
+});
+function importJSON(){document.getElementById('file-json').click();}
+document.getElementById('file-json').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=ev=>{try{loadFromJSON(JSON.parse(ev.target.result));}catch(err){showModal('ERRO',`<span class="err">JSON inválido:</span><br>${err.message}`,null,'OK',false);}};r.readAsText(f);e.target.value='';
+});
+function loadFromJSON(data){
+  elements=[];nextId=1;selectedId=null;
+  // Reset history when loading a new map
+  history=[];histIdx=-1;
+  if(data.name)document.getElementById('map-name').value=data.name;
+  if(data.config){mapConfig={...mapConfig,...data.config};document.getElementById('cfg-vd').value=mapConfig.vision_distance||400;document.getElementById('cfg-fov').value=mapConfig.vision_fov||100;document.getElementById('cfg-snd').value=mapConfig.ambient_sound||'none';}
+  const addR=(arr,type)=>{if(!Array.isArray(arr))return;for(const el of arr){let e;if(el.shape==='circle'||el.r>0)e=makeCircle(type,el.x,el.y,el.r||50);else{e=makeRect(type,el.x,el.y,el.width||el.w||50,el.height||el.h||50);e.rotation=el.rotation||0;}if(type==='wall')e.penetrable=el.penetrable===true;if(type==='objectiveZone'){e.subtype=el.type||el.subtype||'bomb_site';e.label=el.label||'';}elements.push(e);}};
+  addR(data.walls,'wall');addR(data.windows,'window');addR(data.lowObstacles,'lowObstacle');addR(data.objectiveZones,'objectiveZone');
+  if(Array.isArray(data.spawnPoints))for(const s of data.spawnPoints){const e=makeSpawn(s.x||0,s.y||0);e.team=s.team||null;elements.push(e);}
+  const addL=arr=>{if(!Array.isArray(arr))return;for(const l of arr){const e=makePointLight(l.x||0,l.y||0,l.radius||200);Object.assign(e,{color:l.color||'#ffcc44',intensity:l.intensity||0.9,angle:l.angle||360,direction:l.direction||0,limit1:l.limit1||0,limit2:l.limit2||0});elements.push(e);}};
+  addL(data.pointLights);addL(data.lights);
+  // nextId must be set AFTER all elements are created so IDs don't collide
+  nextId=elements.reduce((m,e)=>Math.max(m,e.id),0)+1;
+  snapshot();updateAll();
+}
+function exportJSON(){
+  const name=document.getElementById('map-name').value.trim(),errs=[],warns=[];
+  if(!name)errs.push('<span class="err">✗ Nome do mapa vazio</span>');
+  const spawns=elements.filter(e=>e.type==='spawn'),walls=elements.filter(e=>e.type==='wall');
+  if(spawns.length<4)warns.push(`<span class="warn">⚠ Menos de 4 spawns (${spawns.length})</span>`);
+  if(spawns.length>16)warns.push(`<span class="warn">⚠ Mais de 16 spawns (${spawns.length})</span>`);
+  if(walls.length===0)warns.push('<span class="warn">⚠ Nenhuma parede</span>');
+  if(errs.length){showModal('ERRO',errs.join('<br>'),null,'OK',false);return;}
+  if(warns.length){showModal('AVISOS',warns.join('<br>')+'<br><br>Exportar mesmo assim?',()=>doExport(name),'Exportar',true);return;}
+  doExport(name);
+}
+function doExport(name){
+  updateConfig();
+  const mE=el=>el.shape==='circle'?{shape:'circle',x:el.x,y:el.y,r:el.r}:{x:el.x,y:el.y,width:el.w,height:el.h,rotation:el.rotation||0};
+  const data={name,version:2,size:{width:WORLD,height:WORLD},config:{...mapConfig},
+    walls:elements.filter(e=>e.type==='wall').map(e=>({...mE(e),penetrable:e.penetrable===true})),
+    windows:elements.filter(e=>e.type==='window').map(mE),
+    lowObstacles:elements.filter(e=>e.type==='lowObstacle').map(mE),
+    spawnPoints:elements.filter(e=>e.type==='spawn').map(e=>({x:e.x,y:e.y,team:e.team})),
+    objectiveZones:elements.filter(e=>e.type==='objectiveZone').map((e,i)=>({...mE(e),id:(e.label||('z'+i)).toLowerCase().replace(/\s/g,'_'),type:e.subtype||'bomb_site',label:e.label||''})),
+    pointLights:elements.filter(e=>e.type==='pointLight').map(e=>({x:e.x,y:e.y,radius:e.radius,color:e.color,intensity:e.intensity,angle:e.angle,direction:e.direction,limit1:e.limit1,limit2:e.limit2})),
+  };
+  const jsonStr=JSON.stringify(data,null,2);
+  closeModal();
+
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||
+    (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+
+  // ── iOS: Web Share API is the ONLY way to get a real .json file ──
+  // data URI always saves as .txt on iOS Safari regardless of the download attribute.
+  if(isIOS||navigator.canShare){
+    if(navigator.canShare){
+      // Ensure filename ends with .json — iOS uses the File name as the saved filename
+      const fname=name.endsWith('.json')?name:name+'.json';
+      const file=new File([jsonStr],fname,{type:'application/json'});
+      if(navigator.canShare({files:[file]})){
+        navigator.share({files:[file],title:fname})
+          .then(()=>{/* success */})
+          .catch(err=>{
+            // AbortError = user cancelled share sheet, don't show error
+            if(err.name!=='AbortError') showExportModal(name,jsonStr);
+          });
+        return;
+      }
+    }
+    // iOS but no canShare (older iOS / WKWebView) → textarea fallback
+    showExportModal(name,jsonStr);
+    return;
+  }
+
+  // ── Desktop / non-iOS: Blob download (correct extension guaranteed) ──
+  try{
+    const blob=new Blob([jsonStr],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=name+'.json';
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},300);
+    return;
+  }catch(_){}
+
+  // ── Final fallback: copyable textarea ──
+  showExportModal(name,jsonStr);
+}
+function showModal(title,body,cb,label,showCancel){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').innerHTML=body;
+  document.getElementById('modal-confirm').textContent=label||'OK';
+  document.getElementById('modal-cancel').style.display=showCancel?'inline-flex':'none';
+  modalCb=cb;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('show');modalCb=null;}
+function confirmModal(){const cb=modalCb;closeModal();if(cb)cb();}
+function showExportModal(name,jsonStr){
+  let ov=document.getElementById('export-overlay');
+  if(ov)ov.remove();
+
+  ov=document.createElement('div');
+  ov.id='export-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:200;display:flex;flex-direction:column;padding:16px;gap:10px;box-sizing:border-box;';
+
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||
+    (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+
+  ov.innerHTML=`
+    <div style="font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;color:var(--accent);flex-shrink:0">
+      ◈ EXPORTAR — ${name}.json
+    </div>
+    <div style="font-size:12px;color:var(--text2);flex-shrink:0;line-height:1.5">
+      ${isIOS
+        ? `1. Toca <b style="color:var(--text)">📋 Copiar</b>.<br>2. Abre <b style="color:var(--text)">Ficheiros</b> → pasta desejada → toca ··· → <b style="color:var(--text)">Novo Ficheiro</b>.<br>3. Cola o conteúdo e renomeia para <b style="color:var(--clight)">${name}.json</b> (importante: extensão .json)`
+        : `Copia o JSON e guarda num ficheiro <b>${name}.json</b>`}
+    </div>
+    <textarea id="export-ta" readonly
+      style="flex:1;background:#0a0a14;color:#b8ffc8;font-family:'Share Tech Mono',monospace;
+             font-size:10px;border:1px solid var(--border2);border-radius:2px;padding:8px;
+             resize:none;-webkit-user-select:text;user-select:text;white-space:pre;
+             min-height:120px;"></textarea>
+    <div style="display:flex;gap:8px;flex-shrink:0">
+      <button id="export-copy-btn" class="btn accent" style="flex:2;font-size:14px;padding:10px">📋 Copiar JSON</button>
+      <button class="btn" style="flex:1;padding:10px" onclick="document.getElementById('export-overlay').remove()">✕ Fechar</button>
+    </div>`;
+
+  document.body.appendChild(ov);
+  document.getElementById('export-ta').value=jsonStr;
+
+  document.getElementById('export-copy-btn').addEventListener('click',function(){
+    const ta=document.getElementById('export-ta');
+    const btn=this;
+    // Try modern clipboard API first
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(jsonStr)
+        .then(()=>{btn.textContent='✓ Copiado!';btn.style.background='#27ae60';
+          setTimeout(()=>{btn.textContent='📋 Copiar JSON';btn.style.background='';},3000);})
+        .catch(()=>_fallbackCopy(ta,btn));
+    }else{
+      _fallbackCopy(ta,btn);
+    }
+  });
+
+  // Auto-select and try to copy on iOS (must happen in user gesture context)
+  setTimeout(()=>{
+    const ta=document.getElementById('export-ta');
+    if(ta){ta.focus();ta.select();}
+  },150);
+}
+
+function _fallbackCopy(ta,btn){
+  try{
+    ta.focus();ta.select();
+    // iOS Safari: use setSelectionRange to ensure full selection
+    ta.setSelectionRange(0,ta.value.length);
+    const ok=document.execCommand('copy');
+    if(ok){
+      btn.textContent='✓ Copiado!';btn.style.background='#27ae60';
+      setTimeout(()=>{btn.textContent='📋 Copiar JSON';btn.style.background='';},3000);
+    }else{
+      btn.textContent='Seleciona e copia manualmente';
+    }
+  }catch(e){
+    btn.textContent='Seleciona e copia manualmente';
+  }
+}
+document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target.id==='modal-overlay')closeModal();});
+document.getElementById('toggle-shadows').addEventListener('change',render);
+wrap.addEventListener('contextmenu',e=>e.preventDefault());
+
+// ── Reset all pointer state when app comes back to foreground ──────────────
+// iOS/iPadOS: if the app was backgrounded mid-gesture, pointerup never fires.
+// On next focus the _ptrs Map is stale → pen appears broken (size >= 2 always).
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'){
+    _ptrs.clear();
+    _pinchMid=null;_pinchDist=0;
+    drawing=false;dragging=false;resizing=false;rotating=false;panning=false;
+    _touchPanMode=false;
+    if(_longPressTimer){clearTimeout(_longPressTimer);_longPressTimer=null;}
+    drawStart=null;drawCurrent=null;
+    wrap.classList.remove('pan-mode','panning');
+  }
+});
+window.addEventListener('focus',()=>{
+  // Also reset on window focus (Documents app switching)
+  _ptrs.clear();
+  _pinchMid=null;_pinchDist=0;
+  drawing=false;dragging=false;resizing=false;rotating=false;panning=false;
+  _touchPanMode=false;
+  if(_longPressTimer){clearTimeout(_longPressTimer);_longPressTimer=null;}
+  drawStart=null;drawCurrent=null;
+  wrap.classList.remove('pan-mode','panning');
+});
+
+// ════════════════════════════════════════════════════════════════
+//  FULLSCREEN
+// ════════════════════════════════════════════════════════════════
+function toggleFullscreen(){
+  const btn=document.getElementById('btn-fs');
+  // Try native Fullscreen API first (works in most browsers including iPad Chrome)
+  if(!document.fullscreenElement&&!document.webkitFullscreenElement){
+    const el=document.documentElement;
+    const req=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;
+    if(req){
+      req.call(el).then(()=>{
+        document.body.classList.add('fullscreen');
+        btn.textContent='✕ Sair Tela Cheia';
+        resizeCanvas();
+      }).catch(()=>{
+        // Fullscreen API blocked (WKWebView/Documents) → CSS fullscreen simulation
+        _cssFullscreen(true);
+      });
+    }else{
+      _cssFullscreen(true);
+    }
+  }else{
+    const ex=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen;
+    if(ex) ex.call(document).catch(()=>{});
+    document.body.classList.remove('fullscreen');
+    btn.textContent='⛶ Tela Cheia';
+    resizeCanvas();
+  }
+}
+
+function _cssFullscreen(on){
+  const btn=document.getElementById('btn-fs');
+  if(on){
+    // Hide the topbar to reclaim space — double-tap topbar area or press F to restore
+    document.getElementById('topbar').style.display='none';
+    document.getElementById('statusbar').style.display='none';
+    document.body.classList.add('fullscreen');
+    document.body.style.height='100vh';
+    _lockedVH=0; // reset so height re-locks when exiting fullscreen
+    btn.textContent='✕ Sair';
+    // Add floating restore button so user can exit without keyboard
+    let rb=document.getElementById('fs-restore');
+    if(!rb){
+      rb=document.createElement('button');
+      rb.id='fs-restore';
+      rb.textContent='⛶';
+      rb.style.cssText='position:fixed;top:8px;right:8px;z-index:999;background:rgba(0,0,0,.6);'+
+        'color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:4px;padding:6px 10px;'+
+        'font-size:18px;cursor:pointer;-webkit-tap-highlight-color:transparent;';
+      rb.addEventListener('click',()=>_cssFullscreen(false));
+      rb.addEventListener('touchend',e=>{e.preventDefault();_cssFullscreen(false);});
+      document.body.appendChild(rb);
+    }
+    rb.style.display='block';
+    resizeCanvas();
+  }else{
+    document.getElementById('topbar').style.display='';
+    document.getElementById('statusbar').style.display='';
+    document.body.classList.remove('fullscreen');
+    document.body.style.height='';
+    _lockedVH=0; // force re-measure on next visualViewport event
+    btn.textContent='⛶ Tela Cheia';
+    const rb=document.getElementById('fs-restore');
+    if(rb) rb.style.display='none';
+    setTimeout(resizeCanvas,50); // defer so layout settles first
+  }
+}
+
+// Listen for native fullscreen exit (e.g. user presses Esc)
+document.addEventListener('fullscreenchange',()=>{
+  if(!document.fullscreenElement&&!document.webkitFullscreenElement){
+    document.body.classList.remove('fullscreen');
+    document.getElementById('btn-fs').textContent='⛶ Tela Cheia';
+    document.getElementById('topbar').style.display='';
+    document.getElementById('statusbar').style.display='';
+    resizeCanvas();
+  }
+});
+document.addEventListener('webkitfullscreenchange',()=>{
+  if(!document.fullscreenElement&&!document.webkitFullscreenElement){
+    document.body.classList.remove('fullscreen');
+    document.getElementById('btn-fs').textContent='⛶ Tela Cheia';
+    document.getElementById('topbar').style.display='';
+    document.getElementById('statusbar').style.display='';
+    resizeCanvas();
+  }
+});
+
+// ── iOS browser-bar stability fix ────────────────────────────
+// Problem: Chrome/Safari on iPad fires visualViewport 'resize' constantly as the
+// address bar slides in/out. This caused body height to jump between ~900px and ~840px
+// on every scroll, making the canvas flicker and the layout jump.
+//
+// Fix: lock body height to the LARGEST seen height (bar fully hidden = most space).
+// When the bar reappears and height shrinks, we ignore it — the layout stays stable.
+// On orientation change (viewport WIDTH changes) we unlock and re-measure.
+if(window.visualViewport){
+  let _vvLastWidth=window.visualViewport.width;
+
+  function _applyVVH(){
+    if(document.body.classList.contains('fullscreen'))return;
+
+    const vw=window.visualViewport.width;
+    const vh=window.visualViewport.height;
+
+    // Orientation changed → reset locked height and re-measure
+    if(vw!==_vvLastWidth){
+      _vvLastWidth=vw;
+      _lockedVH=0;
+    }
+
+    // Only expand the locked height, never shrink it
+    // This means: when the browser bar hides (vh grows), we update.
+    // When the browser bar shows (vh shrinks), we ignore it → no layout jump.
+    if(vh>_lockedVH){
+      _lockedVH=vh;
+      document.body.style.height=_lockedVH+'px';
+      _debouncedResize();
+    }
+  }
+
+  window.visualViewport.addEventListener('resize', _applyVVH);
+  // Do NOT listen to 'scroll' — scroll events are the main cause of the flickering
+  _applyVVH();
+}
+
+updateUndoRedo();updateAll();
+</script>
+</body>
+</html>

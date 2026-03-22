@@ -1,0 +1,146 @@
+{
+  "name": "Map_01",
+  "version": 2,
+  "size": {
+    "width": 1024,
+    "height": 1024
+  },
+  "image": "maps/map_01_bg.png",
+  "config": {
+    "vision_distance": 400,
+    "vision_fov": 100,
+    "ambient_sound": "none"
+  },
+  "walls": [
+    {
+      "x": 275,
+      "y": 152,
+      "width": 145,
+      "height": 44,
+      "rotation": 0,
+      "penetrable": false
+    },
+    {
+      "x": 642,
+      "y": 479,
+      "width": 35,
+      "height": 208,
+      "rotation": 0,
+      "penetrable": false
+    },
+    {
+      "x": 177,
+      "y": 638,
+      "width": 115,
+      "height": 44,
+      "rotation": 0,
+      "penetrable": false
+    },
+    {
+      "shape": "circle",
+      "x": 853,
+      "y": 285,
+      "r": 43,
+      "penetrable": false
+    },
+    {
+      "shape": "circle",
+      "x": 308,
+      "y": 351,
+      "r": 17,
+      "penetrable": false
+    }
+  ],
+  "windows": [],
+  "lowObstacles": [
+    {
+      "shape": "circle",
+      "x": 614,
+      "y": 299,
+      "r": 30
+    },
+    {
+      "x": 397,
+      "y": 369,
+      "width": 28,
+      "height": 250,
+      "rotation": 0
+    },
+    {
+      "x": 565,
+      "y": 430,
+      "width": 14,
+      "height": 126,
+      "rotation": 0
+    }
+  ],
+  "spawnPoints": [
+    {
+      "x": 173,
+      "y": 928,
+      "team": null
+    },
+    {
+      "x": 909,
+      "y": 897,
+      "team": null
+    },
+    {
+      "x": 934,
+      "y": 122,
+      "team": null
+    },
+    {
+      "x": 93,
+      "y": 157,
+      "team": null
+    }
+  ],
+  "objectiveZones": [],
+  "pointLights": [
+    {
+      "x": 54,
+      "y": 984,
+      "radius": 354,
+      "color": "#ffcc44",
+      "intensity": 0.9,
+      "angle": 90,
+      "direction": 315,
+      "limit1": 50,
+      "limit2": 242
+    },
+    {
+      "x": 983,
+      "y": 988,
+      "radius": 354,
+      "color": "#ffcc44",
+      "intensity": 0.9,
+      "angle": 90,
+      "direction": 225,
+      "limit1": 50,
+      "limit2": 242
+    },
+    {
+      "x": 989,
+      "y": 29,
+      "radius": 507,
+      "color": "#ffcc44",
+      "intensity": 0.9,
+      "angle": 90,
+      "direction": 134,
+      "limit1": 50,
+      "limit2": 405
+    },
+    {
+      "x": 32,
+      "y": 31,
+      "radius": 387,
+      "color": "#ffcc44",
+      "intensity": 0.9,
+      "angle": 90,
+      "direction": 45,
+      "limit1": 50,
+      "limit2": 337
+    }
+  ]
+}

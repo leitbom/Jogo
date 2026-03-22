@@ -14,6 +14,7 @@ import {
   MATCH_TIME_S, COUNTDOWN_S, SPAWN_POINTS,
   TICK_HZ_GAME,
 } from '../domain/entities/AgentStats';
+import type { SecurityGuard } from './SecurityGuard';
 
 // ── Types ──────────────────────────────────────────────
 export interface PlayerStat {
@@ -33,6 +34,7 @@ export class SurvivalGameService {
     private readonly rooms: IRoomRepository,
     private readonly emitter: IGameEventEmitter,
     private readonly logger: ILogger,
+    private readonly security?: SecurityGuard,
   ) {}
 
   // ── COUNTDOWN → START ─────────────────────────────────
@@ -86,6 +88,7 @@ export class SurvivalGameService {
       p.spawnTime     = now;
       p.deathTime     = null;
       p.winner        = false;
+      if (this.security) this.security.resetPosition(p.id);
     }
 
     this.emitter.toRoom(roomCode, 'game:start', {
@@ -94,6 +97,7 @@ export class SurvivalGameService {
       roomCode,
       totalPlayers: room.totalPlayers,
       timerTotal:   MATCH_TIME_S,
+      mapData:      room.mapData,
     });
     this.emitter.toRoom(roomCode, 'game:timer',       { remaining_s: MATCH_TIME_S });
     this.emitter.toRoom(roomCode, 'game:alive_count', { alive: room.aliveCount, total: room.totalPlayers });
@@ -234,11 +238,22 @@ export class SurvivalGameService {
   private assignSpawns(room: Room): Record<string, SpawnPoint> {
     const players = [...room.players.values()].sort(() => Math.random() - 0.5);
     const result: Record<string, SpawnPoint> = {};
+    
+    // Prioritize spawn points from map data
+    const mapSpawns = room.mapData?.spawnPoints || [];
+    
     players.forEach((p, i) => {
-      const sp  = SPAWN_POINTS[i % 4];
-      const off = i >= 4
+      let sp: SpawnPoint;
+      if (mapSpawns.length > 0) {
+        sp = mapSpawns[i % mapSpawns.length];
+      } else {
+        sp = SPAWN_POINTS[i % 4];
+      }
+      
+      const off = i >= (mapSpawns.length || 4)
         ? { x: (Math.random() - 0.5) * 60, y: (Math.random() - 0.5) * 60 }
         : { x: 0, y: 0 };
+        
       result[p.id] = { x: Math.round(sp.x + off.x), y: Math.round(sp.y + off.y) };
     });
     return result;
