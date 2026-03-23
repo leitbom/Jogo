@@ -7,10 +7,12 @@
 import type { IRoomRepository } from '../domain/ports/out/IRoomRepository';
 import type { IGameEventEmitter } from '../domain/ports/out/IGameEventEmitter';
 import type { ILogger } from '../domain/ports/out/ILogger';
-import { createRoom } from '../domain/entities/Room';
+import { createRoom, type Room } from '../domain/entities/Room';
 import { createPlayer, toPublicPlayer } from '../domain/entities/Player';
 import type { AgentKey } from '../domain/entities/Player';
 import { MIN_TO_START, MAX_ROOM_SIZE } from '../domain/entities/AgentStats.js';
+import { GAME_MODE_PRESETS } from '../domain/entities/GameModeConfig';
+import type { GameMode } from '../domain/entities/GameModeConfig';
 import fs from 'fs';
 import path from 'path';
 
@@ -55,6 +57,8 @@ export class LobbyService {
       roomCode: code,
       players: [...room.players.values()].map(toPublicPlayer),
       selectedMap: room.selectedMap,
+      gameMode: room.gameMode,
+      gameModeConfig: room.gameModeConfig,
       myId: socketId,
       myName: playerName,
     });
@@ -90,6 +94,8 @@ export class LobbyService {
       roomCode: room.code,
       players: [...room.players.values()].map(toPublicPlayer),
       selectedMap: room.selectedMap,
+      gameMode: room.gameMode,
+      gameModeConfig: room.gameModeConfig,
       myId: socketId,
       myName: playerName,
     });
@@ -122,7 +128,29 @@ export class LobbyService {
     this.emitter.toRoom(room.code, 'lobby:map_changed', { mapName });
   }
 
-  private loadMapData(room: any, mapName: string): void {
+  selectGameMode(socketId: string, mode: GameMode): void {
+    const room = this.rooms.findBySocketId(socketId);
+    if (!room) return;
+    const player = room.players.get(socketId);
+    if (!player || !player.isHost || room.state !== 'lobby') return;
+
+    if (!GAME_MODE_PRESETS[mode]) return;
+    
+    room.gameMode = mode;
+    room.gameModeConfig = GAME_MODE_PRESETS[mode];
+    
+    // Also update the map to the mode's default
+    room.selectedMap = room.gameModeConfig.defaultMap;
+    this.loadMapData(room, room.selectedMap);
+
+    this.emitter.toRoom(room.code, 'lobby:mode_changed', { 
+      gameMode: room.gameMode,
+      gameModeConfig: room.gameModeConfig,
+      selectedMap: room.selectedMap
+    });
+  }
+
+  public loadMapData(room: any, mapName: string): void {
     try {
       const mapsDir = path.resolve(process.cwd(), 'public', 'maps');
       const filePath = path.join(mapsDir, mapName);
@@ -184,8 +212,21 @@ export class LobbyService {
       players: [...room!.players.values()].map(toPublicPlayer),
       roomCode: room!.code,
       selectedMap: room!.selectedMap,
+      gameMode: room!.gameMode,
+      gameModeConfig: room!.gameModeConfig,
     });
     this.logger.info(`[room:reset] ${room!.code}`);
+  }
+
+  public selectTeam(socketId: string, team: 'A' | 'B' | 'NONE'): void {
+    const room = this.rooms.findBySocketId(socketId);
+    if (!room) return;
+
+    const player = room.players.get(socketId);
+    if (!player || player.ready) return;
+
+    player.team = team;
+    this.emitter.toRoom(room.code, 'lobby:team_changed', { id: socketId, team });
   }
 
   // ── LEAVE ROOM ────────────────────────────────────────────────

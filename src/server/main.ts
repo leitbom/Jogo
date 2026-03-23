@@ -18,8 +18,9 @@ import { ConsoleLogger } from './adapters/out/ConsoleLogger';
 import { InMemoryRoomRepository } from './adapters/out/InMemoryRoomRepository';
 import { SocketIoEmitter } from './adapters/out/SocketIoEmitter';
 import { LobbyService } from './application/LobbyService';
-import { SurvivalGameService } from './application/SurvivalGameService';
+import { GameModeFactory } from './application/GameModeFactory';
 import { SecurityGuard } from './application/SecurityGuard';
+import type { GameMode } from './domain/entities/GameModeConfig';
 import type { AgentKey, PlayerStateRelay } from './domain/entities/Player';
 import {
   DISCONNECT_DEAD_MS,
@@ -49,12 +50,21 @@ const emitter = new SocketIoEmitter(io, socketMap);
 
 // ── Application services ─────────────────────────────────────────
 const security = new SecurityGuard(logger);
-const survivalSvc = new SurvivalGameService(roomRepo, emitter, logger, security);
+
+// We'll use a factory to get the right service instance
+const getGameSvc = (mode: GameMode) => GameModeFactory.create(mode, roomRepo, emitter, logger, security);
+
 const lobbySvc = new LobbyService(
   roomRepo,
   emitter,
   logger,
-  (roomCode) => survivalSvc.startCountdown(roomCode),
+  (roomCode) => {
+    const room = roomRepo.findByCode(roomCode);
+    if (room) {
+      const svc = getGameSvc(room.gameMode);
+      svc.startCountdown(roomCode);
+    }
+  },
 );
 
 // ── Status endpoint ─────────────────────────────────────────────
@@ -110,6 +120,8 @@ setInterval(() => {
         io.to(room.code).emit('lobby:state_sync', {
           players: [...room.players.values()].map(toPublicPlayer),
           roomCode: room.code,
+          gameMode: room.gameMode,
+          gameModeConfig: room.gameModeConfig,
           selectedMap: room.selectedMap,
         });
       }
@@ -151,6 +163,18 @@ io.on('connection', (socket: Socket) => {
   socket.on('lobby:select_map', ({ mapName }: { mapName: string }) => {
     if (!security.checkLobbyRate(socket.id)) return;
     lobbySvc.selectMap(socket.id, mapName);
+  });
+
+  socket.on('lobby:select_game_mode', ({ mode }: { mode: GameMode }) => {
+    if (!security.checkLobbyRate(socket.id)) return;
+    lobbySvc.selectGameMode(socket.id, mode);
+  });
+
+  socket.on('lobby:select_team', ({ team }: { team: any }) => {
+    if (!security.checkLobbyRate(socket.id)) return;
+    if (team === 'A' || team === 'B' || team === 'NONE') {
+      lobbySvc.selectTeam(socket.id, team);
+    }
   });
 
   socket.on('lobby:toggle_ready', ({ ready }: { ready: boolean }) => {
@@ -197,9 +221,10 @@ io.on('connection', (socket: Socket) => {
     if (room.state === 'in_game') {
       const weapon = AGENT_STATS[p.agentKey]?.weapon ?? 'ak47';
       if (!security.checkShotRate(socket.id, weapon)) return;
+      const svc = getGameSvc(room.gameMode);
+      svc.incrementShotsFired(socket.id);
     }
 
-    survivalSvc.incrementShotsFired(socket.id);
     socket.to(room.code).emit('peer_shot', { id: socket.id, ...(data as object) });
   });
 
@@ -272,11 +297,15 @@ io.on('connection', (socket: Socket) => {
   // DEATH — action-rate-limited; server re-validates alive state
   socket.on('i_died', (data: { killedBy?: string; cause?: string }) => {
     if (!security.checkActionRate(socket.id)) return;
-    survivalSvc.handlePlayerDied(
-      socket.id,
-      data?.killedBy ?? null,
-      data?.cause ?? 'BALA',
-    );
+    const room = roomRepo.findBySocketId(socket.id);
+    if (room) {
+      const svc = getGameSvc(room.gameMode);
+      svc.handlePlayerDied(
+        socket.id,
+        data?.killedBy ?? null,
+        data?.cause ?? 'BALA',
+      );
+    }
   });
 
   // DISCONNECT
@@ -290,7 +319,8 @@ io.on('connection', (socket: Socket) => {
       const p = room.players.get(socket.id);
       if (p?.alive) {
         p.disconnectTimerId = setTimeout(() => {
-          survivalSvc.handleDisconnectDeath(socket.id);
+          const svc = getGameSvc(room.gameMode);
+          svc.handleDisconnectDeath(socket.id);
         }, DISCONNECT_DEAD_MS);
         return;
       }

@@ -4,6 +4,8 @@
 
 export type AgentKey = 'fable' | 'fate' | 'foul' | 'nykora';
 
+export type Team = 'A' | 'B' | 'NONE';
+
 /** In-lobby status (public, shared with all clients) */
 export interface PublicPlayer {
   id: string;
@@ -11,6 +13,7 @@ export interface PublicPlayer {
   agentKey: AgentKey;
   ready: boolean;
   isHost: boolean;
+  team: Team;
 }
 
 /** Full server-side player state */
@@ -59,6 +62,7 @@ export function createPlayer(id: string, name: string): Player {
     agentKey: 'nykora',
     ready: false,
     isHost: false,
+    team: 'NONE',
     alive: true,
     hp: 100,
     armor: 0,
@@ -86,5 +90,6 @@ export function toPublicPlayer(p: Player): PublicPlayer {
     agentKey: p.agentKey,
     ready: p.ready,
     isHost: p.isHost,
+    team: p.team,
   };
 }

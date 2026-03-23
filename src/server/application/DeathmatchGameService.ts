@@ -1,7 +1,8 @@
 // ═══════════════════════════════════════════════════════
-// Application Service: SurvivalGameService
-// Responsibility: match lifecycle — countdown, spawn,
-//   180s timer, kill handling, win conditions, end match.
+// Application Service: DeathmatchGameService
+// Responsibility: match lifecycle for Deathmatch mode — 
+//   countdown, spawn, respawn, kill limit win condition, 
+//   timer fallback, end match.
 // ═══════════════════════════════════════════════════════
 
 import type { IRoomRepository }   from '../domain/ports/out/IRoomRepository';
@@ -11,26 +12,13 @@ import type { Room, SpawnPoint }  from '../domain/entities/Room';
 import { toPublicPlayer }         from '../domain/entities/Player';
 import {
   AGENT_STATS, WEAPON_MAG,
-  MATCH_TIME_S, COUNTDOWN_S, SPAWN_POINTS,
+  SPAWN_POINTS,
   TICK_HZ_GAME,
 } from '../domain/entities/AgentStats';
 import type { SecurityGuard } from './SecurityGuard';
 import type { IGameModeService } from '../domain/ports/in/IGameModeService';
 
-// ── Types ──────────────────────────────────────────────
-export interface PlayerStat {
-  name: string;
-  agentKey: string;
-  kills: number;
-  damageDealt: number;
-  damageTaken: number;
-  accuracy: number;
-  survivalTime: number;
-  winner: boolean;
-}
-export type StatsMap = Record<string, PlayerStat>;
-
-export class SurvivalGameService implements IGameModeService {
+export class DeathmatchGameService implements IGameModeService {
   constructor(
     private readonly rooms: IRoomRepository,
     private readonly emitter: IGameEventEmitter,
@@ -44,7 +32,7 @@ export class SurvivalGameService implements IGameModeService {
     if (!room) return;
     room.state = 'countdown';
 
-    let n = COUNTDOWN_S;
+    let n = 3; // Use constant or room config
     this.emitter.toRoom(roomCode, 'game:countdown', { count: n });
 
     const iv = setInterval(() => {
@@ -71,6 +59,7 @@ export class SurvivalGameService implements IGameModeService {
     room.totalPlayers  = room.players.size;
     room.lastDeadIds   = [];
     room.matchStartTime = now;
+    room.killLeader    = null;
 
     for (const p of room.players.values()) {
       const stats = AGENT_STATS[p.agentKey] ?? AGENT_STATS.fable;
@@ -97,15 +86,15 @@ export class SurvivalGameService implements IGameModeService {
       players:      [...room.players.values()].map(toPublicPlayer),
       roomCode,
       totalPlayers: room.totalPlayers,
-      timerTotal:   MATCH_TIME_S,
+      timerTotal:   room.gameModeConfig.matchTimeLimitS,
       mapData:      room.mapData,
     });
-    this.emitter.toRoom(roomCode, 'game:timer',       { remaining_s: MATCH_TIME_S });
+    this.emitter.toRoom(roomCode, 'game:timer',       { remaining_s: room.gameModeConfig.matchTimeLimitS });
     this.emitter.toRoom(roomCode, 'game:alive_count', { alive: room.aliveCount, total: room.totalPlayers });
 
-    this.logger.info(`[survival:start] ${roomCode} ${room.players.size}p`);
+    this.logger.info(`[deathmatch:start] ${roomCode} ${room.players.size}p`);
     this.startTimer(room);
-    this.startStateTick(room);  // 30 Hz state-broadcast tick
+    this.startStateTick(room); 
   }
 
   // ── HANDLE PLAYER DEATH ───────────────────────────────
@@ -119,23 +108,73 @@ export class SurvivalGameService implements IGameModeService {
     player.deaths++;
 
     const killer = killedBy ? room!.players.get(killedBy) : null;
-    if (killer?.alive) killer.kills++;
+    if (killer && killer.id !== socketId) {
+      killer.kills++;
+      // Update kill leader
+      if (!room!.killLeader || killer.kills > (room!.players.get(room!.killLeader)?.kills || 0)) {
+        room!.killLeader = killer.id;
+      }
+    }
 
     room!.lastDeadIds = [socketId];
-    room!.aliveCount  = [...room!.players.values()].filter(p => p.alive).length;
 
     this.emitter.toRoom(room!.code, 'game:kill', {
       killer_id: killedBy,
       victim_id: socketId,
       cause,
     });
-    this.emitter.toRoom(room!.code, 'game:alive_count', {
-      alive: room!.aliveCount,
-      total: room!.totalPlayers,
-    });
+    
     this.logger.info(`[kill] ${(killedBy ?? '??').slice(0,6)}→${socketId.slice(0,6)} (${cause})`);
 
     this.checkWinCondition(room!);
+
+    // Start respawn timer
+    if (room!.state === 'in_game') {
+      const deadline = Date.now() + room!.gameModeConfig.respawnTimeS * 1000;
+      this.emitter.toSocket(socketId, 'respawn_at', { deadline });
+      
+      setTimeout(() => {
+        this.respawnPlayer(room!, socketId);
+      }, room!.gameModeConfig.respawnTimeS * 1000);
+    }
+  }
+
+  private respawnPlayer(room: Room, socketId: string): void {
+    const p = room.players.get(socketId);
+    if (!p || p.alive || room.state !== 'in_game') return;
+
+    const stats = AGENT_STATS[p.agentKey] ?? AGENT_STATS.fable;
+    const mag   = WEAPON_MAG[stats.weapon] ?? 30;
+    
+    // Assign a random spawn point
+    const mapSpawns = room.mapData?.spawnPoints || [];
+    let sp: SpawnPoint;
+    if (mapSpawns.length > 0) {
+      sp = mapSpawns[Math.floor(Math.random() * mapSpawns.length)];
+    } else {
+      sp = SPAWN_POINTS[Math.floor(Math.random() * 4)];
+    }
+
+    p.alive = true;
+    p.hp = stats.hp;
+    p.armor = stats.armor;
+    p.ammoCurrentMag = mag;
+    p.ammoReserve = mag;
+    p.deathTime = null;
+    
+    if (this.security) this.security.resetPosition(p.id);
+
+    this.emitter.toRoom(room.code, 'game:respawn', {
+      id: p.id,
+      x: sp.x,
+      y: sp.y,
+      hp: p.hp,
+      armor: p.armor,
+      ammoCurrentMag: p.ammoCurrentMag,
+      ammoReserve: p.ammoReserve
+    });
+
+    this.logger.info(`[respawn] ${p.id.slice(0,6)} at (${sp.x},${sp.y})`);
   }
 
   // ── DISCONNECT DEATH ─────────────────────────────────
@@ -166,17 +205,13 @@ export class SurvivalGameService implements IGameModeService {
   // ── WIN CONDITION ────────────────────────────────────
   private checkWinCondition(room: Room): void {
     if (room.state !== 'in_game') return;
-    const alive = [...room.players.values()].filter(p => p.alive);
+    
+    const killLimit = room.gameModeConfig.killLimit;
+    const topScorer = [...room.players.values()].find(p => p.kills >= killLimit);
 
-    if (alive.length === 1) {
-      alive[0].winner = true;
-      this.endMatch(room, [alive[0].id]);
-    } else if (alive.length === 0) {
-      const tieIds = room.lastDeadIds.length > 0 ? room.lastDeadIds : [];
-      this.endMatch(room, tieIds);
-    } else {
-      room.aliveCount = alive.length;
-      this.emitter.toRoom(room.code, 'game:alive_count', { alive: alive.length, total: room.totalPlayers });
+    if (topScorer) {
+      topScorer.winner = true;
+      this.endMatch(room, [topScorer.id]);
     }
   }
 
@@ -192,7 +227,7 @@ export class SurvivalGameService implements IGameModeService {
       if (p) p.winner = true;
     });
 
-    const stats: StatsMap = {};
+    const stats: any = {};
     const now = Date.now();
     for (const p of room.players.values()) {
       const elapsed = p.deathTime != null
@@ -216,7 +251,7 @@ export class SurvivalGameService implements IGameModeService {
 
   // ── TIMER ────────────────────────────────────────────
   private startTimer(room: Room): void {
-    room.timerRemaining = MATCH_TIME_S;
+    room.timerRemaining = room.gameModeConfig.matchTimeLimitS;
     room.timerIntervalId = setInterval(() => {
       if (room.state !== 'in_game') {
         clearInterval(room.timerIntervalId!);
@@ -228,9 +263,19 @@ export class SurvivalGameService implements IGameModeService {
       if (room.timerRemaining <= 0) {
         clearInterval(room.timerIntervalId!);
         room.timerIntervalId = null;
-        const alive = [...room.players.values()].filter(p => p.alive);
-        alive.forEach(p => { p.winner = true; });
-        this.endMatch(room, alive.map(p => p.id));
+        
+        // Winner is the one with most kills
+        let maxKills = -1;
+        let winners: string[] = [];
+        for (const p of room.players.values()) {
+          if (p.kills > maxKills) {
+            maxKills = p.kills;
+            winners = [p.id];
+          } else if (p.kills === maxKills) {
+            winners.push(p.id);
+          }
+        }
+        this.endMatch(room, winners);
       }
     }, 1_000);
   }
@@ -240,7 +285,6 @@ export class SurvivalGameService implements IGameModeService {
     const players = [...room.players.values()].sort(() => Math.random() - 0.5);
     const result: Record<string, SpawnPoint> = {};
     
-    // Prioritize spawn points from map data
     const mapSpawns = room.mapData?.spawnPoints || [];
     
     players.forEach((p, i) => {

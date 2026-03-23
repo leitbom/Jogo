@@ -1095,7 +1095,62 @@
       letter-spacing: 1px;
     }
 
-    /* â”€â”€ Error toast â”€â”€ */
+    /* ── Mode selector ── */
+    .lc-modes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .lc-mode-card {
+      background: #0b0b18;
+      border: 1px solid #1e2a4e;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .lc-mode-card:hover:not(.disabled) {
+      border-color: #e94560;
+      background: #121225;
+    }
+    .lc-mode-card.active {
+      border-color: #e94560;
+      background: rgba(233, 69, 96, 0.05);
+      box-shadow: inset 0 0 10px rgba(233, 69, 96, 0.1);
+    }
+    .lc-mode-card.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      filter: grayscale(0.8);
+    }
+    .lc-mode-name {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #e94560;
+      margin-bottom: 4px;
+    }
+    .lc-mode-desc {
+      font-size: 10px;
+      color: #556;
+      line-height: 1.2;
+    }
+    .lc-mode-coming-soon {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      font-size: 8px;
+      background: #333;
+      color: #aaa;
+      padding: 2px 4px;
+      border-radius: 3px;
+      letter-spacing: 1px;
+    }
+
+    /* ── Error toast ── */
     .lc-err {
       background: rgba(233, 69, 96, .12);
       border: 1px solid #e94560;
@@ -1425,6 +1480,29 @@
 
       <div id="lc-players" class="lc-players"></div>
 
+      <!-- Mode selection -->
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#445;margin-bottom:8px;text-transform:uppercase;">Modo de Jogo</div>
+      <div class="lc-modes" id="lc-modes">
+        <div class="lc-mode-card active" data-mode="survival">
+          <div class="lc-mode-name">SURVIVAL</div>
+          <div class="lc-mode-desc">Último vivo vence. Sem respawn.</div>
+        </div>
+        <div class="lc-mode-card" data-mode="deathmatch">
+          <div class="lc-mode-name">DEATHMATCH</div>
+          <div class="lc-mode-desc">FFA com respawn. Primeiro a 15 kills.</div>
+        </div>
+        <div class="lc-mode-card disabled" title="Em breve">
+          <div class="lc-mode-name">K.O.T.H.</div>
+          <div class="lc-mode-desc">Controle a zona central.</div>
+          <div class="lc-mode-coming-soon">EM BREVE</div>
+        </div>
+        <div class="lc-mode-card disabled" title="Em breve">
+          <div class="lc-mode-name">S & D</div>
+          <div class="lc-mode-desc">Plante ou desarme a bomba.</div>
+          <div class="lc-mode-coming-soon">EM BREVE</div>
+        </div>
+      </div>
+
       <!-- Map selection -->
       <div class="lc-map">
         <div style="font-size:14px;font-weight:600;color:#889;">MAPA</div>
@@ -1523,6 +1601,7 @@
   <div id="death-screen">
     <div id="death-title">ABATIDO</div>
     <div id="death-cause">—</div>
+    <div id="death-respawn" style="display:none; color:#e94560; font-size:14px; letter-spacing:4px; margin-top:10px;">Respawn em <span id="death-respawn-time">3</span>s</div>
     <div id="death-timer" style="display:none"></div>
   </div>
   <div id="controls">
@@ -1611,8 +1690,8 @@
       camera: { type: 'camera', label: 'CÂMERA', hint: 'Q · COLOCAR', fovAngle: 180, fovDist: 800, duration: 20, rechargeTime: 15, staminaCost: 30, hp: 1, projectileSpeed: 420, projectileMaxTime: 1.0, viewSwitchCooldown: 0.65 },
       tower: { type: 'tower', label: 'TORRE', hint: 'T · COLOCAR', hp: 50, maxAmmo: 50, damage: 10, fireRate: 10, range: 350, duration: 15, autoDmg: 68, autoRadius: 180, staminaCost: 30, rechargeTime: 18, bulletSpeed: 1800, bulletColor: '#f1c40f' },
       shield: { type: 'shield', label: 'ESCUDO', hint: 'Q · ATIVAR', duration: 7.5, cooldown: 12, staminaCost: 20 },
-      dash: { type: 'dash', label: 'DASH', hint: 'RMB · AVANÇAR', range: 105, maxResets: 2, cooldown: 10, staminaCost: 15 },
-      spin: { type: 'spin', label: 'CORTE GIRATÓRIO', hint: 'E · GIRAR', damage: 75, radius: 120, maxCharges: 2, rechargeTime: 8, staminaCost: 25, cooldown: 0.5 },
+      dash: { type: 'dash', label: 'DASH', hint: 'RMB · AVANÇAR', range: 105, maxResets: 1, cooldown: 10, staminaCost: 30 },
+      spin: { type: 'spin', label: 'CORTE GIRATÓRIO', hint: 'E · GIRAR', damage: 75, radius: 120, maxCharges: 2, rechargeTime: 8, staminaCost: 50, cooldown: 0.5 },
     });
 
     // ════════════════════════════════════════════════════════════════════════════════
@@ -1826,6 +1905,7 @@
     let stateEmitTimer = 0;
     const STATE_EMIT_INTERVAL = 0.033; // ~30fps
     let myKills = 0, myDeaths = 0;
+    let lastHitter = null, lastCause = 'BALA';
 
     // ——— Survival mode state —————————————————————————————————————————————————————
     let survivalTimer = 180;   // seconds remaining
@@ -1835,6 +1915,10 @@
     let specTargetId = null;  // ID of player being spectated
     let ammoReserve = 0;     // tactical reload reserve (1 extra mag)
     let remoteAliveMap = {};    // {id: boolean} — tracks who is still alive
+
+    let currentGameMode = 'survival'; // 'survival' | 'deathmatch'
+    let gameModeConfig = { killLimit: 0, respawnEnabled: false, respawnTimeS: 0 };
+    let isLobbyHost = false;
 
     let loopStarted = false;
 
@@ -1954,16 +2038,44 @@
       socket.on('peer_agent', data => { if (remotePlayers[data.id]) remotePlayers[data.id].agentKey = data.agentKey; });
       socket.on('peer_left', data => { delete remotePlayers[data.id]; delete remoteDeployables[data.id]; updateLobbyBadge(); });
 
-      // Dano autoritativo — BUG-FIX: mortos ignoram take_dmg
       socket.on('take_dmg', data => {
         if (player.dead) return;
         if (!isFinite(data.dmg) || data.dmg <= 0) return;
+        lastHitter = data.from || null;
+        lastCause = data.cause || 'BALA';
         applyDmg(player, data.dmg, data.cause || 'BALA');
       });
 
       // Respawn autoritativo — servidor envia deadline real
       socket.on('respawn_at', data => {
         player.respawnDeadline = data.deadline;
+      });
+
+      socket.on('game:respawn', data => {
+        if (data.id === myId) {
+          player.x = data.x;
+          player.y = data.y;
+          player.hp = data.hp;
+          player.armor = data.armor;
+          player.ammo = data.ammoCurrentMag;
+          ammoReserve = data.ammoReserve;
+          player.dead = false;
+          player.respawnDeadline = null;
+          isSpectating = false;
+          hideDeathScreen();
+          updateVitalsHUD();
+          updateWeaponHUD();
+          if (camera) {
+            camera.x = player.x;
+            camera.y = player.y;
+          }
+        } else {
+          const rp = remotePlayers[data.id];
+          if (rp) {
+            rp.dead = false;
+            remoteAliveMap[data.id] = true;
+          }
+        }
       });
 
       socket.on('peer_shot', data => {
@@ -2036,14 +2148,54 @@
         if (isSpectating && specTargetId === victim_id) {
           setTimeout(() => { if (remotePlayers[victim_id]) remotePlayers[victim_id].dead = true; cycleSpectatorTarget(); }, 300);
         }
-        // Mark victim dead in remote state
         if (remotePlayers[victim_id]) remotePlayers[victim_id].dead = true;
+        updateSurvivalHUD();
       });
 
       socket.on('game:end', ({ winners, stats }) => {
         if (gameState !== 'playing') return;
         // Brief delay so last action is visible
         setTimeout(() => showEndgame(winners, stats), 1500);
+      });
+
+      socket.on('lobby:mode_changed', ({ gameMode, gameModeConfig: config, selectedMap }) => {
+        currentGameMode = gameMode;
+        gameModeConfig = config;
+        updateLobbyModesUI();
+        if (selectedMap) {
+          const sel = document.getElementById('lc-map-select');
+          if (sel) sel.value = selectedMap;
+        }
+      });
+    }
+
+    function updateLobbyModesUI() {
+      const cards = document.querySelectorAll('.lc-mode-card');
+      cards.forEach(card => {
+        const mode = card.getAttribute('data-mode');
+        if (mode === currentGameMode) card.classList.add('active');
+        else card.classList.remove('active');
+        
+        // Disable cards if not host
+        if (!isLobbyHost) {
+          card.style.pointerEvents = 'none';
+        } else {
+          card.style.pointerEvents = card.classList.contains('disabled') ? 'none' : 'auto';
+        }
+      });
+      
+      const title = document.getElementById('rs-title');
+      if (title) title.textContent = currentGameMode.toUpperCase();
+    }
+
+    function setupLobbyModeSelectors() {
+      const cards = document.querySelectorAll('.lc-mode-card:not(.disabled)');
+      cards.forEach(card => {
+        card.addEventListener('click', () => {
+          if (!isLobbyHost) return;
+          const mode = card.getAttribute('data-mode');
+          if (mode) socket.emit('lobby:select_game_mode', { mode });
+        });
       });
     }
 
@@ -2097,6 +2249,7 @@
       survivalAlive = survivalTotal;
       isSpectating = false;
       specTargetId = null;
+      myKills = 0; myDeaths = 0; updateKD();
       remoteAliveMap = {};
       updateSurvivalHUD();
       showSurvivalHUD();
@@ -2133,6 +2286,28 @@
       const myP = (data.players || []).find(p => p.id === (myId || socket?.id) || p.name === (lobbyMyName || ""));
       const forceAgentKey = myP?.agentKey || menuAgentKey || 'fable';
       player.agentKey = forceAgentKey;
+
+      const statsKills = document.getElementById('stats-kills');
+      if (statsKills) statsKills.textContent = myKills;
+      const statsDeaths = document.getElementById('stats-deaths');
+      if (statsDeaths) statsDeaths.textContent = myDeaths;
+
+      // Deathmatch HUD: Kills / Limit
+      if (currentGameMode === 'deathmatch') {
+        const hudKills = document.getElementById('hud-kills');
+        const hudTotal = document.getElementById('hud-total');
+        const hudLabel = document.getElementById('hud-player-count-label');
+        if (hudLabel) hudLabel.textContent = 'KILLS';
+        if (hudKills) hudKills.textContent = myKills;
+        if (hudTotal) hudTotal.textContent = '/' + (gameModeConfig.killLimit || 25);
+      } else {
+        const hudKills = document.getElementById('hud-kills');
+        const hudTotal = document.getElementById('hud-total');
+        const hudLabel = document.getElementById('hud-player-count-label');
+        if (hudLabel) hudLabel.textContent = 'RESTANTES';
+        if (hudKills) hudKills.textContent = survivalAlive; // Changed from survivalLeft to survivalAlive
+        if (hudTotal) hudTotal.textContent = '/' + survivalTotal;
+      }
 
       try {
         applyAgentSurvival(player.agentKey);
@@ -2232,10 +2407,19 @@
       const mm = String(Math.floor(s / 60)).padStart(2, '0');
       const ss = String(s % 60).padStart(2, '0');
       const el = document.getElementById('sv-timer');
-      el.textContent = mm + ':' + ss;
-      el.classList.toggle('urgent', s <= 30);
-      document.getElementById('sv-alive-n').textContent = survivalAlive;
-      document.getElementById('sv-alive-t').textContent = survivalTotal;
+      if (el) {
+        el.textContent = mm + ':' + ss;
+        el.classList.toggle('urgent', s <= 30);
+      }
+      
+      const aliveEl = document.getElementById('sv-alive');
+      if (aliveEl) {
+        if (currentGameMode === 'deathmatch') {
+          aliveEl.innerHTML = `KILLS: <span id="sv-alive-n">${myKills}</span>/<span id="sv-alive-t">${gameModeConfig.killLimit || 0}</span>`;
+        } else {
+          aliveEl.innerHTML = `VIVOS: <span id="sv-alive-n">${survivalAlive}</span>/<span id="sv-alive-t">${survivalTotal || 0}</span>`;
+        }
+      }
     }
 
     // ——— Spectator Mode ———
@@ -2285,10 +2469,17 @@
       hideSurvivalHUD();
       const isTie = winners.length !== 1;
       const titleEl = document.getElementById('eg-title');
+      const subTitleEl = document.getElementById('eg-subtitle');
+      if (subTitleEl) subTitleEl.textContent = (currentGameMode || 'survival').toUpperCase() + ' · FIM DE JOGO';
+
       if (winners.length === 0) {
         titleEl.textContent = 'EMPATE'; titleEl.className = 'tie';
-      } else if (isTie) {
+      } else if (isTie && currentGameMode !== 'deathmatch') {
         titleEl.textContent = '🏆 EMPATE'; titleEl.className = 'tie';
+      } else if (currentGameMode === 'deathmatch') {
+        const wid = winners[0]; const ws = stats[wid];
+        titleEl.textContent = '🏆 VITORIA: ' + (ws?.name || '?');
+        titleEl.className = '';
       } else {
         const wid = winners[0]; const ws = stats[wid];
         const agent = AGENTS[ws?.agentKey];
@@ -2327,6 +2518,10 @@
     }
     function hideEndgame() {
       document.getElementById('endgame-screen').classList.remove('active');
+    }
+    function hideDeathScreen() {
+      document.getElementById('death-screen').classList.remove('active');
+      canvas.style.filter = '';
     }
 
     // Endgame buttons
@@ -2370,6 +2565,7 @@
           stateEmitTimer = STATE_EMIT_INTERVAL;
           socket.emit('state', { agentKey: player.agentKey, x: Math.round(player.x), y: Math.round(player.y), angle: player.angle, hp: player.hp, maxHp: player.maxHp, dead: player.dead, _running: player._running, _crouching: player._crouching, shieldActive: player.shieldActive, activeWeapon: player.activeWeapon, viewMode: player.viewMode, slot: mySlot, lightOn: player.lightOn, cam1: fateCam ? { x: Math.round(fateCam.x), y: Math.round(fateCam.y), angle: fateCam.angle } : null, cam2: fateCam2 ? { x: Math.round(fateCam2.x), y: Math.round(fateCam2.y), angle: fateCam2.angle } : null, tower: fateTower ? { x: Math.round(fateTower.x), y: Math.round(fateTower.y), angle: fateTower.angle } : null });
           updateLobbyBadge();
+          setupLobbyModeSelectors();
         }
       }
 
@@ -2649,13 +2845,11 @@
       }
 
       if (hitEnemy) {
-        // Reset Dash (Q) - give 1 base charge back if we have resets left
-        if (p.dashResets < ABILITIES.dash.maxResets) {
-          p.dashResets++;
-          p.abilityCharges = 1;
-          addKF('RESET DASH');
-          showHitMark(false);
-        }
+        // Reset Dash (Q) - give exactly 1 charge back, as requested
+        p.dashResets = 1;
+        p.abilityCharges = 1;
+        addKF('RESET DASH');
+        showHitMark(false);
       }
 
       if (socket && socket.connected) socket.emit('vfx', { type: 'spin', x: p.x, y: p.y, r: def.radius });
@@ -2744,12 +2938,31 @@
           document.getElementById('death-cause').textContent = cause;
           document.getElementById('death-screen').classList.add('active');
           canvas.style.filter = 'grayscale(1) brightness(0.55)';
-          // Survival: enter spectator immediately, no respawn
-          setTimeout(() => {
-            document.getElementById('death-screen').classList.remove('active');
-            enterSpectatorMode();
-          }, 1800);
-          if (socket && socket.connected) socket.emit('i_died', { killedBy: null, cause: String(cause) });
+          
+          if (currentGameMode === 'deathmatch') {
+            const respawnTime = gameModeConfig.respawnTimeS || 3;
+            document.getElementById('death-respawn').style.display = 'block';
+            let timeLeft = respawnTime;
+            document.getElementById('death-respawn-time').textContent = timeLeft;
+            const iv = setInterval(() => {
+              timeLeft--;
+              if (timeLeft <= 0) {
+                clearInterval(iv);
+              } else {
+                document.getElementById('death-respawn-time').textContent = timeLeft;
+              }
+            }, 1000);
+            // Hide screen and reset is handled by game:respawn event from server
+          } else {
+            // Survival: enter spectator immediately, no respawn
+            setTimeout(() => {
+              document.getElementById('death-screen').classList.remove('active');
+              enterSpectatorMode();
+            }, 1800);
+          }
+          if (socket && socket.connected) {
+            socket.emit('i_died', { killedBy: lastHitter, cause: String(lastCause || cause) });
+          }
         }
       }
     }
@@ -4005,10 +4218,25 @@
           '<span class="lc-pname">' + escLobby(p.name) +
           (p.isHost ? '<span class="lc-badge badge-host">HOST</span>' : '') +
           (isMe ? '<span class="lc-badge badge-you">você</span>' : '') +
+          (p.team !== 'NONE' ? '<span class="lc-pteam">TIME ' + p.team + '</span>' : '') +
           '</span>' +
           '<span class="lc-pagent" style="color:' + agent.color + '">' + agent.name + '</span>' +
           '<span class="lc-prole">' + agent.role + '</span>' +
           '<span class="lc-pstatus ' + (p.ready ? 'ready' : 'waiting') + '">' + (p.ready ? (String.fromCharCode(0x2713) + ' Pronto') : 'Aguardando') + '</span>';
+        
+        if (isMe && !p.ready) {
+          const teamRow = document.createElement('div');
+          teamRow.className = 'lc-team-select';
+          ['A', 'B', 'NONE'].forEach(t => {
+            const b = document.createElement('button');
+            b.className = 'lc-team-btn' + (p.team === t ? ' active' : '');
+            b.textContent = t === 'NONE' ? 'Solo' : 'Time ' + t;
+            b.onclick = (e) => { e.stopPropagation(); socket.emit('lobby:select_team', { team: t }); };
+            teamRow.appendChild(b);
+          });
+          el.appendChild(teamRow);
+        }
+        
         container.appendChild(el);
       });
       // Empty slots (show at least 4)
@@ -4033,10 +4261,14 @@
     // ——— Socket events for lobby —————————————————————————————————————————
     function bindLobbyEvents() {
       fetchMaps();
-      socket.on('lobby:state', ({ roomCode, players, myId: id, myName, selectedMap }) => {
+      socket.on('lobby:state', ({ roomCode, players, myId: id, myName, selectedMap, gameMode, gameModeConfig: config, isHost }) => {
         lobbyMyId = id; myId = id; lobbyMyName = myName;
         lobbyPlayers = players;
         lobbyMap = selectedMap;
+        currentGameMode = gameMode || 'survival';
+        gameModeConfig = config || { killLimit: 0, respawnEnabled: false };
+        isLobbyHost = isHost;
+
         const me = players.find(p => p.id === id);
         if (me) {
           lobbyAgentIdx = LOBBY_AGENTS.findIndex(a => a.key === me.agentKey);
@@ -4046,6 +4278,27 @@
         }
         showLobby(roomCode, myName);
         renderLobbyPlayers();
+        updateLobbyModesUI();
+      });
+
+      socket.on('lobby:state_sync', ({ players, selectedMap, gameMode, gameModeConfig: config }) => {
+        lobbyPlayers = players;
+        lobbyMap = selectedMap;
+        if (gameMode) currentGameMode = gameMode;
+        if (config) gameModeConfig = config;
+        
+        const me = players.find(p => p.id === lobbyMyId);
+        if (me) {
+          isLobbyHost = me.isHost;
+          applyReadyUI(me.ready);
+        }
+        
+        renderLobbyPlayers();
+        updateLobbyModesUI();
+        
+        const sel = document.getElementById('lc-map-select');
+        if (sel && selectedMap) sel.value = selectedMap;
+        updateMapSelectState();
       });
 
       socket.on('lobby:player_joined', p => {
@@ -4068,22 +4321,17 @@
         if (id === lobbyMyId) applyReadyUI(ready);
         renderLobbyPlayers();
       });
+      socket.on('lobby:team_changed', ({ id, team }) => {
+        const p = lobbyPlayers.find(p => p.id === id);
+        if (p) p.team = team;
+        renderLobbyPlayers();
+      });
       socket.on('lobby:host_changed', ({ newHostId }) => {
         lobbyPlayers.forEach(p => { p.isHost = p.id === newHostId; });
         renderLobbyPlayers();
         updateMapSelectState();
       });
       socket.on('lobby:error', ({ message }) => showLobbyErr(message));
-
-      socket.on('lobby:state_sync', ({ players, selectedMap }) => {
-        lobbyPlayers = players;
-        if (selectedMap) {
-          lobbyMap = selectedMap;
-          document.getElementById('lc-map-select').value = selectedMap;
-        }
-        renderLobbyPlayers();
-        updateMapSelectState();
-      });
 
       socket.on('lobby:map_changed', ({ selectedMap }) => {
         lobbyMap = selectedMap;
