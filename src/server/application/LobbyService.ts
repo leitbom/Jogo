@@ -32,10 +32,14 @@ export class LobbyService {
 
   // ── CREATE ROOM ────────────────────────────────────────────────
   createRoom(socketId: string, playerName: string): void {
+    const code = this.rooms.generateCode();
+    this.createRoomWithCode(socketId, playerName, code);
+  }
+
+  createRoomWithCode(socketId: string, playerName: string, code: string): void {
     // Leave any current room first
     this.leaveRoom(socketId);
 
-    const code = this.rooms.generateCode();
     const room = createRoom(code);
     this.loadMapData(room, 'default.json');
     const player = createPlayer(socketId, playerName);
@@ -54,14 +58,17 @@ export class LobbyService {
       myId: socketId,
       myName: playerName,
     });
+    this.emitter.toSocket(socketId, 'lobby:joined', { isHost: true }); // Notify client
     this.logger.info(`[room+] ${code} host=${socketId.slice(0, 6)}`);
   }
 
   // ── JOIN ROOM ─────────────────────────────────────────────────
   joinRoom(socketId: string, playerName: string, code: string): void {
-    const room = this.rooms.findByCode(code.toUpperCase().trim());
+    const roomCode = code.toUpperCase().trim();
+    let room = this.rooms.findByCode(roomCode);
     if (!room) {
-      this.emitter.toSocket(socketId, 'lobby:error', { message: 'Sala não encontrada' });
+      // Auto-create room if joining a non-existent code (e.g. from a shared link)
+      this.createRoomWithCode(socketId, playerName, roomCode);
       return;
     }
     if (room.state !== 'lobby') {
@@ -86,6 +93,7 @@ export class LobbyService {
       myId: socketId,
       myName: playerName,
     });
+    this.emitter.toSocket(socketId, 'lobby:joined', { isHost: false }); // Notify client
     this.emitter.toRoomExcept(room.code, socketId, 'lobby:player_joined', {
       id: socketId, name: playerName, agentKey: 'nykora', ready: false, isHost: false,
     });

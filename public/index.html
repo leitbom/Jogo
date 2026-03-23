@@ -52,101 +52,216 @@
       color: #888;
     }
 
-    #weapon-panel {
+
+    /* ════════════════════════════════════════════════════════
+       UNIFIED BOTTOM HUD BAR
+       ════════════════════════════════════════════════════════ */
+    #hud-bar {
       position: fixed;
-      bottom: 24px;
-      right: 24px;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      align-items: stretch;
+      gap: 0;
+      pointer-events: none;
+      z-index: 150;
+      background: rgba(8, 8, 14, 0.88);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+      font-family: 'Rajdhani', sans-serif;
+    }
+    #hud-bar.active { display: flex; }
+
+    /* ── Dividers between zones ── */
+    .hud-divider {
+      width: 1px;
+      background: rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+
+    /* ══ LEFT ZONE: Vitals ══ */
+    #hud-vitals {
       display: flex;
       flex-direction: column;
-      align-items: flex-end;
-      gap: 3px;
-      pointer-events: none;
+      justify-content: center;
+      gap: 5px;
+      padding: 12px 16px;
+      min-width: 160px;
     }
-
-    #wp-name {
-      color: #ff4400;
-      font-size: 13px;
-      letter-spacing: 4px;
-    }
-
-    #wp-ammo {
-      color: #fff;
-      font-size: 28px;
-      font-weight: bold;
-      letter-spacing: 2px;
-    }
-
-    #wp-ammo span {
-      color: #444;
-      font-size: 15px;
-    }
-
-    #wp-state {
-      color: #555;
-      font-size: 10px;
+    #hud-agent-badge {
+      font-size: 11px;
+      font-weight: 700;
       letter-spacing: 3px;
+      color: var(--hud-color, #ff4400);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+      text-shadow: 0 0 10px var(--hud-color, #ff4400);
+    }
+    .hud-stat-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .hud-stat-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: #556;
+    }
+    .hud-stat-label span { color: #aaa; font-size: 10px; }
+    .hud-bar-track {
+      width: 130px;
+      height: 3px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .hud-bar-fill {
+      height: 3px;
+      border-radius: 2px;
+      transition: width 0.15s ease;
+    }
+    #hud-armor-fill { background: #3498db; }
+
+    /* ══ CENTER ZONE: Abilities ══ */
+    #hud-abilities {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 14px;
+    }
+    .hud-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      min-width: 64px;
+      padding: 6px 10px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: border-color 0.2s;
+    }
+    .hud-slot.active-ability {
+      border-color: var(--slot-color, rgba(255,255,255,0.2));
+      background: rgba(255,255,255,0.06);
+    }
+    .hud-slot-key {
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: #444;
+      font-weight: 600;
+    }
+    .hud-slot-label {
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: #888;
+      font-weight: 700;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .hud-slot-charges {
+      display: flex;
+      gap: 3px;
+    }
+    .hud-pip {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: background 0.15s;
+    }
+    .hud-pip.filled {
+      background: var(--slot-color, #aaa);
+      border-color: var(--slot-color, #aaa);
+      box-shadow: 0 0 5px var(--slot-color, #aaa);
+    }
+    .hud-slot-bar-track {
+      width: 100%;
+      height: 2px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+    .hud-slot-bar-fill {
+      height: 2px;
+      border-radius: 1px;
+      background: var(--slot-color, #aaa);
+      transition: width 0.2s ease;
+    }
+    .hud-slot-state {
+      font-size: 8px;
+      letter-spacing: 1px;
+      color: #444;
+      text-align: center;
+      white-space: nowrap;
     }
 
-    #wp-reload-track {
+    /* ══ RIGHT ZONE: Weapon ══ */
+    #hud-weapon {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 4px;
+      padding: 12px 16px;
+      min-width: 140px;
+    }
+    #hud-wp-name {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--hud-color, #ff4400);
+      text-transform: uppercase;
+    }
+    #hud-wp-ammo {
+      font-size: 26px;
+      font-weight: 700;
+      color: #e0e0e0;
+      letter-spacing: 1px;
+      line-height: 1;
+    }
+    #hud-wp-ammo .hud-reserve {
+      color: #334;
+      font-size: 14px;
+      font-weight: 400;
+    }
+    #hud-wp-state {
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: #556;
+    }
+    #hud-wp-state.reload  { color: #ffaa22; }
+    #hud-wp-state.no-ammo { color: #e74c3c; }
+    .hud-reload-track {
       width: 110px;
       height: 2px;
-      background: #1a1a1a;
+      background: rgba(255,255,255,0.06);
+      border-radius: 1px;
+      overflow: hidden;
       display: none;
     }
-
-    #wp-reload-fill {
-      height: 2px;
-      background: #ff4400;
-      width: 0;
-    }
-
-    #wp-mode {
-      color: #333;
-      font-size: 9px;
+    #hud-wp-mode {
+      font-size: 8px;
       letter-spacing: 2px;
+      color: #333;
+    }
+    #hud-reload-fill {
+      height: 2px;
+      background: var(--hud-color, #ff4400);
+      width: 0;
+      transition: width 0.05s linear;
+      border-radius: 1px;
     }
 
-    #ability-panel {
-      position: fixed;
-      bottom: 24px;
-      right: 170px;
-      display: none;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 4px;
-      pointer-events: none;
-    }
-
-    #ab-label {
-      color: #888;
-      font-size: 9px;
-      letter-spacing: 3px;
-    }
-
-    #ab-pips {
-      display: flex;
-      gap: 4px;
-    }
-
-    .ab-pip {
-      width: 14px;
-      height: 14px;
-      border: 1px solid #282828;
-      background: #111;
-      transition: background .15s;
-    }
-
-    .ab-pip.he-on {
-      background: #ff6600;
-      border-color: #ff8800;
-      box-shadow: 0 0 4px #ff6600;
-    }
-
-    .ab-pip.fl-on {
-      background: #66ccff;
-      border-color: #88eeff;
-      box-shadow: 0 0 4px #66ccff;
-    }
 
     /* ── Map picker CSS ── */
     .lc-map {
@@ -181,114 +296,7 @@
       background: #0b0b18;
     }
 
-    #ab-rech-track {
-      width: 64px;
-      height: 2px;
-      background: #1a1a1a;
-    }
 
-    #ab-rech-fill {
-      height: 2px;
-      width: 0;
-    }
-
-    #ab-hint {
-      color: #333;
-      font-size: 9px;
-      letter-spacing: 2px;
-    }
-
-    #cam-panel,
-    #tower-panel {
-      position: fixed;
-      right: 24px;
-      display: none;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 3px;
-      pointer-events: none;
-    }
-
-    #cam-panel {
-      bottom: 180px;
-    }
-
-    #tower-panel {
-      bottom: 110px;
-    }
-
-    .sec-label {
-      font-size: 9px;
-      letter-spacing: 3px;
-    }
-
-    .sec-bar-track {
-      width: 80px;
-      height: 2px;
-      background: #1a1a1a;
-    }
-
-    .sec-bar-fill {
-      height: 2px;
-      width: 0;
-    }
-
-    .sec-state {
-      color: #555;
-      font-size: 9px;
-      letter-spacing: 2px;
-    }
-
-    #shield-panel {
-      position: fixed;
-      bottom: 110px;
-      right: 24px;
-      display: none;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 3px;
-      pointer-events: none;
-    }
-
-    #shield-label {
-      color: #2ecc71;
-      font-size: 9px;
-      letter-spacing: 3px;
-    }
-
-    #shield-bar-track {
-      width: 80px;
-      height: 2px;
-      background: #1a1a1a;
-    }
-
-    #shield-bar-fill {
-      height: 2px;
-      background: #2ecc71;
-      width: 0;
-    }
-
-    #shield-state {
-      color: #555;
-      font-size: 9px;
-      letter-spacing: 2px;
-    }
-
-    #spinup-bar {
-      position: fixed;
-      bottom: 102px;
-      right: 24px;
-      width: 110px;
-      height: 3px;
-      background: #1a1a1a;
-      display: none;
-    }
-
-    #spinup-fill {
-      height: 3px;
-      background: #2ecc71;
-      width: 0;
-    }
 
     #killfeed {
       position: fixed;
@@ -1483,46 +1491,30 @@
     </div>
   </div>
   <div id="kd"><span class="kd-k" id="kd-k">K: 0</span> <span class="kd-d" id="kd-d">M: 0</span></div>
-  <div id="weapon-panel">
-    <div id="wp-name">AK-47</div>
-    <div id="wp-ammo">30 <span>/ 30</span></div>
-    <div id="wp-reload-track">
-      <div id="wp-reload-fill"></div>
+  <!-- ═══════════════════════════════════════════════════════
+       UNIFIED BOTTOM HUD BAR
+       ═══════════════════════════════════════════════════════ -->
+  <div id="hud-bar">
+    <!-- LEFT: Vitals -->
+    <div id="hud-vitals">
+      <div id="hud-agent-badge">FABLE</div>
+      <div class="hud-stat-row" id="hud-armor-row">
+        <div class="hud-stat-label">ARMOR <span id="hud-armor-val">50</span></div>
+        <div class="hud-bar-track"><div class="hud-bar-fill" id="hud-armor-fill" style="width:100%"></div></div>
+      </div>
     </div>
-    <div id="wp-state">PRONTO</div>
-    <div id="wp-mode">AUTO · 600 RPM</div>
-  </div>
-  <div id="ability-panel">
-    <div id="ab-label">GRANADA HE</div>
-    <div id="ab-pips"></div>
-    <div id="ab-rech-track">
-      <div id="ab-rech-fill"></div>
+    <div class="hud-divider"></div>
+    <!-- CENTER: Ability Slots (populated dynamically by JS) -->
+    <div id="hud-abilities"></div>
+    <div class="hud-divider"></div>
+    <!-- RIGHT: Weapon -->
+    <div id="hud-weapon">
+      <div id="hud-wp-name">AK-47</div>
+      <div id="hud-wp-ammo">30 <span class="hud-reserve">/ 90</span></div>
+      <div id="hud-wp-state">PRONTO</div>
+      <div class="hud-reload-track" id="hud-reload-track"><div id="hud-reload-fill"></div></div>
+      <div id="hud-wp-mode">AUTO · 600 RPM</div>
     </div>
-    <div id="ab-hint">E · LANÇAR</div>
-  </div>
-  <div id="cam-panel">
-    <div class="sec-label" style="color:#3498db" id="cam-label">CÂMERA</div>
-    <div class="sec-bar-track">
-      <div class="sec-bar-fill" id="cam-fill" style="background:#3498db"></div>
-    </div>
-    <div class="sec-state" id="cam-state">Q · COLOCAR</div>
-  </div>
-  <div id="tower-panel">
-    <div class="sec-label" style="color:#f39c12" id="tower-label">TORRE</div>
-    <div class="sec-bar-track">
-      <div class="sec-bar-fill" id="tower-fill" style="background:#f39c12"></div>
-    </div>
-    <div class="sec-state" id="tower-state">T · COLOCAR</div>
-  </div>
-  <div id="shield-panel">
-    <div id="shield-label">ESCUDO</div>
-    <div id="shield-bar-track">
-      <div id="shield-bar-fill"></div>
-    </div>
-    <div id="shield-state">Q · ATIVAR</div>
-  </div>
-  <div id="spinup-bar">
-    <div id="spinup-fill"></div>
   </div>
   <div id="killfeed"></div>
   <div id="hitmarker"></div>
@@ -1669,7 +1661,6 @@
       },
     });
 
-
     // ════════════════════════════════════════════════════════════════════════════════
     // § 5 · WORLD CONFIG
     // ════════════════════════════════════════════════════════════════════════════════
@@ -1686,9 +1677,6 @@
     let lobbyMap = null;
     let globalMapData = null;
 
-    // ════════════════════════════════════════════════════════════════════════════════
-    // § 6 · PHYSICS — funções puras de colisão e FOV
-    // ════════════════════════════════════════════════════════════════════════════════
     // ════════════════════════════════════════════════════════════════════════════════
     // § 6 · PHYSICS — funções puras de colisão e FOV
     // ════════════════════════════════════════════════════════════════════════════════
@@ -1717,8 +1705,9 @@
       wallExit(ox, oy, vx, vy, maxDist = 200) { const len = Math.hypot(vx, vy); if (len < 0.001) return null; const nx = vx / len, ny = vy / len; for (let d = 4; d <= maxDist; d += 4) { if (!Physics.hitWalls(ox + nx * d, oy + ny * d, 2)) return { x: ox + nx * d, y: oy + ny * d }; } return null; },
       buildFOV(px, py, ac, fovDeg, dist, opts = {}) {
         const fr = fovDeg * Math.PI / 180, half = fr / 2, pts = fovDeg >= 360 ? [] : [{ x: px, y: py }];
-        for (let i = 0; i <= 90; i++) {
-          const a = ac - half + fr * i / 90;
+        const stepCount = fovDeg >= 360 ? 120 : 90;
+        for (let i = 0; i <= stepCount; i++) {
+          const a = ac - half + fr * i / stepCount;
           if (opts.noWalls) pts.push({ x: px + Math.cos(a) * dist, y: py + Math.sin(a) * dist });
           else pts.push(Physics.castRay(px, py, px + Math.cos(a) * dist, py + Math.sin(a) * dist, opts));
         }
@@ -1726,25 +1715,27 @@
       },
       buildCircleFOV(px, py, dist, opts = {}) {
         const pts = [];
-        for (let i = 0; i <= 64; i++) {
-          const a = (i / 64) * Math.PI * 2;
+        const steps = 128; // Optimized for smoothness
+        for (let i = 0; i <= steps; i++) {
+          const a = (i / steps) * Math.PI * 2;
           pts.push(Physics.castRay(px, py, px + Math.cos(a) * dist, py + Math.sin(a) * dist, opts));
         }
         return pts;
       },
       castRay(ox, oy, ex, ey, opts = {}) {
         let bT = 1, bX = ex, bY = ey;
-        const checkWalls = (list, isLowStanding = false) => {
+        const dx = ex - ox, dy = ey - oy;
+        const checkWalls = (list) => {
           for (const w of list) {
             let hitT = null, hx, hy;
             if (w.shape === 'circle') {
-              const dx = ex - ox, dy = ey - oy, a = dx * dx + dy * dy;
-              const vx = ox - w.x, vy = oy - w.y, b = 2 * (vx * dx + vy * dy), c = vx * vx + vy * vy - w.r * w.r;
+              const dxL = ex - ox, dyL = ey - oy, a = dxL * dxL + dyL * dyL;
+              const vx = ox - w.x, vy = oy - w.y, b = 2 * (vx * dxL + vy * dyL), c = vx * vx + vy * vy - w.r * w.r;
               const disc = b * b - 4 * a * c;
               if (disc >= 0) {
                 const s = Math.sqrt(disc), t1 = (-b - s) / (2 * a), t2 = (-b + s) / (2 * a);
-                if (t1 >= 0 && t1 <= 1) { hitT = t1; hx = ox + dx * t1; hy = oy + dy * t1; }
-                else if (t2 >= 0 && t2 <= 1) { hitT = t2; hx = ox + dx * t2; hy = oy + dy * t2; }
+                if (t1 >= 0 && t1 <= 1) { hitT = t1; hx = ox + dxL * t1; hy = oy + dyL * t1; }
+                else if (t2 >= 0 && t2 <= 1) { hitT = t2; hx = ox + dxL * t2; hy = oy + dyL * t2; }
               }
             } else {
               const ww = w.width || w.w || 0, wh = w.height || w.h || 0;
@@ -1754,25 +1745,25 @@
                 if (h && (hitT === null || h.t < hitT)) { hitT = h.t; hx = h.x; hy = h.y; }
               }
             }
-
             if (hitT !== null) {
-              const dx = ex - ox, dy = ey - oy;
-              let targetT = hitT;
-              if (isLowStanding) {
-                // Half shadow Rule: extend ray halfway to the original target (ex, ey)
-                targetT = hitT + (1 - hitT) * 0.5;
-              }
-              if (targetT < bT) {
-                bT = targetT;
-                bX = ox + dx * targetT;
-                bY = oy + dy * targetT;
-              }
+              if (hitT < bT) { bT = hitT; bX = ox + dx * hitT; bY = oy + dy * hitT; }
             }
           }
         };
         checkWalls(WALLS);
         if (opts.isCrouching) checkWalls(LOW_OBSTACLES);
-        else checkWalls(LOW_OBSTACLES, true);
+        
+        if (opts.entities) {
+          for (const ent of opts.entities) {
+            const a = dx * dx + dy * dy; if (a < 0.001) continue;
+            const vx = ox - ent.x, vy = oy - ent.y, b = 2 * (vx * dx + vy * dy), c = vx * vx + vy * vy - ent.r * ent.r;
+            const disc = b * b - 4 * a * c;
+            if (disc >= 0) {
+              const s = Math.sqrt(disc), t = (-b - s) / (2 * a);
+              if (t >= 0 && t <= 1 && t < bT) { bT = t; bX = ox + dx * t; bY = oy + dy * t; }
+            }
+          }
+        }
         if (opts.customSegments) {
           for (const seg of opts.customSegments) {
             const h = Physics.ssect(ox, oy, ex, ey, seg[0].x, seg[0].y, seg[1].x, seg[1].y);
@@ -1950,7 +1941,12 @@
       if (socket && socket.connected) { afterConnect && afterConnect(); return; }
       socket = io({ reconnection: false });
       let _lobbyBound = false;
-      socket.on('connect', () => { if (!_lobbyBound) { _lobbyBound = true; bindLobbyEvents(); } afterConnect && afterConnect(); });
+      socket.on('connect', () => { 
+        if (!_lobbyBound) { _lobbyBound = true; bindLobbyEvents(); } 
+        const ms = document.getElementById('menu-status');
+        if (ms) { ms.textContent = '● LIGADO'; ms.style.color = '#2ecc71'; }
+        afterConnect && afterConnect(); 
+      });
       socket.on('connect_error', () => { showRoomMsg('Erro de ligação — tenta novamente'); showRoomSelect(); });
       // ——— In-game peers (scoped to room — sent by server after game:start) ———
       socket.on('peer_joined', data => { remotePlayers[data.id] = null; remoteDeployables[data.id] = { cam1: null, cam2: null, tower: null }; });
@@ -2012,7 +2008,10 @@
         else if (data.action === 'destroy_all') { rd.cam1 = null; rd.cam2 = null; rd.tower = null; }
       });
       socket.on('kill_event', data => { if (data.killer === myId) { myKills++; updateKD(); addKF('✔ KILL · ' + data.cause); } });
-      socket.on('disconnect', () => { document.getElementById('menu-status').style.color = '#ff4400'; });
+      socket.on('disconnect', () => { 
+        const ms = document.getElementById('menu-status');
+        if (ms) { ms.textContent = '● DESLIGADO'; ms.style.color = '#ff4400'; }
+      });
 
       // ——— Survival events ———
       socket.on('game:timer', ({ remaining_s }) => {
@@ -2220,11 +2219,13 @@
     function showSurvivalHUD() {
       document.getElementById('sv-timer').style.display = 'block';
       document.getElementById('sv-alive').style.display = 'block';
+      const hb = document.getElementById('hud-bar'); if (hb) hb.classList.add('active');
     }
     function hideSurvivalHUD() {
       document.getElementById('sv-timer').style.display = 'none';
       document.getElementById('sv-alive').style.display = 'none';
       document.getElementById('sv-spectate').style.display = 'none';
+      const hb = document.getElementById('hud-bar'); if (hb) hb.classList.remove('active');
     }
     function updateSurvivalHUD() {
       const s = survivalTimer;
@@ -2425,7 +2426,25 @@
         const f = 1 - Math.max(0, p.dashRemaining / 0.15);
         p.x = p.dashStartX + (p.dashTargetX - p.dashStartX) * f;
         p.y = p.dashStartY + (p.dashTargetY - p.dashStartY) * f;
-        if (p.dashRemaining <= 0) { p.x = p.dashTargetX; p.y = p.dashTargetY; p.dashRemaining = 0; }
+        if (p.dashRemaining <= 0) {
+          // Wall-clip prevention: binary-search the last safe point along the dash ray
+          const r = a.radius;
+          if (Physics.hitWalls(p.dashTargetX, p.dashTargetY, r)) {
+            let lo = 0, hi = 1;
+            for (let _i = 0; _i < 8; _i++) {
+              const mid = (lo + hi) / 2;
+              const tx = p.dashStartX + (p.dashTargetX - p.dashStartX) * mid;
+              const ty = p.dashStartY + (p.dashTargetY - p.dashStartY) * mid;
+              if (Physics.hitWalls(tx, ty, r)) hi = mid; else lo = mid;
+            }
+            p.x = p.dashStartX + (p.dashTargetX - p.dashStartX) * lo;
+            p.y = p.dashStartY + (p.dashTargetY - p.dashStartY) * lo;
+          } else {
+            p.x = p.dashTargetX;
+            p.y = p.dashTargetY;
+          }
+          p.dashRemaining = 0;
+        }
       } else if (!frozen) {
         const shift = keys['ShiftLeft'] || keys['ShiftRight'], crouch = keys['Space'];
         let dx = 0, dy = 0;
@@ -2538,14 +2557,14 @@
       const p = player; if (p.dead) return; const a = p.agent; if (!a) return;
       if (a.cam2_via_e) {
         if (!fateCam2 && !fateCamProj2) tryPlaceCam(2);
-        else if (fateCam2) { if (p.camViewCooldownDeadline && !Clock.expired(p.camViewCooldownDeadline)) return; p.viewMode = (p.viewMode === 2) ? 0 : 2; p.camViewCooldownDeadline = Clock.deadline(ABILITIES.camera.viewSwitchCooldown); document.getElementById('cam-view-banner').style.display = p.viewMode !== 0 ? 'block' : 'none'; }
+        else if (fateCam2) { if (p.camViewCooldownDeadline && !Clock.expired(p.camViewCooldownDeadline)) return; p.viewMode = (p.viewMode === 2) ? 0 : 2; if(p.viewMode !== 0) player.lightOn = false; p.camViewCooldownDeadline = Clock.deadline(ABILITIES.camera.viewSwitchCooldown); document.getElementById('cam-view-banner').style.display = p.viewMode !== 0 ? 'block' : 'none'; }
       } else tryUseAbility(a.slot_e);
     }
     function onKeyQ() {
       const p = player; if (p.dead) return; const a = p.agent; if (!a) return;
       if (a.slot_q === 'camera') {
         if (!fateCam && !fateCamProj) tryPlaceCam(1);
-        else if (fateCam) { if (p.camViewCooldownDeadline && !Clock.expired(p.camViewCooldownDeadline)) return; p.viewMode = (p.viewMode === 1) ? 0 : 1; p.camViewCooldownDeadline = Clock.deadline(ABILITIES.camera.viewSwitchCooldown); document.getElementById('cam-view-banner').style.display = p.viewMode !== 0 ? 'block' : 'none'; }
+        else if (fateCam) { if (p.camViewCooldownDeadline && !Clock.expired(p.camViewCooldownDeadline)) return; p.viewMode = (p.viewMode === 1) ? 0 : 1; if(p.viewMode !== 0) player.lightOn = false; p.camViewCooldownDeadline = Clock.deadline(ABILITIES.camera.viewSwitchCooldown); document.getElementById('cam-view-banner').style.display = p.viewMode !== 0 ? 'block' : 'none'; }
       } else if (a.slot_q === 'shield') {
         if (p.shieldActive) { const used = ABILITIES.shield.duration - Clock.remaining(p.shieldDeadline); p.shieldActive = false; p.shieldDeadline = null; p.shieldCooldownDeadline = Clock.deadline(ABILITIES.shield.cooldown * (used / ABILITIES.shield.duration)); }
         else { if (p.shieldCooldownDeadline && !Clock.expired(p.shieldCooldownDeadline)) return; if (p.stamina < ABILITIES.shield.staminaCost) return; p.stamina = Math.max(0, p.stamina - ABILITIES.shield.staminaCost); p.shieldActive = true; p.shieldDeadline = Clock.deadline(ABILITIES.shield.duration); p.shieldCooldownDeadline = null; }
@@ -3057,38 +3076,60 @@
       const isNykora = observer && observer.agentKey === 'nykora';
       const fovDeg = (observer && observer._running) ? (ta.fovAngleRun || 90) : (observer && observer._crouching ? (ta.fovAngleCrouch || 90) : (ta.fovAngle || 90));
 
+      // Gather shadow-casting entities (alive players)
+      const shadowEntities = [];
+      for (const entId in remotePlayers) {
+        const ent = remotePlayers[entId];
+        if (ent && !ent.dead && entId !== (specSt ? specTargetId : null)) {
+          shadowEntities.push({ x: ent.x, y: ent.y, r: AGENTS[ent.agentKey]?.radius || 14 });
+        }
+      }
+      if (specSt && !p.dead) { // If spectating, local player also casts shadow
+        shadowEntities.push({ x: p.x, y: p.y, r: p.radius });
+      }
+
       if (isEffCamView) {
         const cd = ABILITIES.camera;
         fovsData.push({
-          fov: Physics.buildFOV(activeEffCam.x, activeEffCam.y, activeEffCam.angle, cd.fovAngle, cd.fovDist, { isCrouching: false }),
+          fov: Physics.buildFOV(activeEffCam.x, activeEffCam.y, activeEffCam.angle, cd.fovAngle, cd.fovDist, { isCrouching: false, entities: shadowEntities }),
           x: activeEffCam.x, y: activeEffCam.y, lightOn: true, dist: cd.fovDist, agentKey: 'camera'
         });
         fovsData.push({
-          fov: Physics.buildFOV(observer.x, observer.y, observer.angle, 360, ta.radius * 4.4, { isCrouching: observer._crouching }),
+          fov: Physics.buildFOV(observer.x, observer.y, observer.angle, 360, ta.radius * 4.4, { isCrouching: observer._crouching, entities: [] }), // No shadows for body glow while in cam
           x: observer.x, y: observer.y, lightOn: false, dist: ta.radius * 4.4, agentKey: observer.agentKey
         });
       } else if (!observer.dead) {
         const actDeg = isNykora ? 360 : (observer.lightOn ? fovDeg : 360);
-        // If light is off and not Nykora, only reveal exactly the character radius (hidden circle)
-        const actDist = isNykora ? ta.fovDist : (observer.lightOn ? ta.fovDist : ta.radius);
+        const isStandard = ['fable', 'fate', 'foul'].includes(observer.agentKey);
+        const actDist = isNykora ? ta.fovDist : (observer.lightOn ? ta.fovDist : (isStandard ? 120 : ta.radius));
+
+        const isFateInCam = (observer.agentKey === 'fate' && isEffCamView);
+        // Only cast player shadows if flashlight is ON. Small vision circles (light OFF) should NOT produce shadows.
+        const useEnts = observer.lightOn ? shadowEntities : [];
+        const finalFov = (isFateInCam && !observer.lightOn) ? [] : Physics.buildFOV(observer.x, observer.y, observer.angle, actDeg, actDist, { noWalls: isNykora, isCrouching: observer._crouching, entities: useEnts });
+
         fovsData.push({
-          fov: Physics.buildFOV(observer.x, observer.y, observer.angle, actDeg, actDist, { noWalls: isNykora, isCrouching: observer._crouching }),
+          fov: finalFov,
           x: observer.x, y: observer.y, lightOn: observer.lightOn, dist: actDist, agentKey: observer.agentKey, isCrouching: observer._crouching
         });
       }
 
       for (const [rid, rs] of Object.entries(remotePlayers)) {
         if (!rs || rs.dead || (rid === (specSt ? specTargetId : null))) continue;
-        if (rs.lightOn && rs.agentKey !== 'nykora') {
-          const ra = AGENTS[rs.agentKey];
-          if (!ra) continue;
-          const rfovDeg = rs._running ? ra.fovAngleRun : rs._crouching ? ra.fovAngleCrouch : ra.fovAngle,
-            rfovDist = rs._crouching ? ra.fovDist * 0.7 : ra.fovDist; // Crouching reduces FOV distance
-          fovsData.push({
-            fov: Physics.buildFOV(rs.x, rs.y, rs.angle, rfovDeg, rfovDist, { isCrouching: rs._crouching }),
-            x: rs.x, y: rs.y, lightOn: true, dist: rfovDist, agentKey: rs.agentKey, isCrouching: rs._crouching
-          });
-        }
+        const ra = AGENTS[rs.agentKey];
+        if (!ra) continue;
+
+        // Visibility rule: only add FOV for remote players when their flashlight is ON.
+        // All navigation circles (light OFF) are private — including Nykora's 360 glow.
+        if (!rs.lightOn) continue;
+
+        const rfovDeg = rs._running ? ra.fovAngleRun : (rs._crouching ? ra.fovAngleCrouch : ra.fovAngle);
+        const rfovDist = rs._crouching ? ra.fovDist * 0.7 : ra.fovDist;
+
+        fovsData.push({
+          fov: Physics.buildFOV(rs.x, rs.y, rs.angle, rfovDeg, rfovDist, { isCrouching: rs._crouching, entities: shadowEntities }),
+          x: rs.x, y: rs.y, lightOn: true, dist: rfovDist, agentKey: rs.agentKey, isCrouching: rs._crouching
+        });
       }
 
       ctx.save();
@@ -3122,25 +3163,16 @@
       ctx.globalCompositeOperation = 'lighter';
       for (const pl of POINT_LIGHTS) {
         const rad = pl.radius || pl.range || 400;
-        const customSegs = [];
-        const shadowCasters = [];
-        if (!p.dead && p.agent) shadowCasters.push({ x: p.x, y: p.y, r: p.agent.radius });
-        for (const rs of Object.values(remotePlayers)) {
-          if (rs && !rs.dead) shadowCasters.push({ x: rs.x, y: rs.y, r: AGENTS[rs.agentKey]?.radius || 14 });
-        }
-        for (const b of shadowCasters) {
-          const dx = b.x - pl.x, dy = b.y - pl.y, d = Math.hypot(dx, dy);
-          if (d < rad && d > 1) {
-            const ang = Math.atan2(dy, dx), perp = ang + Math.PI / 2, w = b.r * 0.8;
-            customSegs.push([{ x: b.x + Math.cos(perp) * w, y: b.y + Math.sin(perp) * w }, { x: b.x - Math.cos(perp) * w, y: b.y - Math.sin(perp) * w }]);
-          }
-        }
-        const lightFov = Physics.buildCircleFOV(pl.x, pl.y, rad, { customSegments: customSegs, isCrouching: true });
+        // Include local player in shadows cast by map lights
+        const mapShadowEntities = [...shadowEntities];
+        if (!p.dead && !specSt) mapShadowEntities.push({ x: p.x, y: p.y, r: p.radius });
+        
+        const lightFov = Physics.buildCircleFOV(pl.x, pl.y, rad, { entities: mapShadowEntities, isCrouching: false });
         ctx.beginPath(); for (const pt of lightFov) ctx.lineTo(pt.x, pt.y); ctx.closePath();
         const g = ctx.createRadialGradient(pl.x, pl.y, 0, pl.x, pl.y, rad);
         const col = pl.color || '#ffffff';
-        // Extreme subtle intensity: '08' (~3%) and '02' (~1%)
-        g.addColorStop(0, col + '08'); g.addColorStop(0.6, col + '02'); g.addColorStop(1, 'rgba(0,0,0,0)');
+        // Boosted intensity for local illumination visibility
+        g.addColorStop(0, col + '44'); g.addColorStop(0.6, col + '11'); g.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = g; ctx.fill();
       }
       ctx.globalCompositeOperation = 'source-over';
@@ -3171,7 +3203,11 @@
           const isLocalNykora = (fd.agentKey === 'nykora' && fd.x === player.x && fd.y === player.y);
           if (fd.lightOn) { gr.addColorStop(0, 'rgba(255,235,170,.30)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); }
           else if (isLocalNykora) { gr.addColorStop(0, 'rgba(155,89,182,.45)'); gr.addColorStop(0.5, 'rgba(155,89,182,.15)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); }
-          else { gr.addColorStop(0, 'rgba(80,80,80,.20)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); }
+          else { 
+            // Better visibility for FOV-off circles / local illumination
+            gr.addColorStop(0, 'rgba(180,180,180,.40)'); 
+            gr.addColorStop(1, 'rgba(0,0,0,0)'); 
+          }
           ctx.globalCompositeOperation = 'lighter';
           ctx.beginPath(); ctx.moveTo(fd.fov[0].x, fd.fov[0].y); for (let i = 1; i < fd.fov.length; i++) ctx.lineTo(fd.fov[i].x, fd.fov[i].y); ctx.closePath();
           ctx.fillStyle = gr; ctx.fill();
@@ -3549,102 +3585,160 @@
     function adjustColor(hex, amt) { const n = parseInt(hex.slice(1), 16); const r = Math.max(0, Math.min(255, (n >> 16) + amt)), g = Math.max(0, Math.min(255, ((n >> 8) & 0xff) + amt)), b = Math.max(0, Math.min(255, (n & 0xff) + amt)); return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`; }
 
     // ════════════════════════════════════════════════════════════════════════════════
-    // § 17 · HUD DOM
+    // § 17 · HUD DOM  (unified bottom bar)
     // ════════════════════════════════════════════════════════════════════════════════
+    const AGENT_HUD_COLORS = { fable: '#e74c3c', fate: '#3498db', foul: '#2ecc71', nykora: '#9b59b6' };
+
     function updateHUDDOM() {
-      const p = player, a = p.agent; tickHM(1 / 60); if (p.dead) return;
-      const wd = WEAPONS[p.activeWeapon] || WEAPONS.knife;
-      const name = document.getElementById('wp-name'); if (name) name.textContent = wd.name;
-      if (p.activeWeapon === 'knife' || p.activeWeapon === 'sword') {
-        const ammo = document.getElementById('wp-ammo'); if (ammo) ammo.innerHTML = '— <span>MELEE</span>';
-        const state = document.getElementById('wp-state'); if (state) state.textContent = p.meleeCooldown > 0 ? 'COOLDOWN' : 'PRONTO';
-        const mode = document.getElementById('wp-mode'); if (mode) mode.textContent = 'LMB · ' + wd.cooldown + 's';
+      const p = player, a = p.agent;
+      tickHM(1 / 60);
+      if (p.dead) return;
+
+      const agColor = AGENT_HUD_COLORS[p.agentKey] || '#ff4400';
+      const bar = document.getElementById('hud-bar');
+      if (bar) bar.style.setProperty('--hud-color', agColor);
+
+      // ── Vitals ──────────────────────────────────────────────────────────────
+      const badge = document.getElementById('hud-agent-badge');
+      if (badge) badge.textContent = (a && a.name) ? a.name.toUpperCase() : (p.agentKey || 'AGENT').toUpperCase();
+
+
+      const maxArmor  = (a && a.armor) ? a.armor : 0;
+      const armorRow  = document.getElementById('hud-armor-row');
+      if (armorRow) armorRow.style.display = maxArmor > 0 ? '' : 'none';
+      const armorVal  = document.getElementById('hud-armor-val');
+      if (armorVal)  armorVal.textContent  = maxArmor;
+
+      const staPct  = Math.max(0, Math.min(1, (p.stamina || 0) / (a && a.staminaMax ? a.staminaMax : 100)));
+      // HP/Stamina bars are now on player back; removed from bottom HUD as requested.
+
+      // ── Weapon ──────────────────────────────────────────────────────────────
+      const wd      = WEAPONS[p.activeWeapon] || WEAPONS.knife;
+      const isMelee = p.activeWeapon === 'knife' || p.activeWeapon === 'sword';
+
+      const wpName      = document.getElementById('hud-wp-name');
+      const wpAmmo      = document.getElementById('hud-wp-ammo');
+      const wpState     = document.getElementById('hud-wp-state');
+      const wpMode      = document.getElementById('hud-wp-mode');
+      const reloadTrack = document.getElementById('hud-reload-track');
+
+      if (wpName) wpName.textContent = wd.name;
+      if (wpMode) wpMode.textContent = isMelee ? ('LMB · ' + wd.cooldown + 's') : (wd.mode || '');
+
+      if (isMelee) {
+        if (wpAmmo)  wpAmmo.innerHTML = '&#8212; <span class="hud-reserve">MELEE</span>';
+        if (wpState) { wpState.textContent = p.meleeCooldown > 0 ? 'COOLDOWN' : 'PRONTO'; wpState.className = ''; }
+        if (reloadTrack) reloadTrack.style.display = 'none';
       } else {
-        // Survival: show ammo/reserve instead of ammo/magazineMax
-        const ammo = document.getElementById('wp-ammo'); if (ammo) ammo.innerHTML = p.ammo + ' <span>/ ' + ammoReserve + '</span>';
-        const state = document.getElementById('wp-state');
-        if (state) {
-          state.textContent =
-            p.reloading ? 'RECARREGANDO...' :
-              p.ammo === 0 && ammoReserve === 0 ? 'SEM MUNICAO' :
-                p.ammo === 0 ? 'SEM BALAS' :
-                  p.activeWeapon === 'minigun' && p.spinLevel < 1 ? 'SPIN ' + Math.round(p.spinLevel * 100) + '%' :
-                    p.shieldActive ? 'ESCUDO ATIVO' : 'PRONTO';
+        if (wpAmmo) wpAmmo.innerHTML = p.ammo + ' <span class="hud-reserve">/ ' + ammoReserve + '</span>';
+        const stTxt = p.reloading ? 'RECARREGANDO...' :
+          (p.ammo === 0 && ammoReserve === 0) ? 'SEM MUNICAO' :
+          p.ammo === 0 ? 'SEM BALAS' :
+          (p.activeWeapon === 'minigun' && p.spinLevel < 1) ? ('SPIN ' + Math.round(p.spinLevel * 100) + '%') :
+          p.shieldActive ? 'ESCUDO ATIVO' : 'PRONTO';
+        if (wpState) {
+          wpState.textContent = stTxt;
+          wpState.className   = p.reloading ? 'reload' : (p.ammo === 0 && ammoReserve === 0 ? 'no-ammo' : '');
         }
-        const mode = document.getElementById('wp-mode'); if (mode) mode.textContent = wd.mode;
+        if (reloadTrack) {
+          if (p.reloading && p.reloadDeadline) {
+            reloadTrack.style.display = 'block';
+            const fill = document.getElementById('hud-reload-fill');
+            if (fill) fill.style.width = ((1 - Clock.pct(p.reloadDeadline, wd.reloadTime || 2)) * 100) + '%';
+          } else {
+            reloadTrack.style.display = 'none';
+          }
+        }
       }
+
+      updateAbilitySlots(p, a);
+
+      const banner = document.getElementById('cam-view-banner');
+      if (banner) banner.style.display = (p.viewMode !== 0) ? 'block' : 'none';
       updateControlHints(p, a);
-      updateAbilityPanel(p, a);
-      updateFatePanels(p, a);
-      updateFoulPanel(p, a);
-      updateNykoraPanels(p, a);
-      const banner = document.getElementById('cam-view-banner'); if (banner) banner.style.display = (p.viewMode !== 0) ? 'block' : 'none';
     }
+
+    // Builds ability slot descriptors per agent and renders them into #hud-abilities.
+    function updateAbilitySlots(p, a) {
+      const container = document.getElementById('hud-abilities');
+      if (!container) return;
+      const cd = ABILITIES;
+      const slots = [];
+
+      if (p.agentKey === 'fable') {
+        const def = a.slot_e ? cd[a.slot_e] : null;
+        if (def) {
+          const prog = (p.abilityCharges < def.maxCharges && p.abilityRechargeDeadline)
+            ? 1 - Clock.pct(p.abilityRechargeDeadline, def.rechargeTime) : (p.abilityCharges >= def.maxCharges ? 1 : 0);
+          slots.push({ key:'E', label:'GRANADA', charges:p.abilityCharges, maxCharges:def.maxCharges, barPct:prog, state:p.abilityCharges>0?'PRONTO':'RECARG.', color:'#ff6600' });
+        }
+      } else if (p.agentKey === 'fate') {
+        const camDef = cd.camera;
+        const camProg = fateCam ? 1 : (p.camRecharging && p.camRechargeDeadline ? 1-Clock.pct(p.camRechargeDeadline,camDef.rechargeTime) : 0);
+        slots.push({ key:'E', label:'CAMERA', charges:-1, maxCharges:0, barPct:camProg, state:fateCam?'COLOCADA':(p.camRecharging?'RECARG.':'PRONTO'), color:'#3498db' });
+        const cam2Prog = fateCam2 ? 1 : (p.cam2Recharging && p.cam2RechargeDeadline ? 1-Clock.pct(p.cam2RechargeDeadline,camDef.rechargeTime) : 0);
+        slots.push({ key:'Q', label:'CAMERA 2', charges:-1, maxCharges:0, barPct:cam2Prog, state:fateCam2?'COLOCADA':(p.cam2Recharging?'RECARG.':'PRONTO'), color:'#2980b9' });
+        const twDef  = cd.tower;
+        const twProg = fateTower ? fateTower.timer/fateTower.maxTimer : (p.towerRecharging && p.towerRechargeDeadline ? 1-Clock.pct(p.towerRechargeDeadline,twDef.rechargeTime) : 0);
+        slots.push({ key:'T', label:'TORRE', charges:-1, maxCharges:0, barPct:twProg, state:fateTower?('AMMO '+fateTower.ammo):(p.towerRecharging?'RECARG.':'PRONTO'), color:'#f39c12' });
+      } else if (p.agentKey === 'foul') {
+        const flDef = a.slot_e ? cd[a.slot_e] : null;
+        if (flDef) {
+          const prog = (p.abilityCharges < flDef.maxCharges && p.abilityRechargeDeadline)
+            ? 1 - Clock.pct(p.abilityRechargeDeadline, flDef.rechargeTime) : (p.abilityCharges >= flDef.maxCharges ? 1 : 0);
+          slots.push({ key:'E', label:'FLASH', charges:p.abilityCharges, maxCharges:flDef.maxCharges, barPct:prog, state:p.abilityCharges>0?'PRONTO':'RECARG.', color:'#66ccff' });
+        }
+        const shDef  = cd.shield;
+        const shProg = p.shieldActive && p.shieldDeadline ? Clock.pct(p.shieldDeadline,shDef.duration)
+          : (p.shieldCooldownDeadline && !Clock.expired(p.shieldCooldownDeadline)) ? (1-Clock.pct(p.shieldCooldownDeadline,shDef.cooldown)) : 1;
+        slots.push({ key:'Q', label:'ESCUDO', charges:-1, maxCharges:0, barPct:shProg, state:p.shieldActive?'ATIVO':(p.shieldCooldownDeadline&&!Clock.expired(p.shieldCooldownDeadline)?'RECARG.':'PRONTO'), color:'#2ecc71', active:p.shieldActive });
+      } else if (p.agentKey === 'nykora') {
+        const dashDef  = cd.dash;
+        const dashProg = (p.dashCharges < 1 && p.dashCooldownDeadline) ? 1-Clock.pct(p.dashCooldownDeadline,dashDef.cooldown) : (p.dashCharges>=1?1:0);
+        slots.push({ key:'RMB', label:'DASH', charges:p.dashCharges+p.dashResets, maxCharges:1, barPct:dashProg, state:(p.dashCharges+p.dashResets)+' USOS', color:'#9b59b6' });
+        const spinDef  = cd.spin;
+        const spinProg = (p.spinCharges < 2 && p.spinRechargeDeadline) ? 1-Clock.pct(p.spinRechargeDeadline,spinDef.rechargeTime) : (p.spinCharges>=2?1:0);
+        slots.push({ key:'E', label:'GIRO', charges:p.spinCharges, maxCharges:2, barPct:spinProg, state:p.spinCharges+' CARGAS', color:'#8e44ad' });
+      }
+
+      // Sync DOM element count
+      while (container.children.length > slots.length) container.removeChild(container.lastChild);
+      while (container.children.length < slots.length) {
+        const el = document.createElement('div');
+        el.className = 'hud-slot';
+        el.innerHTML = '<div class="hud-slot-key"></div><div class="hud-slot-label"></div>' +
+                       '<div class="hud-slot-charges"></div>' +
+                       '<div class="hud-slot-bar-track"><div class="hud-slot-bar-fill"></div></div>' +
+                       '<div class="hud-slot-state"></div>';
+        container.appendChild(el);
+      }
+      for (let i = 0; i < slots.length; i++) {
+        const s = slots[i], el = container.children[i];
+        el.style.setProperty('--slot-color', s.color);
+        el.classList.toggle('active-ability', !!s.active);
+        el.querySelector('.hud-slot-key').textContent   = s.key;
+        el.querySelector('.hud-slot-label').textContent = s.label;
+        const pipsEl = el.querySelector('.hud-slot-charges');
+        pipsEl.innerHTML = '';
+        if (s.maxCharges > 0) {
+          for (let j = 0; j < s.maxCharges; j++) {
+            const pip = document.createElement('div');
+            pip.className = 'hud-pip' + (j < s.charges ? ' filled' : '');
+            pipsEl.appendChild(pip);
+          }
+        }
+        el.querySelector('.hud-slot-bar-fill').style.width = (Math.max(0,Math.min(1,s.barPct))*100)+'%';
+        el.querySelector('.hud-slot-state').textContent    = s.state;
+      }
+    }
+
     function updateControlHints(p, a) {
       const l2 = document.getElementById('ctrl-line2');
       if (!l2) return;
-      if (p.agentKey === 'fable') l2.innerHTML = '<b>R</b> recarregar · <b>E</b> granada frag · <b>SHIFT</b> correr';
-      else if (p.agentKey === 'fate') l2.innerHTML = '<b>R</b> recarregar · <b>E/Q</b> c&acirc;meras · <b>T</b> torre';
-      else if (p.agentKey === 'foul') l2.innerHTML = '<b>R</b> recarregar · <b>E</b> granada flash · <b>Q</b> escudo';
-      else if (p.agentKey === 'nykora') l2.innerHTML = '<b>R</b> recarregar · <b>E</b> corte girat&oacute;rio · <b>RMB</b> dash';
-    }
-    function updateNykoraPanels(p, a) {
-      const $dash = document.getElementById('cam-panel'), $spin = document.getElementById('tower-panel'); // Reuse panels
-      if (p.agentKey !== 'nykora') { return; } // They will be hidden by other panel updates if not Nykora
-      if ($dash) $dash.style.display = 'flex'; if ($spin) $spin.style.display = 'flex';
-      const dd = ABILITIES.dash, sd = ABILITIES.spin;
-
-      // Dash Panel (reusing cam-panel IDs for convenience or updating them)
-      const cl = document.getElementById('cam-label'); if (cl) { cl.textContent = 'DASH'; cl.style.color = '#9b59b6'; }
-      const dashCount = p.dashCharges + p.dashResets;
-      const cs = document.getElementById('cam-state'); if (cs) cs.textContent = 'RMB · ' + dashCount + ' USOS';
-      const dprog = p.dashCharges < 1 && p.dashCooldownDeadline ? 1 - Clock.pct(p.dashCooldownDeadline, dd.cooldown) : 1;
-      const cf = document.getElementById('cam-fill'); if (cf) { cf.style.width = (dprog * 100) + '%'; cf.style.background = '#9b59b6'; }
-
-      // Spin Panel (reusing tower-panel IDs)
-      const tl = document.getElementById('tower-label'); if (tl) { tl.textContent = 'GIRO'; tl.style.color = '#8e44ad'; }
-      const ts = document.getElementById('tower-state'); if (ts) ts.textContent = 'E · ' + p.spinCharges + ' CARGAS';
-      const sprog = p.spinCharges < 2 && p.spinRechargeDeadline ? 1 - Clock.pct(p.spinRechargeDeadline, sd.rechargeTime) : p.spinCharges >= 2 ? 1 : 0;
-      const tf = document.getElementById('tower-fill'); if (tf) { tf.style.width = (sprog * 100) + '%'; tf.style.background = '#8e44ad'; }
-    }
-    function updateAbilityPanel(p, a) {
-      const panel = document.getElementById('ability-panel'); if (!panel) return;
-      const abilKey = a.slot_e, def = abilKey ? ABILITIES[abilKey] : null;
-      if (!def || (def.type !== 'grenade' && a.agentKey !== 'nykora')) { panel.style.display = 'none'; return; }
-      panel.style.display = 'flex'; const isF = (abilKey === 'flash');
-      const label = document.getElementById('ab-label'); if (label) label.textContent = def.label;
-      const hint = document.getElementById('ab-hint'); if (hint) hint.textContent = def.hint;
-      const pips = document.getElementById('ab-pips');
-      if (pips) {
-        while (pips.children.length > def.maxCharges) pips.removeChild(pips.lastChild); while (pips.children.length < def.maxCharges) { const d = document.createElement('div'); d.className = 'ab-pip'; pips.appendChild(d); }
-        for (let i = 0; i < def.maxCharges; i++)pips.children[i].className = 'ab-pip' + (i < p.abilityCharges ? (isF ? ' fl-on' : ' he-on') : '');
-      }
-      const fill = document.getElementById('ab-rech-fill');
-      if (fill) {
-        const prog = p.abilityCharges < def.maxCharges && p.abilityRechargeDeadline ? 1 - Clock.pct(p.abilityRechargeDeadline, def.rechargeTime) : p.abilityCharges >= def.maxCharges ? 1 : 0;
-        fill.style.width = (prog * 100) + '%'; fill.style.background = isF ? '#66ccff' : '#ff6600';
-      }
-    }
-    function updateFatePanels(p, a) {
-      const cd = ABILITIES.camera, td = ABILITIES.tower, $cam = document.getElementById('cam-panel'), $tower = document.getElementById('tower-panel');
-      if (p.agentKey !== 'fate') { $cam.style.display = 'none'; $tower.style.display = 'none'; return; }
-      $cam.style.display = 'flex'; $tower.style.display = 'flex';
-      if (fateCam) { document.getElementById('cam-state').textContent = 'COLOCADA'; document.getElementById('cam-fill').style.width = '100%'; }
-      else if (p.camRecharging && p.camRechargeDeadline) { document.getElementById('cam-fill').style.width = ((1 - Clock.pct(p.camRechargeDeadline, cd.rechargeTime)) * 100) + '%'; document.getElementById('cam-state').textContent = 'RECARREGANDO…'; }
-      else { document.getElementById('cam-fill').style.width = '0%'; document.getElementById('cam-state').textContent = 'Q · COLOCAR'; }
-      if (fateTower) { document.getElementById('tower-fill').style.width = (fateTower.timer / fateTower.maxTimer * 100) + '%'; document.getElementById('tower-state').textContent = 'AMMO ' + fateTower.ammo; }
-      else if (p.towerRecharging && p.towerRechargeDeadline) { document.getElementById('tower-fill').style.width = ((1 - Clock.pct(p.towerRechargeDeadline, td.rechargeTime)) * 100) + '%'; document.getElementById('tower-state').textContent = 'RECARREGANDO…'; }
-      else { document.getElementById('tower-fill').style.width = '0%'; document.getElementById('tower-state').textContent = 'T · COLOCAR'; }
-    }
-    function updateFoulPanel(p, a) {
-      const sd = ABILITIES.shield, $sh = document.getElementById('shield-panel');
-      if (p.agentKey !== 'foul') { if ($sh) $sh.style.display = 'none'; return; }
-      if ($sh) $sh.style.display = 'flex';
-      const fill = document.getElementById('shield-bar-fill');
-      const state = document.getElementById('shield-state');
-      if (p.shieldActive && p.shieldDeadline) { if (fill) fill.style.width = (Clock.pct(p.shieldDeadline, sd.duration) * 100) + '%'; if (state) state.textContent = 'ATIVO · Q DESLIGAR'; }
-      else if (p.shieldCooldownDeadline && !Clock.expired(p.shieldCooldownDeadline)) { if (fill) fill.style.width = ((1 - Clock.pct(p.shieldCooldownDeadline, sd.cooldown)) * 100) + '%'; if (state) state.textContent = 'RECARREGANDO…'; }
-      else { if (fill) fill.style.width = '100%'; if (state) state.textContent = 'Q · ATIVAR'; }
+      if      (p.agentKey === 'fable')  l2.innerHTML = '<b>R</b> recarregar &middot; <b>E</b> granada frag &middot; <b>SHIFT</b> correr';
+      else if (p.agentKey === 'fate')   l2.innerHTML = '<b>R</b> recarregar &middot; <b>E/Q</b> câmeras &middot; <b>T</b> torre';
+      else if (p.agentKey === 'foul')   l2.innerHTML = '<b>R</b> recarregar &middot; <b>E</b> granada flash &middot; <b>Q</b> escudo';
+      else if (p.agentKey === 'nykora') l2.innerHTML = '<b>R</b> recarregar &middot; <b>E</b> corte giratório &middot; <b>RMB</b> dash';
     }
 
     // ————————————————————————————————————————————————————————————————————————————
@@ -3741,7 +3835,7 @@
     // â”€â”€ Show / hide lobby â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function showLobby(roomCode, myName) {
       hideRoomSelect();
-      document.getElementById('lc-code-val').textContent = roomCode + " (V 2.7)";
+      document.getElementById('lc-code-val').textContent = roomCode;
       document.getElementById('lc-myname').textContent = myName;
       document.getElementById('lobby-screen').classList.add('active');
     }
@@ -3784,7 +3878,53 @@
       socket.emit('lobby:select_map', { mapName });
     });
 
-    // â”€â”€ Copy room code â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Auto-join from URL (tester link) ------------------------------------
+    window.addEventListener('load', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const rawCode = urlParams.get('room') || '';
+      const roomCode = rawCode.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const targetAgent = urlParams.get('agent');
+      const targetMap = urlParams.get('map');
+      const autoReady = urlParams.get('ready') === '1';
+
+      if (roomCode.length >= 4) {
+        // Hide main menu and go straight to connecting → room join
+        const menu = document.getElementById('menu');
+        if (menu) menu.style.display = 'none';
+        showRoomSelect();
+        document.getElementById('rs-connecting').classList.add('active');
+        showRoomMsg('Conectando à sala ' + roomCode + '...', false);
+        
+        connectSocket(() => {
+          myId = socket.id;
+          socket.emit('lobby:join_room', { code: roomCode });
+          
+          // Wait for join confirmation before automated actions
+          socket.once('lobby:joined', ({ isHost }) => {
+            if (targetAgent) {
+              const idx = LOBBY_AGENTS.findIndex(a => a.key === targetAgent.toLowerCase());
+              if (idx !== -1) {
+                lobbyAgentIdx = idx;
+                updateLobbyAgentUI();
+                socket.emit('lobby:select_agent', { agentKey: LOBBY_AGENTS[idx].key });
+              }
+            }
+            if (isHost && targetMap) {
+              socket.emit('lobby:select_map', { mapName: targetMap.toLowerCase() + '.json' });
+            }
+            if (autoReady) {
+              setTimeout(() => {
+                lobbyMyReady = true;
+                applyReadyUI(true);
+                socket.emit('lobby:ready', { ready: true });
+              }, 800);
+            }
+          });
+        });
+      }
+    });
+
+    // â”€â”€ Copy room code â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     document.getElementById('lc-copy').addEventListener('click', () => {
       const code = document.getElementById('lc-code-val').textContent;
       const url = window.location.origin + window.location.pathname + '?room=' + code;
@@ -3987,18 +4127,6 @@
       });
     }
 
-    // â”€â”€ Auto-join from URL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    window.addEventListener('load', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const roomCode = urlParams.get('room');
-      if (roomCode && roomCode.length === 5) {
-        if (typeof gameState !== 'undefined' && gameState === 'menu') {
-          menuEnter();
-          document.getElementById('rs-code-input').value = roomCode.toUpperCase();
-          doJoinRoom();
-        }
-      }
-    });
 
     // â”€â”€ bindLobbyEvents is called from connectSocket after 'connect' â”€
     // (see connectSocket below â€” it calls bindLobbyEvents() on first connect)
