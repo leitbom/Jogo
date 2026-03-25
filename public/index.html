@@ -1699,43 +1699,43 @@
     // ════════════════════════════════════════════════════════════════════════════════
     const AGENTS = Object.freeze({
       fable: {
-        name: 'FABLE', color: '#e74c3c', radius: 14, zoom: 700, speed: 220, runSpeed: 330, crouchSpeed: 110,
-        staminaDrain: 20, staminaRegen: 12, staminaMax: 150, fovAngle: 80, fovAngleRun: 60, fovAngleCrouch: 90, fovDist: 800,
-        hp: 120, armor: 0, weapon: 'ak47', slot_e: 'he', slot_q: null, slot_t: null,
+        name: 'FABLE', color: '#e74c3c', radius: 14, zoom: 700, speed: 225, runSpeed: 340, crouchSpeed: 115,
+        staminaDrain: 18, staminaRegen: 14, staminaMax: 160, fovAngle: 85, fovAngleRun: 65, fovAngleCrouch: 100, fovDist: 850,
+        hp: 130, armor: 0, weapon: 'ak47', slot_e: 'he', slot_q: null, slot_t: null,
         sprite: {
-          idle: { src: 'agents/fable_idle.png', frames: 4, speed: 0.15 },
-          walk: { src: 'agents/fable_walk.png', frames: 8, speed: 0.1 },
-          dead: { src: 'agents/fable_dead.png', frames: 1, speed: 0 }
+          idle: { src: 'agents/fable_idle.svg', frames: 4, speed: 0.15 },
+          walk: { src: 'agents/fable_walk.svg', frames: 8, speed: 0.1 },
+          dead: { src: 'agents/fable_dead.svg', frames: 1, speed: 0 }
         }
       },
       fate: {
-        name: 'FATE', color: '#3498db', radius: 14, zoom: 950, speed: 190, runSpeed: 285, crouchSpeed: 95,
-        staminaDrain: 20, staminaRegen: 15, staminaMax: 120, fovAngle: 75, fovAngleRun: 55, fovAngleCrouch: 90, fovDist: 800,
-        hp: 100, armor: 0, weapon: 'deagle', slot_e: 'camera', slot_q: 'camera', slot_t: 'tower', cam2_via_e: true,
+        name: 'FATE', color: '#3498db', radius: 14, zoom: 950, speed: 195, runSpeed: 290, crouchSpeed: 95,
+        staminaDrain: 22, staminaRegen: 18, staminaMax: 130, fovAngle: 75, fovAngleRun: 55, fovAngleCrouch: 90, fovDist: 900,
+        hp: 110, armor: 0, weapon: 'deagle', slot_e: 'camera', slot_q: 'camera', slot_t: 'tower', cam2_via_e: true,
         sprite: {
-          idle: { src: 'agents/fate_idle.png', frames: 4, speed: 0.15 },
-          walk: { src: 'agents/fate_walk.png', frames: 8, speed: 0.1 },
-          dead: { src: 'agents/fate_dead.png', frames: 1, speed: 0 }
+          idle: { src: 'agents/fate_idle.svg', frames: 4, speed: 0.15 },
+          walk: { src: 'agents/fate_walk.svg', frames: 8, speed: 0.1 },
+          dead: { src: 'agents/fate_dead.svg', frames: 1, speed: 0 }
         }
       },
       foul: {
-        name: 'FOUL', color: '#2ecc71', radius: 18, zoom: 880, speed: 150, runSpeed: 210, crouchSpeed: 75,
-        staminaDrain: 25, staminaRegen: 8, staminaMax: 100, fovAngle: 85, fovAngleRun: 65, fovAngleCrouch: 100, fovDist: 800,
-        hp: 150, armor: 50, weapon: 'minigun', slot_e: 'flash', slot_q: 'shield', slot_t: null,
+        name: 'FOUL', color: '#2ecc71', radius: 19, zoom: 850, speed: 140, runSpeed: 200, crouchSpeed: 80,
+        staminaDrain: 28, staminaRegen: 10, staminaMax: 120, fovAngle: 90, fovAngleRun: 70, fovAngleCrouch: 110, fovDist: 800,
+        hp: 180, armor: 80, weapon: 'minigun', slot_e: 'flash', slot_q: 'shield', slot_t: null,
         sprite: {
-          idle: { src: 'agents/foul_idle.png', frames: 4, speed: 0.15 },
-          walk: { src: 'agents/foul_walk.png', frames: 8, speed: 0.1 },
-          dead: { src: 'agents/foul_dead.png', frames: 1, speed: 0 }
+          idle: { src: 'agents/foul_idle.svg', frames: 4, speed: 0.15 },
+          walk: { src: 'agents/foul_walk.svg', frames: 8, speed: 0.1 },
+          dead: { src: 'agents/foul_dead.svg', frames: 1, speed: 0 }
         }
       },
       nykora: {
-        name: 'NYKORA', color: '#9b59b6', radius: 14, zoom: 750, speed: 240, runSpeed: 360, crouchSpeed: 120,
-        staminaDrain: 15, staminaRegen: 18, staminaMax: 180, fovAngle: 360, fovAngleRun: 360, fovAngleCrouch: 360, fovDist: 210,
+        name: 'NYKORA', color: '#9b59b6', radius: 13, zoom: 750, speed: 255, runSpeed: 380, crouchSpeed: 130,
+        staminaDrain: 12, staminaRegen: 20, staminaMax: 200, fovAngle: 360, fovAngleRun: 360, fovAngleCrouch: 360, fovDist: 220,
         hp: 100, armor: 0, weapon: 'sword', slot_e: 'spin', slot_q: null, slot_t: null,
         sprite: {
-          idle: { src: 'agents/nykora_idle.png', frames: 4, speed: 0.15 },
-          walk: { src: 'agents/nykora_walk.png', frames: 8, speed: 0.1 },
-          dead: { src: 'agents/nykora_dead.png', frames: 1, speed: 0 }
+          idle: { src: 'agents/nykora_idle.svg', frames: 4, speed: 0.15 },
+          walk: { src: 'agents/nykora_walk.svg', frames: 8, speed: 0.1 },
+          dead: { src: 'agents/nykora_dead.svg', frames: 1, speed: 0 }
         }
       },
     });
@@ -1788,7 +1788,7 @@
         for (let i = 0; i <= stepCount; i++) {
           const a = ac - half + fr * i / stepCount;
           if (opts.noWalls) pts.push({ x: px + Math.cos(a) * dist, y: py + Math.sin(a) * dist });
-          else pts.push(Physics.castRay(px, py, px + Math.cos(a) * dist, py + Math.sin(a) * dist, opts));
+          else pts.push(Physics.castRay(px, py, px + Math.cos(a) * dist, py + Math.sin(a) * dist, { ...opts, isFov: true }));
         }
         return pts;
       },
@@ -1797,15 +1797,18 @@
         const steps = 128; // Optimized for smoothness
         for (let i = 0; i <= steps; i++) {
           const a = (i / steps) * Math.PI * 2;
-          pts.push(Physics.castRay(px, py, px + Math.cos(a) * dist, py + Math.sin(a) * dist, opts));
+          pts.push(Physics.castRay(px, py, px + Math.cos(a) * dist, py + Math.sin(a) * dist, { ...opts, isFov: true }));
         }
         return pts;
       },
       castRay(ox, oy, ex, ey, opts = {}) {
         let bT = 1, bX = ex, bY = ey;
         const dx = ex - ox, dy = ey - oy;
-        const checkWalls = (list) => {
+        const checkWalls = (list, isFov = false) => {
           for (const w of list) {
+            // Se for cálculo de FOV e a parede for janela ou marcada para não projetar sombra, pulamos
+            if (isFov && (w.isWindow || w.noShadow)) continue;
+
             let hitT = null, hx, hy;
             if (w.shape === 'circle') {
               const dxL = ex - ox, dyL = ey - oy, a = dxL * dxL + dyL * dyL;
@@ -1829,8 +1832,8 @@
             }
           }
         };
-        checkWalls(WALLS);
-        if (opts.isCrouching) checkWalls(LOW_OBSTACLES);
+        checkWalls(WALLS, opts.isFov);
+        if (opts.isCrouching) checkWalls(LOW_OBSTACLES, opts.isFov);
         
         if (opts.entities) {
           for (const ent of opts.entities) {
@@ -2210,10 +2213,10 @@
       // Init Assets
       AssetManager.init({
         images: [
-          'agents/fable_idle.png', 'agents/fable_walk.png', 'agents/fable_dead.png',
-          'agents/fate_idle.png', 'agents/fate_walk.png', 'agents/fate_dead.png',
-          'agents/foul_idle.png', 'agents/foul_walk.png', 'agents/foul_dead.png',
-          'agents/nykora_idle.png', 'agents/nykora_walk.png', 'agents/nykora_dead.png'
+          'agents/fable_idle.svg', 'agents/fable_walk.svg', 'agents/fable_dead.svg',
+          'agents/fate_idle.svg', 'agents/fate_walk.svg', 'agents/fate_dead.svg',
+          'agents/foul_idle.svg', 'agents/foul_walk.svg', 'agents/foul_dead.svg',
+          'agents/nykora_idle.svg', 'agents/nykora_walk.svg', 'agents/nykora_dead.svg'
         ],
         sounds: [
           'shoot_ak47', 'shoot_deagle', 'shoot_minigun', 'shoot_knife', 'shoot_sword',
@@ -3369,7 +3372,7 @@
       // Clipping logic: rect with holes
       ctx.rect(camX - 50, camY - 50, W / sc + 100, H / sc + 100);
       ctx.clip();
-      ctx.fillStyle = 'rgba(0,0,0,0.88)';
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
       ctx.fillRect(camX - 50, camY - 50, W / sc + 100, H / sc + 100);
       ctx.restore();
 
@@ -3414,16 +3417,35 @@
           ctx.save();
           const gr = ctx.createRadialGradient(fd.x, fd.y, 0, fd.x, fd.y, fd.dist);
           const isLocalNykora = (fd.agentKey === 'nykora' && fd.x === player.x && fd.y === player.y);
-          if (fd.lightOn) { gr.addColorStop(0, 'rgba(255,235,170,.30)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); }
-          else if (isLocalNykora) { gr.addColorStop(0, 'rgba(155,89,182,.45)'); gr.addColorStop(0.5, 'rgba(155,89,182,.15)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); }
-          else { 
-            // Better visibility for FOV-off circles / local illumination
-            gr.addColorStop(0, 'rgba(180,180,180,.40)'); 
-            gr.addColorStop(1, 'rgba(0,0,0,0)'); 
+          if (fd.lightOn) {
+            // Bullet Echo style: double gradient for "beam" effect
+            gr.addColorStop(0, 'rgba(255,250,225,.35)');
+            gr.addColorStop(0.3, 'rgba(255,245,210,.15)');
+            gr.addColorStop(1, 'rgba(0,0,0,0)');
+          } else if (isLocalNykora) {
+            gr.addColorStop(0, 'rgba(155,89,182,.50)');
+            gr.addColorStop(0.6, 'rgba(155,89,182,.10)');
+            gr.addColorStop(1, 'rgba(0,0,0,0)');
+          } else {
+            // Subtle ambient light around player (navigation light)
+            gr.addColorStop(0, 'rgba(200,200,200,.25)');
+            gr.addColorStop(0.8, 'rgba(200,200,200,.05)');
+            gr.addColorStop(1, 'rgba(0,0,0,0)');
           }
           ctx.globalCompositeOperation = 'lighter';
-          ctx.beginPath(); ctx.moveTo(fd.fov[0].x, fd.fov[0].y); for (let i = 1; i < fd.fov.length; i++) ctx.lineTo(fd.fov[i].x, fd.fov[i].y); ctx.closePath();
-          ctx.fillStyle = gr; ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(fd.fov[0].x, fd.fov[0].y);
+          for (let i = 1; i < fd.fov.length; i++) ctx.lineTo(fd.fov[i].x, fd.fov[i].y);
+          ctx.closePath();
+          ctx.fillStyle = gr;
+          ctx.fill();
+          
+          // Add a subtle border to the flashlight cone
+          if (fd.lightOn) {
+            ctx.strokeStyle = 'rgba(255,255,200,0.08)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
           ctx.restore();
         }
       }
@@ -3441,32 +3463,73 @@
 
     function drawChecker(camX, camY, scale) {
       const c0 = Math.floor(camX / TILE), r0 = Math.floor(camY / TILE), c1 = Math.ceil((camX + W / scale) / TILE) + 1, r1 = Math.ceil((camY + H / scale) / TILE) + 1;
+      
       if (mapBgImage && mapBgImage.complete) {
-        ctx.drawImage(mapBgImage, 0, 0, WORLD, WORLD);
+        // Se a imagem for um tileset (contém "tileset" no nome), usamos o primeiro tile (64x64) como padrão de chão
+        // Caso contrário, mantemos o comportamento original de desenhar a imagem inteira no mundo
+        const isTileset = globalMapData && globalMapData.image && globalMapData.image.includes('tileset');
+        
+        if (isTileset) {
+          for (let c = c0; c <= c1; c++) {
+            for (let r = r0; r <= r1; r++) {
+              const tx = c * TILE, ty = r * TILE;
+              if (tx < 0 || ty < 0 || tx >= WORLD || ty >= WORLD) continue;
+              // Desenha o primeiro tile (0,0) do tileset (64x64) em cada posição de tile
+              ctx.drawImage(mapBgImage, 0, 0, TILE, TILE, tx, ty, TILE, TILE);
+            }
+          }
+        } else {
+          ctx.drawImage(mapBgImage, 0, 0, WORLD, WORLD);
+        }
       } else {
-        for (let c = c0; c <= c1; c++)for (let r = r0; r <= r1; r++) {
-          const tx = c * TILE, ty = r * TILE;
-          ctx.fillStyle = (tx < 0 || ty < 0 || tx >= WORLD || ty >= WORLD) ? '#0a0a0a' : (c + r) % 2 === 0 ? '#202024' : '#28282c';
-          ctx.fillRect(tx, ty, TILE, TILE);
+        for (let c = c0; c <= c1; c++) {
+          for (let r = r0; r <= r1; r++) {
+            const tx = c * TILE, ty = r * TILE;
+            ctx.fillStyle = (tx < 0 || ty < 0 || tx >= WORLD || ty >= WORLD) ? '#0a0a0a' : (c + r) % 2 === 0 ? '#202024' : '#28282c';
+            ctx.fillRect(tx, ty, TILE, TILE);
+          }
         }
       }
       ctx.strokeStyle = '#ff4400'; ctx.lineWidth = 4; ctx.strokeRect(0, 0, WORLD, WORLD);
     }
     function drawWalls() {
       for (const w of WALLS) {
-        ctx.fillStyle = '#2a2a2e'; ctx.strokeStyle = '#444'; ctx.lineWidth = 2;
-        if (w.shape === 'circle') { ctx.beginPath(); ctx.arc(w.x, w.y, w.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
-        else {
+        if (w.isWindow) {
+          ctx.fillStyle = 'rgba(100, 200, 255, 0.25)'; 
+          ctx.strokeStyle = 'rgba(150, 220, 255, 0.5)';
+          ctx.lineWidth = 3;
+        } else {
+          ctx.fillStyle = '#1e1e22'; ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+        }
+        
+        if (w.shape === 'circle') { 
+          ctx.beginPath(); ctx.arc(w.x, w.y, w.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); 
+          if (!w.isWindow) { // Top detail for realism
+            ctx.fillStyle = '#25252a'; ctx.beginPath(); ctx.arc(w.x, w.y, w.r * 0.85, 0, Math.PI * 2); ctx.fill();
+          }
+        } else {
           const ww = w.width || w.w || 0, wh = w.height || w.h || 0;
           ctx.fillRect(w.x, w.y, ww, wh); ctx.strokeRect(w.x, w.y, ww, wh);
+          if (!w.isWindow) {
+             ctx.fillStyle = '#25252a'; ctx.fillRect(w.x + 4, w.y + 4, ww - 8, wh - 8);
+          }
         }
       }
       for (const w of LOW_OBSTACLES) {
-        ctx.fillStyle = '#1a1a1e'; ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
-        if (w.shape === 'circle') { ctx.beginPath(); ctx.arc(w.x, w.y, w.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+        // Objetos baixos têm um look mais detalhado
+        ctx.fillStyle = '#15151a'; ctx.strokeStyle = '#2a2a2f'; ctx.lineWidth = 1;
+        if (w.shape === 'circle') { 
+          ctx.beginPath(); ctx.arc(w.x, w.y, w.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); 
+          // Barril detalhe (circular top-down)
+          ctx.strokeStyle = '#333'; ctx.beginPath(); ctx.arc(w.x, w.y, w.r * 0.7, 0, Math.PI * 2); ctx.stroke();
+        }
         else {
           const ww = w.width || w.w || 0, wh = w.height || w.h || 0;
           ctx.fillRect(w.x, w.y, ww, wh); ctx.strokeRect(w.x, w.y, ww, wh);
+          // Caixa detalhe
+          ctx.strokeStyle = '#222'; ctx.strokeRect(w.x + 5, w.y + 5, ww - 10, wh - 10);
+          ctx.beginPath(); ctx.moveTo(w.x + 5, w.y + 5); ctx.lineTo(w.x + ww - 5, w.y + wh - 5); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(w.x + ww - 5, w.y + 5); ctx.lineTo(w.x + 5, w.y + wh - 5); ctx.stroke();
         }
       }
     }
@@ -3498,21 +3561,34 @@
         const spDef = a.sprite[state];
         const img = AssetManager.getImage(spDef.src);
 
+        ctx.save();
+        ctx.translate(rs.x, rs.y);
+        ctx.rotate(rs.angle);
+
+        // Bullet Echo Style circular base
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fillStyle = a.color + '66';
+        ctx.fill();
+
         if (img) {
           const frame = spDef.speed > 0 ? Math.floor((performance.now() / 1000) / spDef.speed) % spDef.frames : 0;
-          drawSpriteAligned(ctx, img, spDef.frames, frame, rs.x, rs.y, rs.angle, r * 1.5);
+          drawSpriteAligned(ctx, img, spDef.frames, frame, 0, 0, 0, r * 2.8);
         } else {
-          // Fallback vetorial
-          ctx.save(); ctx.translate(rs.x, rs.y);
-          if (rs.dead) { ctx.globalAlpha = .35; ctx.fillStyle = '#ff2200'; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill(); ctx.restore(); continue; }
-          ctx.save(); ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(2, 4, r * .9, r * .55, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-          drawBarrel(rs, a, r, scale);
-          ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fillStyle = a.color; ctx.fill();
-          const sSafe = Math.max(0.1, scale || 1);
-          ctx.strokeStyle = a.color; ctx.lineWidth = 2 / sSafe; ctx.globalAlpha = .5; ctx.setLineDash([4 / sSafe, 4 / sSafe]); ctx.beginPath(); ctx.arc(0, 0, r + 3 / sSafe, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
-          ctx.rotate(rs.angle); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(r * .35, -r * .17, r * .85, r * .34); ctx.rotate(-rs.angle);
-          ctx.restore();
+          // Fallback vetorial circular
+          ctx.fillStyle = a.color;
+          ctx.beginPath();
+          ctx.arc(0, 0, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Indicador de "Ombros/Arma" (Direita)
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(r * 0.4, -r * 0.2, r * 0.8, r * 0.4); 
         }
+        ctx.restore();
 
         // Nomes e HUDs (sempre desenhados sobre o sprite ou círculo)
         ctx.save(); ctx.translate(rs.x, rs.y);
@@ -3594,26 +3670,39 @@
     function drawPlayer(p, a, scale) {
       const r = p.radius * (p._crouching ? .9 : 1);
 
-      // Híbrido: Tentar Sprite primeiro
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+
+      // Bullet Echo style circular base shadow/glow
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fillStyle = a.color + '66';
+      ctx.fill();
+
+      // Sprite Rendering
       const state = p.dead ? 'dead' : (p._running ? 'walk' : 'idle');
       const spDef = a.sprite[state];
       const img = AssetManager.getImage(spDef.src);
 
       if (img) {
         const frame = spDef.speed > 0 ? Math.floor((performance.now() / 1000) / spDef.speed) % spDef.frames : 0;
-        drawSpriteAligned(ctx, img, spDef.frames, frame, p.x, p.y, p.angle, r * 1.5, (p.agentKey === 'nykora' && p.nykoraSpinning > 0));
-        return; // Pula o desenho vetorial se o sprite funcionar
+        // Desenha a imagem mantendo a orientação do sistema (0 = Direita)
+        drawSpriteAligned(ctx, img, spDef.frames, frame, 0, 0, 0, r * 2.8);
+      } else {
+        // Fallback vetorial circular avançado (Bullet Echo style)
+        ctx.fillStyle = a.color;
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Indicador de "Ombros/Arma" (Direita)
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(r * 0.4, -r * 0.2, r * 0.8, r * 0.4); 
       }
-
-      ctx.save(); ctx.translate(p.x, p.y);
-      if (p.agentKey === 'nykora' && p.nykoraSpinning > 0) ctx.rotate(Clock.now() / 40);
-      if (p.hitFlash > 0) { ctx.save(); ctx.globalAlpha = Math.min(1, p.hitFlash * 8); ctx.beginPath(); ctx.arc(0, 0, r + 4, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fill(); ctx.restore(); }
-      ctx.save(); ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(2, 4, r * .9, r * .55, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-      drawBarrel(p, a, r, scale);
-      ctx.beginPath(); ctx.arc(0, 0, r + 2, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fill();
-      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); const g = ctx.createRadialGradient(-r * .3, -r * .3, 0, 0, 0, r); g.addColorStop(0, lighten(a.color, 30)); g.addColorStop(1, a.color); ctx.fillStyle = g; ctx.fill();
-      ctx.strokeStyle = darken(a.color, 30); ctx.lineWidth = 2; ctx.stroke();
-      ctx.beginPath(); ctx.arc(-r * .28, -r * .28, r * .3, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill();
       ctx.restore();
     }
 

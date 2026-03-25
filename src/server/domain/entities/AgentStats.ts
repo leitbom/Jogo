@@ -28,8 +28,8 @@ export const WEAPON_MAG: Readonly<Record<WeaponKey, number>> = {
 
 export const MATCH_TIME_S = 180;
 export const MAX_ROOM_SIZE = 8;
-export const MIN_TO_START = 2;
-export const COUNTDOWN_S = 3;
+export const MIN_TO_START = 1;
+export const COUNTDOWN_S = 1;
 /** @deprecated — use TICK_HZ_LOBBY / TICK_HZ_GAME */
 export const TICK_HZ = 20;
 export const DISCONNECT_DEAD_MS = 5_000;

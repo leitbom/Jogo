@@ -1,0 +1,16 @@
+<svg width="512" height="64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>
+    <radialGradient id="bodyGrad" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#34495e"/><stop offset="100%" stop-color="#1a2530"/></radialGradient>
+    <radialGradient id="visorGrad" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#3498db"/></radialGradient>
+  </defs>
+  <!-- 8 horizontal frames -->
+  <g transform="translate(0,0)"><ellipse cx="32" cy="32" rx="14" ry="22" fill="url(#bodyGrad)"/><circle cx="32" cy="30" r="8" fill="url(#visorGrad)" filter="url(#glow)"/></g>
+  <g transform="translate(64,0)"><ellipse cx="32" cy="31" rx="15" ry="21" fill="url(#bodyGrad)"/><circle cx="32" cy="29" r="8.5" fill="url(#visorGrad)" filter="url(#glow)"/></g>
+  <g transform="translate(128,0)"><ellipse cx="32" cy="30" rx="16" ry="20" fill="url(#bodyGrad)"/><circle cx="32" cy="28" r="9" fill="url(#visorGrad)" filter="url(#glow)"/></g>
+  <g transform="translate(192,0)"><ellipse cx="32" cy="31" rx="15" ry="21" fill="url(#bodyGrad)"/><circle cx="32" cy="29" r="8.5" fill="url(#visorGrad)" filter="url(#glow)"/></g>
+  <g transform="translate(256,0)"><ellipse cx="32" cy="32" rx="14" ry="22" fill="url(#bodyGrad)"/><circle cx="32" cy="30" r="8" fill="url(#visorGrad)" filter="url(#glow)"/></g>
+  <g transform="translate(320,0)"><ellipse cx="32" cy="33" rx="13" ry="23" fill="url(#bodyGrad)"/><circle cx="32" cy="31" r="7.5" fill="url(#visorGrad)" filter="url(#glow)"/></g>
+  <g transform="translate(384,0)"><ellipse cx="32" cy="34" rx="12" ry="24" fill="url(#bodyGrad)"/><circle cx="32" cy="32" r="7" fill="url(#visorGrad)" filter="url(#glow)"/></g>
+  <g transform="translate(448,0)"><ellipse cx="32" cy="33" rx="13" ry="23" fill="url(#bodyGrad)"/><circle cx="32" cy="31" r="7.5" fill="url(#visorGrad)" filter="url(#glow)"/></g>
+</svg>

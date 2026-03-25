@@ -1,0 +1,22 @@
+<svg width="256" height="64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="bladeGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.5" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>
+    <radialGradient id="ninjaGrad" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#8e44ad"/><stop offset="100%" stop-color="#2c003e"/></radialGradient>
+  </defs>
+  <g transform="translate(0,0)">
+    <ellipse cx="32" cy="32" rx="12" ry="20" fill="url(#ninjaGrad)" stroke="#000" />
+    <path d="M 40 32 L 62 32" stroke="#fff" stroke-width="2" filter="url(#bladeGlow)" />
+    <path d="M 40 33 L 62 33" stroke="#9b59b6" stroke-width="3" opacity="0.6" />
+    <rect x="38" y="29" width="3" height="6" fill="#111" />
+  </g>
+  <g transform="translate(64,0)">
+    <ellipse cx="32" cy="32" rx="13" ry="21" fill="url(#ninjaGrad)" stroke="#000" />
+    <path d="M 41 32 L 63 32" stroke="#fff" stroke-width="2" filter="url(#bladeGlow)" />
+  </g>
+  <g transform="translate(128,0)">
+    <ellipse cx="32" cy="32" rx="12" ry="20" fill="url(#ninjaGrad)" />
+  </g>
+  <g transform="translate(192,0)">
+    <ellipse cx="32" cy="32" rx="11" ry="19" fill="url(#ninjaGrad)" />
+  </g>
+</svg>
