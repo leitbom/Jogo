@@ -1699,30 +1699,49 @@
       },
       
       play(name, vol = 0.4, loop = false) {
-        // Fallback for missing sounds
-        const path = 'assets/sounds/' + name + '.mp3';
+        let actualName = name;
+        let rate = 1.0;
+        let finalVol = vol;
+
+        // Simplify run: use walk.mp3 faster and louder
+        if (name === 'run') {
+          actualName = 'walk';
+          rate = 1.6;
+          finalVol = vol * 1.3;
+        }
+        
+        // Unified gunshots: use shoot_deagle.mp3 for all firearms
+        const gunShots = ['shoot_ak47', 'shoot_minigun', 'shoot_deagle'];
+        if (gunShots.includes(name)) {
+          actualName = 'shoot_deagle';
+        }
+
+        const path = 'assets/sounds/' + actualName + '.mp3';
         
         if (loop) {
           if (this.loops[name]) return; 
           const audio = new Audio(path);
           audio.loop = true;
-          audio.volume = vol;
+          audio.volume = finalVol;
+          audio.playbackRate = rate;
           audio.play().catch(() => {});
           this.loops[name] = audio;
           return;
         }
         
         // Audio pooling for overlapping sounds
-        if (!this.pools[name]) this.pools[name] = [];
-        let audio = this.pools[name].find(a => a.paused || a.ended);
+        const poolKey = actualName + '_' + rate; // differentiate by rate if needed
+        if (!this.pools[poolKey]) this.pools[poolKey] = [];
+        let audio = this.pools[poolKey].find(a => a.paused || a.ended);
         
         if (!audio) {
           audio = new Audio(path);
-          this.pools[name].push(audio);
+          this.pools[poolKey].push(audio);
         }
         
         audio.currentTime = 0;
-        audio.volume = vol;
+        audio.volume = finalVol;
+        audio.playbackRate = rate;
         audio.play().catch(() => {});
       },
       
@@ -4252,8 +4271,8 @@
           'agents/nykora_idle.svg', 'agents/nykora_walk.svg', 'agents/nykora_dead.svg', 'agents/nykora_crouch_walk.svg'
         ],
         sounds: [
-          'walk', 'run', 'reload', 'hurt', 'die', 'deploy', 'grenade_explode',
-          'shoot_ak47', 'shoot_deagle', 'shoot_minigun', 'shoot_knife', 'shoot_sword'
+          'walk', 'reload', 'hurt', 'die', 'deploy', 'grenade_explode',
+          'shoot_deagle', 'shoot_knife', 'shoot_sword'
         ]
       });
     });
