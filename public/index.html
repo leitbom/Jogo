@@ -1642,12 +1642,16 @@
       init(manifest) {
         const { images, sounds } = manifest;
         this.total = images.length + (sounds ? sounds.length : 0);
+        console.log('[AssetManager] Initializing with', images.length, 'images');
         images.forEach(src => {
           const img = new Image();
           img.src = 'assets/' + src;
-          img.onload = () => this.loaded++;
+          img.onload = () => {
+            this.loaded++;
+            console.log(`[AssetManager] Loaded: ${src} (${this.loaded}/${this.total})`);
+          };
           img.onerror = () => {
-            console.warn('[AssetManager] Failed:', src);
+            console.error('[AssetManager] Failed:', src);
             this.failed.add(src);
             this.loaded++;
           };
@@ -1656,9 +1660,20 @@
       },
 
       getImage(src) {
+        if (!src) return null;
         if (this.failed.has(src)) return null;
-        const img = this.images[src];
-        return (img && img.complete) ? img : null;
+        
+        // Normalize path: remove leading / and assets/ prefix
+        let key = src;
+        if (key.startsWith('/')) key = key.substring(1);
+        if (key.startsWith('assets/')) key = key.substring(7);
+        
+        const img = this.images[key];
+        if (!img) return null;
+        
+        // SVG assets sometimes take a frame to be 'complete' but can be drawn.
+        // Return the image if it exists to avoid falling back to circles.
+        return img;
       }
     };
 
@@ -1703,9 +1718,11 @@
         staminaDrain: 18, staminaRegen: 14, staminaMax: 160, fovAngle: 85, fovAngleRun: 65, fovAngleCrouch: 100, fovDist: 850,
         hp: 130, armor: 0, weapon: 'ak47', slot_e: 'he', slot_q: null, slot_t: null,
         sprite: {
-          idle: { src: 'agents/fable_idle.svg', frames: 4, speed: 0.15 },
-          walk: { src: 'agents/fable_walk.svg', frames: 8, speed: 0.1 },
-          dead: { src: 'agents/fable_dead.svg', frames: 1, speed: 0 }
+          idle: { src: 'assets/agents/fable_idle.svg', frames: 4, speed: 0.15 },
+          walk: { src: 'assets/agents/fable_walk.svg', frames: 8, speed: 0.1 },
+          crouch_walk: { src: 'assets/agents/fable_crouch_walk.svg', frames: 8, speed: 0.15 },
+          reload: { src: 'assets/agents/fable_reload.svg', frames: 8, speed: 0.12 },
+          dead: { src: 'assets/agents/fable_dead.svg', frames: 1, speed: 0 }
         }
       },
       fate: {
@@ -1713,9 +1730,11 @@
         staminaDrain: 22, staminaRegen: 18, staminaMax: 130, fovAngle: 75, fovAngleRun: 55, fovAngleCrouch: 90, fovDist: 900,
         hp: 110, armor: 0, weapon: 'deagle', slot_e: 'camera', slot_q: 'camera', slot_t: 'tower', cam2_via_e: true,
         sprite: {
-          idle: { src: 'agents/fate_idle.svg', frames: 4, speed: 0.15 },
-          walk: { src: 'agents/fate_walk.svg', frames: 8, speed: 0.1 },
-          dead: { src: 'agents/fate_dead.svg', frames: 1, speed: 0 }
+          idle: { src: 'assets/agents/fate_idle.svg', frames: 4, speed: 0.15 },
+          walk: { src: 'assets/agents/fate_walk.svg', frames: 8, speed: 0.1 },
+          crouch_walk: { src: 'assets/agents/fate_crouch_walk.svg', frames: 8, speed: 0.15 },
+          reload: { src: 'assets/agents/fate_reload.svg', frames: 8, speed: 0.12 },
+          dead: { src: 'assets/agents/fate_dead.svg', frames: 1, speed: 0 }
         }
       },
       foul: {
@@ -1723,9 +1742,11 @@
         staminaDrain: 28, staminaRegen: 10, staminaMax: 120, fovAngle: 90, fovAngleRun: 70, fovAngleCrouch: 110, fovDist: 800,
         hp: 180, armor: 80, weapon: 'minigun', slot_e: 'flash', slot_q: 'shield', slot_t: null,
         sprite: {
-          idle: { src: 'agents/foul_idle.svg', frames: 4, speed: 0.15 },
-          walk: { src: 'agents/foul_walk.svg', frames: 8, speed: 0.1 },
-          dead: { src: 'agents/foul_dead.svg', frames: 1, speed: 0 }
+          idle: { src: 'assets/agents/foul_idle.svg', frames: 4, speed: 0.15 },
+          walk: { src: 'assets/agents/foul_walk.svg', frames: 8, speed: 0.1 },
+          crouch_walk: { src: 'assets/agents/foul_crouch_walk.svg', frames: 8, speed: 0.15 },
+          reload: { src: 'assets/agents/foul_reload.svg', frames: 8, speed: 0.12 },
+          dead: { src: 'assets/agents/foul_dead.svg', frames: 1, speed: 0 }
         }
       },
       nykora: {
@@ -1733,9 +1754,11 @@
         staminaDrain: 12, staminaRegen: 20, staminaMax: 200, fovAngle: 360, fovAngleRun: 360, fovAngleCrouch: 360, fovDist: 220,
         hp: 100, armor: 0, weapon: 'sword', slot_e: 'spin', slot_q: null, slot_t: null,
         sprite: {
-          idle: { src: 'agents/nykora_idle.svg', frames: 4, speed: 0.15 },
-          walk: { src: 'agents/nykora_walk.svg', frames: 8, speed: 0.1 },
-          dead: { src: 'agents/nykora_dead.svg', frames: 1, speed: 0 }
+          idle: { src: 'assets/agents/nykora_idle.svg', frames: 4, speed: 0.15 },
+          walk: { src: 'assets/agents/nykora_walk.svg', frames: 8, speed: 0.1 },
+          crouch_walk: { src: 'assets/agents/nykora_crouch_walk.svg', frames: 8, speed: 0.15 },
+          reload: { src: 'assets/agents/nykora_idle.svg', frames: 4, speed: 0.15 }, // Placeholder
+          dead: { src: 'assets/agents/nykora_dead.svg', frames: 1, speed: 0 }
         }
       },
     });
@@ -1971,6 +1994,8 @@
       swingHitIds: {}, // Tracks targets hit during current sword sweep
       // Hit
       hitFlash: 0, shakeX: 0, shakeY: 0,
+      // Animation & Procedural
+      recoil: 0, lastAngle: 0, angVel: 0,
       // Zoom suave baseado em direcção
       _currentZoom: 700,
       // Removed read-only getters that cause crashes on assignment
@@ -2210,19 +2235,7 @@
 
       if (!loopStarted) { loopStarted = true; requestAnimationFrame(loop); }
 
-      // Init Assets
-      AssetManager.init({
-        images: [
-          'agents/fable_idle.svg', 'agents/fable_walk.svg', 'agents/fable_dead.svg',
-          'agents/fate_idle.svg', 'agents/fate_walk.svg', 'agents/fate_dead.svg',
-          'agents/foul_idle.svg', 'agents/foul_walk.svg', 'agents/foul_dead.svg',
-          'agents/nykora_idle.svg', 'agents/nykora_walk.svg', 'agents/nykora_dead.svg'
-        ],
-        sounds: [
-          'shoot_ak47', 'shoot_deagle', 'shoot_minigun', 'shoot_knife', 'shoot_sword',
-          'he_explode', 'flash_bang'
-        ]
-      });
+      // Init context
 
       // Hide all pre-game screens
       document.getElementById('menu').style.display = 'none';
@@ -2241,8 +2254,22 @@
         SPAWN_POINTS = globalMapData.spawnPoints || [];
         if (globalMapData.image) {
           const img = new Image();
-          img.src = 'assets/maps/' + globalMapData.image;
-          img.onload = () => { mapBgImage = img; };
+          // Flexible path logic: handle assets/ prefix and optional folder
+          let cleanImg = globalMapData.image;
+          if (cleanImg.startsWith('assets/')) cleanImg = cleanImg.substring(7);
+          
+          let path = cleanImg;
+          // If no folder prefix, default to maps/
+          if (!path.includes('/')) {
+            path = 'maps/' + path;
+          }
+          
+          img.src = 'assets/' + path;
+          img.onload = () => { 
+            mapBgImage = img;
+            console.log('[Map] Background loaded:', img.src);
+          };
+          img.onerror = () => console.error('[Map] Failed to load background:', img.src);
         }
       }
 
@@ -2556,7 +2583,10 @@
         render();
         updateHUDDOM();
       } catch (err) {
-        console.error('[Engine] Loop exception:', err);
+        if (!window._loopErrLogged) {
+          console.error('[Engine] Loop exception:', err);
+          window._loopErrLogged = true;
+        }
         // Emergency cleanup to prevent canvas context transform leak
         ctx.restore(); ctx.restore(); ctx.restore();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -2566,7 +2596,7 @@
         stateEmitTimer -= dt;
         if (stateEmitTimer <= 0) {
           stateEmitTimer = STATE_EMIT_INTERVAL;
-          socket.emit('state', { agentKey: player.agentKey, x: Math.round(player.x), y: Math.round(player.y), angle: player.angle, hp: player.hp, maxHp: player.maxHp, dead: player.dead, _running: player._running, _crouching: player._crouching, shieldActive: player.shieldActive, activeWeapon: player.activeWeapon, viewMode: player.viewMode, slot: mySlot, lightOn: player.lightOn, cam1: fateCam ? { x: Math.round(fateCam.x), y: Math.round(fateCam.y), angle: fateCam.angle } : null, cam2: fateCam2 ? { x: Math.round(fateCam2.x), y: Math.round(fateCam2.y), angle: fateCam2.angle } : null, tower: fateTower ? { x: Math.round(fateTower.x), y: Math.round(fateTower.y), angle: fateTower.angle } : null });
+          socket.emit('state', { agentKey: player.agentKey, x: Math.round(player.x), y: Math.round(player.y), angle: player.angle, hp: player.hp, maxHp: player.maxHp, dead: player.dead, _running: player._running, _crouching: player._crouching, reloading: player.reloading, shieldActive: player.shieldActive, activeWeapon: player.activeWeapon, viewMode: player.viewMode, slot: mySlot, lightOn: player.lightOn, cam1: fateCam ? { x: Math.round(fateCam.x), y: Math.round(fateCam.y), angle: fateCam.angle } : null, cam2: fateCam2 ? { x: Math.round(fateCam2.x), y: Math.round(fateCam2.y), angle: fateCam2.angle } : null, tower: fateTower ? { x: Math.round(fateTower.x), y: Math.round(fateTower.y), angle: fateTower.angle } : null });
           updateLobbyBadge();
           setupLobbyModeSelectors();
         }
@@ -2588,7 +2618,26 @@
     // ════════════════════════════════════════════════════════════════════════════════
     // § 15 · UPDATE SYSTEMS
     // ════════════════════════════════════════════════════════════════════════════════
-    function update(dt) { updatePlayer(dt); updateBullets(dt); updateGrenades(dt); updateParticles(dt); updateHitNums(dt); updateDeployables(dt); updateTimedLists(dt); updateScreenShake(dt); updateBlind(dt); }
+    function update(dt) { 
+      updatePlayer(dt); 
+      updateBullets(dt); 
+      updateGrenades(dt); 
+      updateParticles(dt); 
+      updateHitNums(dt); 
+      updateDeployables(dt); 
+      updateTimedLists(dt); 
+      updateScreenShake(dt); 
+      updateBlind(dt); 
+      
+      // Update remote players recoil
+      for (const id in remotePlayers) {
+        const rp = remotePlayers[id];
+        if (rp && rp.recoil > 0) {
+          rp.recoil -= dt * 8;
+          if (rp.recoil < 0) rp.recoil = 0;
+        }
+      }
+    }
 
     function updatePlayer(dt) {
       const p = player; if (p.nykoraSpinning > 0) p.nykoraSpinning -= dt;
@@ -2685,6 +2734,15 @@
       // BUG-FIX: câmera/torre/escudo via Clock
       if (p.camRecharging && Clock.expired(p.camRechargeDeadline)) { p.camRecharging = false; p.camRechargeDeadline = null; }
       if (p.cam2Recharging && Clock.expired(p.cam2RechargeDeadline)) { p.cam2Recharging = false; p.cam2RechargeDeadline = null; }
+      // Decay recoil
+      if (p.recoil > 0) p.recoil -= dt * 8; if (p.recoil < 0) p.recoil = 0;
+      
+      // Angular velocity for player leaning
+      const dAng = p.angle - p.lastAngle;
+      const normalizedDAng = Math.atan2(Math.sin(dAng), Math.cos(dAng));
+      p.angVel = p.angVel * 0.85 + normalizedDAng * 0.15;
+      p.lastAngle = p.angle;
+
       if (p.towerRecharging && Clock.expired(p.towerRechargeDeadline)) { p.towerRecharging = false; p.towerRechargeDeadline = null; }
       if (p.shieldActive && Clock.expired(p.shieldDeadline)) { p.shieldActive = false; p.shieldDeadline = null; p.shieldCooldownDeadline = Clock.deadline(ABILITIES.shield.cooldown); }
       if (p.shieldCooldownDeadline && Clock.expired(p.shieldCooldownDeadline)) p.shieldCooldownDeadline = null;
@@ -2974,7 +3032,8 @@
       let sp = wd.spread; if (p._running) sp = wd.spreadMove; else if (p._crouching) sp *= .4; if (p.activeWeapon === 'minigun') sp = 0.05 + p.spinHeat;
       const tip = barrelTip(p, a), ang = p.angle + (Math.random() - .5) * 2 * sp, life = wd.bulletRange / wd.bulletSpeed, vx = Math.cos(ang) * wd.bulletSpeed, vy = Math.sin(ang) * wd.bulletSpeed;
       bullets.push({ x: tip.x, y: tip.y, vx, vy, life, maxLife: life, damage: wd.damage, color: wd.bulletColor, trail: [], wallPen: wd.wallPen || false, wallPenFactor: wd.wallPenFactor || 1, wallPenCount: 0, justPenetrated: false, owner: 'player', ownerCrouched: p._crouching });
-      p.ammo--; p.fireCooldown = 1 / wd.fireRate; screenShake = Math.max(screenShake, wd.recoilShake); muzzFX = { x: tip.x, y: tip.y, angle: p.angle, life: .06 };
+      p.ammo--; p.fireCooldown = 1 / wd.fireRate; p.recoil = 1.0; 
+      screenShake = Math.max(screenShake, wd.recoilShake); muzzFX = { x: tip.x, y: tip.y, angle: p.angle, life: .06 };
       playSound('shoot_' + p.activeWeapon, 0.4);
       for (let i = 0; i < 4; i++) { const a2 = p.angle + (Math.random() - .5) * .6; particles.push({ x: tip.x, y: tip.y, vx: Math.cos(a2) * (200 + Math.random() * 300), vy: Math.sin(a2) * (200 + Math.random() * 300), life: .12, maxLife: .12, color: '#ffcc44', r: 2 }); }
 
@@ -3440,12 +3499,7 @@
           ctx.fillStyle = gr;
           ctx.fill();
           
-          // Add a subtle border to the flashlight cone
-          if (fd.lightOn) {
-            ctx.strokeStyle = 'rgba(255,255,200,0.08)';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-          }
+          // Subtle border removed per user request
           ctx.restore();
         }
       }
@@ -3549,15 +3603,18 @@
         }
         const a = AGENTS[rs.agentKey]; if (!a) continue; const r = a.radius * (rs._crouching ? .9 : 1);
 
-        // FOV cone — restaurado
+        // FOV cone polygon removed per user request (only flashlight lights should show)
         if (rs.lightOn && !rs.dead && rs.agentKey !== 'nykora' && !(rs.agentKey === 'fate' && rs.viewMode !== 0)) {
-          const fovDeg = rs._running ? a.fovAngleRun : rs._crouching ? a.fovAngleCrouch : a.fovAngle, half = (fovDeg * Math.PI / 180) / 2;
-          ctx.save(); ctx.globalAlpha = 0.08; ctx.fillStyle = '#ffffff';
-          ctx.beginPath(); ctx.moveTo(rs.x, rs.y); ctx.arc(rs.x, rs.y, a.fovDist * 0.55, rs.angle - half, rs.angle + half); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1; ctx.restore();
+          // No-op or alternative subtle effect could go here, but user asked for "sem limites desenhados"
         }
 
         // Híbrido: Tentar Sprite primeiro
-        const state = rs.dead ? 'dead' : (rs._running ? 'walk' : 'idle');
+        const isWalking = (rs._running || rs._crouching);
+        let state = rs.dead ? 'dead' : (rs.reloading ? 'reload' : (isWalking ? (rs._crouching ? 'crouch_walk' : 'walk') : 'idle'));
+        
+        if (!a.sprite[state]) state = isWalking ? 'walk' : 'idle';
+        if (!a.sprite[state]) state = rs.dead ? 'dead' : 'idle';
+
         const spDef = a.sprite[state];
         const img = AssetManager.getImage(spDef.src);
 
@@ -3572,8 +3629,7 @@
         ctx.fill();
 
         if (img) {
-          const frame = spDef.speed > 0 ? Math.floor((performance.now() / 1000) / spDef.speed) % spDef.frames : 0;
-          drawSpriteAligned(ctx, img, spDef.frames, frame, 0, 0, 0, r * 2.8);
+          drawAnimatedSprite(ctx, rs, a, spDef, img, r);
         } else {
           // Fallback vetorial circular
           ctx.fillStyle = a.color;
@@ -3667,6 +3723,41 @@
       ctx.restore();
     }
 
+    function drawAnimatedSprite(ctx, p, a, spDef, img, r) {
+      if (!img) return;
+      const now = performance.now();
+      const frame = spDef.speed > 0 ? Math.floor(now / 1000 / spDef.speed) % spDef.frames : 0;
+      
+      let bobY = 0, offX = 0, scaleMult = 1.0, rotOff = 0;
+      const isDead = !!p.dead;
+      const isMoving = p._running || p._crouching;
+
+      if (!isDead) {
+        // 1. Breathing (Idle)
+        if (!isMoving) {
+          scaleMult += Math.sin(now / 400) * 0.015;
+          bobY += Math.sin(now / 400) * 0.5;
+        }
+        // 2. Walking Bob
+        else {
+          const bob = Math.abs(Math.sin((now / 1000) / spDef.speed * Math.PI));
+          bobY += bob * (p._running ? 2.5 : 1.5);
+          scaleMult += bob * 0.03;
+        }
+        // 3. Leaning (Angular Velocity)
+        rotOff = (p.angVel || 0) * 0.7;
+        // 4. Recoil
+        if (p.recoil > 0) offX = -p.recoil * 14;
+      }
+
+      ctx.save();
+      ctx.translate(offX, bobY);
+      ctx.rotate(rotOff);
+      ctx.scale(scaleMult, scaleMult);
+      drawSpriteAligned(ctx, img, spDef.frames, frame, 0, 0, 0, r * 2.8);
+      ctx.restore();
+    }
+
     function drawPlayer(p, a, scale) {
       const r = p.radius * (p._crouching ? .9 : 1);
 
@@ -3680,15 +3771,18 @@
       ctx.fillStyle = a.color + '66';
       ctx.fill();
 
-      // Sprite Rendering
-      const state = p.dead ? 'dead' : (p._running ? 'walk' : 'idle');
+      const isWalking = (p._running || p._crouching);
+      let state = p.dead ? 'dead' : (p.reloading ? 'reload' : (isWalking ? (p._crouching ? 'crouch_walk' : 'walk') : 'idle'));
+      
+      // Fallback if state doesn't exist in sprite table (e.g. reload for Nykora)
+      if (!a.sprite[state]) state = isWalking ? (p._crouching ? 'walk' : 'walk') : 'idle';
+      if (!a.sprite[state]) state = p.dead ? 'dead' : 'idle';
+
       const spDef = a.sprite[state];
       const img = AssetManager.getImage(spDef.src);
-
+      
       if (img) {
-        const frame = spDef.speed > 0 ? Math.floor((performance.now() / 1000) / spDef.speed) % spDef.frames : 0;
-        // Desenha a imagem mantendo a orientação do sistema (0 = Direita)
-        drawSpriteAligned(ctx, img, spDef.frames, frame, 0, 0, 0, r * 2.8);
+        drawAnimatedSprite(ctx, p, a, spDef, img, r);
       } else {
         // Fallback vetorial circular avançado (Bullet Echo style)
         ctx.fillStyle = a.color;
@@ -4052,6 +4146,20 @@
       if (!ctx && canvas) ctx = canvas.getContext('2d');
       if (ctx) ctx.imageSmoothingEnabled = false;
       setupInput();
+      
+      // Pre-initialize assets for lobby and game
+      AssetManager.init({
+        images: [
+          'agents/fable_idle.svg', 'agents/fable_walk.svg', 'agents/fable_dead.svg', 'agents/fable_crouch_walk.svg', 'agents/fable_reload.svg',
+          'agents/fate_idle.svg', 'agents/fate_walk.svg', 'agents/fate_dead.svg', 'agents/fate_crouch_walk.svg', 'agents/fate_reload.svg',
+          'agents/foul_idle.svg', 'agents/foul_walk.svg', 'agents/foul_dead.svg', 'agents/foul_crouch_walk.svg', 'agents/foul_reload.svg',
+          'agents/nykora_idle.svg', 'agents/nykora_walk.svg', 'agents/nykora_dead.svg', 'agents/nykora_crouch_walk.svg'
+        ],
+        sounds: [
+          'shoot_ak47', 'shoot_deagle', 'shoot_minigun', 'shoot_knife', 'shoot_sword',
+          'he_explode', 'flash_bang'
+        ]
+      });
     });
 
     // Immediate init attempt
@@ -4238,8 +4346,20 @@
     // â”€â”€ Agent navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function updateLobbyAgentUI() {
       const a = LOBBY_AGENTS[lobbyAgentIdx];
-      document.getElementById('lc-agent-icon').textContent = a.icon;
-      document.getElementById('lc-agent-icon').style.borderColor = a.color;
+      const iconEl = document.getElementById('lc-agent-icon');
+      
+      // Try to show the agent sprite instead of just the letter
+      const agentDef = AGENTS[a.key];
+      const img = agentDef ? AssetManager.getImage(agentDef.sprite.idle.src) : null;
+      if (img && img.complete) {
+        iconEl.innerHTML = `<img src="${img.src}" style="width:100%; height:100%; object-fit:contain;">`;
+        iconEl.style.background = 'transparent';
+      } else {
+        iconEl.textContent = a.icon;
+        iconEl.style.background = '';
+      }
+      
+      iconEl.style.borderColor = a.color;
       document.getElementById('lca-name').textContent = a.name;
       document.getElementById('lca-name').style.color = a.color;
       document.getElementById('lca-role').textContent = a.role;

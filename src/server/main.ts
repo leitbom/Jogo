@@ -212,15 +212,15 @@ io.on('connection', (socket: Socket) => {
   });
 
   // SHOT: validate shot rate then relay immediately (needs low latency)
-  socket.on('shot', (data: unknown) => {
+  socket.on('shot', (data: any) => {
     const room = roomRepo.findBySocketId(socket.id);
     if (!room) return;
     const p = room.players.get(socket.id);
     if (!p) return;
 
     if (room.state === 'in_game') {
-      const weapon = AGENT_STATS[p.agentKey]?.weapon ?? 'ak47';
-      if (!security.checkShotRate(socket.id, weapon)) return;
+      const weapon = data?.owner === 'tower' ? 'TORRE' : (AGENT_STATS[p.agentKey]?.weapon ?? 'ak47');
+      if (!security.checkShotRate(socket.id, weapon as any)) return;
       const svc = getGameSvc(room.gameMode);
       svc.incrementShotsFired(socket.id);
     }

@@ -47,7 +47,7 @@ export class SecurityGuard {
   private readonly actionWindows = new Map<string, SlidingWindow>();
   /** Sliding window for lobby events (create, join, start…) */
   private readonly lobbyWindows  = new Map<string, SlidingWindow>();
-  /** Last shot timestamp per socket (anti-rapid-fire) */
+  /** Last shot timestamp per weapon per socket (anti-rapid-fire) */
   private readonly lastShot      = new Map<string, number>();
   /** Last confirmed position per socket (anti-speedhack) */
   private readonly lastPos       = new Map<string, PosSnapshot>();
@@ -82,7 +82,8 @@ export class SecurityGuard {
    */
   checkShotRate(socketId: string, weapon: WeaponKey): boolean {
     const now      = Date.now();
-    const last     = this.lastShot.get(socketId) ?? 0;
+    const key      = `${socketId}:${weapon}`;
+    const last     = this.lastShot.get(key) ?? 0;
     const cooldown = SHOT_COOLDOWN_MS[weapon] ?? 100;
     if (now - last < cooldown) {
       this.logger.warn(
@@ -91,7 +92,7 @@ export class SecurityGuard {
       );
       return false;
     }
-    this.lastShot.set(socketId, now);
+    this.lastShot.set(key, now);
     return true;
   }
 

@@ -10,7 +10,7 @@ export interface AgentStats {
   weapon: WeaponKey;
 }
 
-export type WeaponKey = 'ak47' | 'deagle' | 'minigun' | 'sword';
+export type WeaponKey = 'ak47' | 'deagle' | 'minigun' | 'sword' | 'TORRE';
 
 export const AGENT_STATS: Readonly<Record<AgentKey, AgentStats>> = {
   fable: { hp: 100, armor: 0, weapon: 'ak47' },
@@ -24,6 +24,7 @@ export const WEAPON_MAG: Readonly<Record<WeaponKey, number>> = {
   deagle: 7,
   minigun: 150,
   sword: 1, // Melee weapon doesn't really use mag, but needs a value
+  TORRE: 50,
 };
 
 export const MATCH_TIME_S = 180;
@@ -53,6 +54,7 @@ export const SHOT_COOLDOWN_MS: Readonly<Record<WeaponKey, number>> = {
   deagle: 380,  // ≈  2.6 shots/s
   minigun: 55,   // ≈ 18 shots/s
   sword: 400,  // ≈ 2.5 swings/s
+  TORRE: 120,    // ≈ 8 shots/s
 };
 
 export const DMG_RANGES: Readonly<Record<string, [number, number]>> = {

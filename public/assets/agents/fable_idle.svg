@@ -1,49 +1,41 @@
 <svg width="256" height="64" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="1" dy="2" stdDeviation="1.5" flood-opacity="0.5"/>
-    </filter>
-    <radialGradient id="helmetGrad" cx="40%" cy="40%" r="60%">
-      <stop offset="0%" stop-color="#4a7a3d"/>
-      <stop offset="100%" stop-color="#1b3d17"/>
-    </radialGradient>
-    <radialGradient id="shoulderGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#8b6e4d"/>
-      <stop offset="100%" stop-color="#5a4632"/>
-    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="1" dy="2" stdDeviation="1.5" flood-opacity="0.4"/></filter>
+    <radialGradient id="helmetGrad" cx="40%" cy="40%" r="60%"><stop offset="0%" stop-color="#e74c3c"/><stop offset="100%" stop-color="#922b21"/></radialGradient>
+    <radialGradient id="vestGrad" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#5d4037"/><stop offset="100%" stop-color="#3e2723"/></radialGradient>
   </defs>
-
   <!-- Frame 1 -->
   <g transform="translate(0,0)" filter="url(#shadow)">
-    <!-- Base Body/Vest -->
-    <ellipse cx="32" cy="32" rx="16" ry="24" fill="url(#shoulderGrad)" />
-    <!-- Helmet -->
-    <circle cx="32" cy="32" r="14" fill="url(#helmetGrad)" stroke="#000" stroke-width="1"/>
-    <!-- AK-47 -->
-    <rect x="42" y="28" width="20" height="6" fill="#1a1a1a" rx="1"/>
-    <rect x="40" y="26" width="8" height="10" fill="#4d3221" rx="2"/>
-    <rect x="52" y="27" width="10" height="2" fill="#333" />
+    <ellipse cx="32" cy="32" rx="16" ry="22" fill="url(#vestGrad)" />
+    <path d="M22 18 L42 18 L44 46 L20 46 Z" fill="#2c3e50" opacity="0.6" /> <!-- Vest Straps -->
+    <circle cx="32" cy="31" r="14" fill="url(#helmetGrad)" stroke="#1a1a1a" stroke-width="1.5"/>
+    <rect x="30" y="24" width="4" height="2" fill="#333" rx="1"/> <!-- Visor -->
+    <rect x="42" y="27" width="22" height="6" fill="#1a1a1a" rx="1"/> <!-- AK-47 -->
+    <rect x="52" y="26" width="3" height="8" fill="#5d4037" rx="1"/> <!-- Handle -->
   </g>
-
-  <!-- Frame 2: Pulse -->
+  <!-- Frame 2 -->
   <g transform="translate(64,0)" filter="url(#shadow)">
-    <ellipse cx="32" cy="32" rx="17" ry="25" fill="url(#shoulderGrad)" />
-    <circle cx="32" cy="32" r="15" fill="url(#helmetGrad)" stroke="#000" stroke-width="1"/>
-    <rect x="43" y="28" width="20" height="6" fill="#1a1a1a" rx="1"/>
-    <rect x="41" y="26" width="8" height="10" fill="#4d3221" rx="2"/>
+    <ellipse cx="32" cy="32" rx="16.5" ry="22.5" fill="url(#vestGrad)" />
+    <path d="M22 18 L42 18 L44 46 L20 46 Z" fill="#2c3e50" opacity="0.6" />
+    <circle cx="32" cy="31.5" r="14.5" fill="url(#helmetGrad)" stroke="#1a1a1a" stroke-width="1.5"/>
+    <rect x="30" y="24.5" width="4" height="2" fill="#333" rx="1"/>
+    <rect x="43" y="27" width="22" height="6" fill="#1a1a1a" rx="1"/>
+    <rect x="53" y="26" width="3" height="8" fill="#5d4037" rx="1"/>
   </g>
-
   <!-- Frame 3 -->
   <g transform="translate(128,0)" filter="url(#shadow)">
-    <ellipse cx="32" cy="32" rx="16" ry="24" fill="url(#shoulderGrad)" />
-    <circle cx="32" cy="32" r="14" fill="url(#helmetGrad)" stroke="#000" stroke-width="1"/>
-    <rect x="42" y="28" width="20" height="6" fill="#1a1a1a" rx="1"/>
+    <ellipse cx="32" cy="32" rx="16" ry="22" fill="url(#vestGrad)" />
+    <path d="M22 18 L42 18 L44 46 L20 46 Z" fill="#2c3e50" opacity="0.6" />
+    <circle cx="32" cy="31" r="14" fill="url(#helmetGrad)" stroke="#1a1a1a" stroke-width="1.5"/>
+    <rect x="30" y="24" width="4" height="2" fill="#333" rx="1"/>
+    <rect x="42" y="27" width="22" height="6" fill="#1a1a1a" rx="1"/>
   </g>
-
   <!-- Frame 4 -->
   <g transform="translate(192,0)" filter="url(#shadow)">
-    <ellipse cx="32" cy="32" rx="15" ry="23" fill="url(#shoulderGrad)" />
-    <circle cx="32" cy="32" r="13" fill="url(#helmetGrad)" stroke="#000" stroke-width="1"/>
-    <rect x="41" y="28" width="20" height="6" fill="#1a1a1a" rx="1"/>
+    <ellipse cx="32" cy="32" rx="15.5" ry="21.5" fill="url(#vestGrad)" />
+    <path d="M22 18 L42 18 L44 46 L20 46 Z" fill="#2c3e50" opacity="0.6" />
+    <circle cx="32" cy="30.5" r="13.5" fill="url(#helmetGrad)" stroke="#1a1a1a" stroke-width="1.5"/>
+    <rect x="30" y="23.5" width="4" height="2" fill="#333" rx="1"/>
+    <rect x="41" y="27" width="22" height="6" fill="#1a1a1a" rx="1"/>
   </g>
 </svg>
