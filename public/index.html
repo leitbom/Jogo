@@ -1642,13 +1642,14 @@
       init(manifest) {
         const { images, sounds } = manifest;
         this.total = images.length + (sounds ? sounds.length : 0);
-        console.log('[AssetManager] Initializing with', images.length, 'images');
+        console.log('[AssetManager] Initializing with', images.length, 'images and', sounds ? sounds.length : 0, 'sounds');
+        
         images.forEach(src => {
           const img = new Image();
           img.src = 'assets/' + src;
           img.onload = () => {
             this.loaded++;
-            console.log(`[AssetManager] Loaded: ${src} (${this.loaded}/${this.total})`);
+            // console.log(`[AssetManager] Loaded: ${src} (${this.loaded}/${this.total})`);
           };
           img.onerror = () => {
             console.error('[AssetManager] Failed:', src);
@@ -1657,6 +1658,14 @@
           };
           this.images[src] = img;
         });
+
+        if (sounds) {
+          sounds.forEach(name => {
+            SoundManager.preload(name);
+            // Auto-advance loaded count for sounds as they are preloaded asynchronously
+            this.loaded++; 
+          });
+        }
       },
 
       getImage(src) {
@@ -1677,11 +1686,57 @@
       }
     };
 
+    const SoundManager = {
+      cache: {},
+      pools: {},
+      loops: {},
+      
+      preload(name) {
+        if (this.cache[name]) return;
+        const audio = new Audio('assets/sounds/' + name + '.mp3');
+        audio.preload = 'auto';
+        this.cache[name] = audio;
+      },
+      
+      play(name, vol = 0.4, loop = false) {
+        // Fallback for missing sounds
+        const path = 'assets/sounds/' + name + '.mp3';
+        
+        if (loop) {
+          if (this.loops[name]) return; 
+          const audio = new Audio(path);
+          audio.loop = true;
+          audio.volume = vol;
+          audio.play().catch(() => {});
+          this.loops[name] = audio;
+          return;
+        }
+        
+        // Audio pooling for overlapping sounds
+        if (!this.pools[name]) this.pools[name] = [];
+        let audio = this.pools[name].find(a => a.paused || a.ended);
+        
+        if (!audio) {
+          audio = new Audio(path);
+          this.pools[name].push(audio);
+        }
+        
+        audio.currentTime = 0;
+        audio.volume = vol;
+        audio.play().catch(() => {});
+      },
+      
+      stop(name) {
+        if (this.loops[name]) {
+          this.loops[name].pause();
+          delete this.loops[name];
+        }
+      }
+    };
+
+    // Re-route legacy playSound
     function playSound(name, vol = 0.4) {
-      // Fallback silencioso se falhar
-      const a = new Audio('/assets/sounds/' + name + '.mp3');
-      a.volume = vol;
-      a.play().catch(() => { });
+      SoundManager.play(name, vol);
     }
 
 
@@ -1991,7 +2046,7 @@
       shieldActive: false,
       // Nykora
       dashResets: 0, spinCharges: 2, spinRechargeDeadline: null,
-      swingHitIds: {}, // Tracks targets hit during current sword sweep
+      swingHitIds: {},
       // Hit
       hitFlash: 0, shakeX: 0, shakeY: 0,
       // Animation & Procedural
@@ -2071,7 +2126,18 @@
         if (!isFinite(data.dmg) || data.dmg <= 0) return;
         lastHitter = data.from || null;
         lastCause = data.cause || 'BALA';
+        
         applyDmg(player, data.dmg, data.cause || 'BALA');
+        
+        // Sound triggers
+        if (player.hp <= 0 && !player.dead) {
+          // Death sound handled by applyDmg check or here
+          SoundManager.stop('walk');
+          SoundManager.stop('run');
+          SoundManager.play('die', 0.7);
+        } else if (player.hp > 0) {
+          SoundManager.play('hurt', 0.4);
+        }
       });
 
       // Respawn autoritativo — servidor envia deadline real
@@ -2107,21 +2173,29 @@
       });
 
       socket.on('peer_shot', data => {
+        const rp = remotePlayers[data.id];
+        if (rp) SoundManager.play('shoot_' + rp.activeWeapon, 0.3);
         bullets.push({ x: data.x, y: data.y, vx: data.vx, vy: data.vy, life: data.life, maxLife: data.life, damage: data.damage || 15, color: data.color || '#ffdd88', trail: [], wallPen: data.wallPen || false, wallPenFactor: data.wallPenFactor || 1, wallPenCount: 0, justPenetrated: false, owner: 'remote_vis', ownerCrouched: data._crouching || false });
       });
       socket.on('peer_grenade', data => {
+        SoundManager.play('deploy', 0.4);
         const def = ABILITIES[data.type] || ABILITIES.he;
         grenades.push({ x: data.x, y: data.y, vx: data.vx, vy: data.vy, type: data.type, timer: def.fuseTime, maxTimer: def.fuseTime, bounces: 0, owner: 'remote', ownerCrouched: data._crouching || false });
       });
       socket.on('peer_vfx', data => {
         if (data.type === 'he_explode') {
+          SoundManager.play('grenade_explode', 0.6);
           explosions.push({ x: data.x, y: data.y, r: data.r || 180, timer: .45, maxTimer: .45 });
           for (let i = 0; i < 28; i++) { const a = Math.random() * Math.PI * 2, s = 80 + Math.random() * 350; particles.push({ x: data.x, y: data.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .4 + Math.random() * .4, maxLife: .8, color: i % 3 === 0 ? '#ff8800' : i % 3 === 1 ? '#ffcc44' : '#ff4400', r: 2 + Math.random() * 4 }); }
           screenShake = Math.max(screenShake, 10);
         } else if (data.type === 'flash_explode') {
+          SoundManager.play('grenade_explode', 0.4);
           // Visual apenas — blind/slow chegam via flash_hit
           flashRings.push({ x: data.x, y: data.y, r: data.r || 240, timer: .5, maxTimer: .5 });
           for (let i = 0; i < 14; i++) { const a = Math.random() * Math.PI * 2, s = 60 + Math.random() * 140; particles.push({ x: data.x, y: data.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .25 + Math.random() * .2, maxLife: .45, color: '#aaeeff', r: 1.5 + Math.random() * 2.5 }); }
+        } else if (data.type === 'tower_explode') {
+          SoundManager.play('grenade_explode', 0.5);
+          explosions.push({ x: data.x, y: data.y, r: data.r || 180, timer: .45, maxTimer: .45 });
         } else if (data.type === 'flash_hit') {
           if (data.to !== myId || player.dead) return;
           const fl = ABILITIES.flash;
@@ -2707,7 +2781,26 @@
         if (!Physics.hitWalls(nx, p.y, a.radius)) p.x = nx; if (!Physics.hitWalls(p.x, ny, a.radius)) p.y = ny;
         p.x = Math.max(a.radius, Math.min(WORLD - a.radius, p.x)); p.y = Math.max(a.radius, Math.min(WORLD - a.radius, p.y));
         p._running = running && len > 0; p._crouching = crouch;
-      } else { p._running = false; }
+
+        // --- Sound: Footstep loops ---
+        if (len > 0 && !p.dead && !p._crouching) {
+          if (p._running) {
+            SoundManager.stop('walk');
+            SoundManager.play('run', 0.5, true);
+          } else {
+            SoundManager.stop('run');
+            SoundManager.play('walk', 0.4, true);
+          }
+        } else {
+          SoundManager.stop('walk');
+          SoundManager.stop('run');
+        }
+        // -----------------------------
+      } else { 
+        p._running = false; 
+        SoundManager.stop('walk');
+        SoundManager.stop('run');
+      }
       if (!(p.dashRemaining > 0)) p.angle = Math.atan2(mouseWorld.y - p.y, mouseWorld.x - p.x);
       // Recarga via Clock
       if (p.reloading) {
@@ -2836,12 +2929,14 @@
         const dx = mouseWorld.x - p.x, dy = mouseWorld.y - p.y, dist = Math.hypot(dx, dy) || 1, vx = (dx / dist) * def.speed, vy = (dy / dist) * def.speed;
         grenades.push({ x: p.x, y: p.y, vx, vy, type: abilKey, timer: def.fuseTime, maxTimer: def.fuseTime, bounces: 0, owner: 'player', ownerCrouched: p._crouching });
         if (socket && socket.connected) socket.emit('grenade', { x: p.x, y: p.y, vx, vy, type: abilKey, fuseTime: def.fuseTime, _crouching: p._crouching });
+        SoundManager.play('deploy', 0.5);
         p.abilityCharges--; p.abilityUseCooldown = def.useInterval;
       } else if (def.type === 'tower') {
         const a = p.agent;
         if (fateTower || p.towerRecharging || !a) return; if (p.stamina < def.staminaCost) return; p.stamina = Math.max(0, p.stamina - def.staminaCost);
         const tx = p.x + Math.cos(p.angle) * (a.radius + 20), ty = p.y + Math.sin(p.angle) * (a.radius + 20);
         fateTower = { x: tx, y: ty, angle: p.angle, hp: def.hp, maxHp: def.hp, ammo: def.maxAmmo, fireCooldown: 0, timer: def.duration, maxTimer: def.duration };
+        SoundManager.play('deploy', 0.7);
         if (socket && socket.connected) socket.emit('deployable', { action: 'place', type: 'tower', obj: { x: tx, y: ty, angle: p.angle } });
       } else if (def.type === 'dash') {
         tryNykoraDash();
@@ -3084,6 +3179,7 @@
         return;
       }
       p.reloading = true; p.reloadDeadline = Clock.deadline(wd.reloadTime);
+      SoundManager.play('reload', 0.6);
       document.getElementById('wp-reload-track').style.display = 'block';
       document.getElementById('wp-reload-fill').style.width = '0%';
       // When reload completes (checked in updatePlayer), apply tactical reload
@@ -3192,7 +3288,7 @@
     function detonate(g) {
       const def = ABILITIES[g.type]; if (!def) return; const isOwner = (g.owner === 'player');
       if (g.type === 'he') {
-        playSound('he_explode', 0.6);
+        SoundManager.play('grenade_explode', 0.8);
         explosions.push({ x: g.x, y: g.y, r: def.blastRadius, timer: .45, maxTimer: .45 });
         for (let i = 0; i < 32; i++) { const a = Math.random() * Math.PI * 2, s = 120 + Math.random() * 420; particles.push({ x: g.x, y: g.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .5 + Math.random() * .5, maxLife: 1, color: i % 3 === 0 ? '#ff8800' : i % 3 === 1 ? '#ffcc44' : '#ff4400', r: 3 + Math.random() * 5 }); }
         screenShake = Math.max(screenShake, 12);
@@ -3201,7 +3297,7 @@
           if (socket && socket.connected) { for (const [rid, rs] of Object.entries(remotePlayers)) { if (!rs || rs.dead) continue; const rr = AGENTS[rs.agentKey]?.radius || 14, d = Math.hypot(rs.x - g.x, rs.y - g.y); if (d > def.blastRadius + rr) continue; socket.emit('dmg', { to: rid, dmg: Math.round(def.damage * (1 - Math.max(0, (d - rr) / def.blastRadius))), cause: 'EXPLOSÃO' }); } socket.emit('vfx', { type: 'he_explode', x: g.x, y: g.y, r: def.blastRadius }); }
         }
       } else if (g.type === 'flash') {
-        playSound('flash_bang', 0.5);
+        SoundManager.play('grenade_explode', 0.5);
         flashRings.push({ x: g.x, y: g.y, r: def.blastRadius, timer: .5, maxTimer: .5 });
         for (let i = 0; i < 18; i++) { const a = Math.random() * Math.PI * 2, s = 80 + Math.random() * 180; particles.push({ x: g.x, y: g.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .3 + Math.random() * .25, maxLife: .55, color: '#aaeeff', r: 2 + Math.random() * 3 }); }
         if (isOwner) {
@@ -4156,8 +4252,8 @@
           'agents/nykora_idle.svg', 'agents/nykora_walk.svg', 'agents/nykora_dead.svg', 'agents/nykora_crouch_walk.svg'
         ],
         sounds: [
-          'shoot_ak47', 'shoot_deagle', 'shoot_minigun', 'shoot_knife', 'shoot_sword',
-          'he_explode', 'flash_bang'
+          'walk', 'run', 'reload', 'hurt', 'die', 'deploy', 'grenade_explode',
+          'shoot_ak47', 'shoot_deagle', 'shoot_minigun', 'shoot_knife', 'shoot_sword'
         ]
       });
     });
