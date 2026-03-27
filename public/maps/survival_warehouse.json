@@ -1,5 +1,6 @@
 {
   "name": "Armazém Industrial — Sobrevivência Pro",
+  "modes": ["survival"],
   "worldSize": 2048,
   "image": "tilesets/warehouse_tileset.png",
   "walls": [

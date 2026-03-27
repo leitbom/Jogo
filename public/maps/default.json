@@ -1,5 +1,6 @@
 {
   "name": "Mapa Padrão",
+  "modes": ["survival", "deathmatch"],
   "worldSize": 2048,
   "image": "maps/default_bg.png",
   "walls": [

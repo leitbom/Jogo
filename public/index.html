@@ -1729,10 +1729,11 @@
 
         // Apply spatial attenuation if position is provided
         if (pos) {
-          let maxDist = 1000;
-          if (gunShots.includes(name)) maxDist = 1200;
-          else if (name === 'grenade_explode') maxDist = 1500;
-          else if (name === 'walk' || name === 'run' || name === 'reload' || name === 'die') maxDist = 550;
+          let maxDist = 1200;
+          if (gunShots.includes(name)) maxDist = 1350;
+          else if (name === 'grenade_explode') maxDist = 1650;
+          else if (name === 'walk' || name === 'run' || name === 'reload' || name === 'die') maxDist = 650;
+          else if (name === 'shoot_sword' || name === 'shoot_knife') maxDist = 800;
           
           finalVol = this.getSpatialVolume(pos, finalVol, maxDist);
         }
@@ -2164,7 +2165,11 @@
       socket.on('peer_joined', data => { remotePlayers[data.id] = null; remoteDeployables[data.id] = { cam1: null, cam2: null, tower: null }; });
       socket.on('peer_state', data => {
         if (!remotePlayers[data.id]) remotePlayers[data.id] = data.state;
-        else Object.assign(remotePlayers[data.id], data.state);
+        else {
+          const rp = remotePlayers[data.id];
+          rp.lastX = rp.x; rp.lastY = rp.y;
+          Object.assign(rp, data.state);
+        }
       });
       socket.on('peer_agent', data => { if (remotePlayers[data.id]) remotePlayers[data.id].agentKey = data.agentKey; });
       socket.on('peer_left', data => { delete remotePlayers[data.id]; delete remoteDeployables[data.id]; updateLobbyBadge(); });
@@ -2244,23 +2249,28 @@
         } else if (data.type === 'tower_explode') {
           SoundManager.play('grenade_explode', 0.5, false, {x: data.x, y: data.y});
           explosions.push({ x: data.x, y: data.y, r: data.r || 180, timer: .45, maxTimer: .45 });
+          towerBlasts.push({ x: data.x, y: data.y, r: data.r || 180, timer: .5, maxTimer: .5 });
+          for (let i = 0; i < 28; i++) { const a = Math.random() * Math.PI * 2, s = 90 + Math.random() * 350; particles.push({ x: data.x, y: data.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .35 + Math.random() * .35, maxLife: .7, color: i % 2 === 0 ? '#00ccff' : '#ffffff', r: 2 + Math.random() * 3 }); }
         } else if (data.type === 'flash_hit') {
           if (data.to !== myId || player.dead) return;
           const fl = ABILITIES.flash;
-          // Slow sempre aplicado
           playerSlow = Math.max(playerSlow, data.intensity || 1);
           playerSlowDeadline = Clock.deadline(fl.slowDuration);
-          // Blind só se inFOV — dura blindDuration completo
           if (data.inFOV) {
             playerBlind = Math.max(playerBlind, data.intensity || 1);
             playerBlindDeadline = Clock.deadline(fl.blindDuration);
           }
-        } else if (data.type === 'tower_explode') {
-          towerBlasts.push({ x: data.x, y: data.y, r: data.r || 180, timer: .5, maxTimer: .5 });
-          for (let i = 0; i < 20; i++) { const a = Math.random() * Math.PI * 2, s = 90 + Math.random() * 280; particles.push({ x: data.x, y: data.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .35 + Math.random() * .35, maxLife: .7, color: i % 2 === 0 ? '#00ccff' : '#ffffff', r: 2 + Math.random() * 3 }); }
         } else if (data.type === 'tower_shot') {
           SoundManager.play('shoot_deagle', 0.2, false, {x: data.x, y: data.y});
           bullets.push({ x: data.x, y: data.y, vx: data.vx, vy: data.vy, life: data.life, maxLife: data.life, damage: 0, color: '#f1c40f', trail: [], wallPen: false, wallPenFactor: 1, wallPenCount: 0, owner: 'remote_vis' });
+        } else if (data.type === 'dash') {
+          SoundManager.play('shoot_knife', 0.6, false, {x: data.x, y: data.y});
+          spawnDashParticles(data.x, data.y, Math.atan2(data.vy || 0, data.vx || 1)); // approximate angle or just position
+        } else if (data.type === 'spin') {
+          SoundManager.play('shoot_knife', 0.8, false, {x: data.x, y: data.y});
+          spawnSpinParticles(data.x, data.y, data.r || 60);
+        } else if (data.type === 'sword_swing') {
+          SoundManager.play('shoot_sword', 0.6, false, {x: data.x, y: data.y});
         }
       });
       socket.on('peer_deployable', data => {
@@ -2348,6 +2358,9 @@
       
       const title = document.getElementById('rs-title');
       if (title) title.textContent = currentGameMode.toUpperCase();
+      
+      // Update map list when game mode changes
+      populateMapSelect();
     }
 
     function setupLobbyModeSelectors() {
@@ -2732,7 +2745,6 @@
           stateEmitTimer = STATE_EMIT_INTERVAL;
           socket.emit('state', { agentKey: player.agentKey, x: Math.round(player.x), y: Math.round(player.y), angle: player.angle, hp: player.hp, maxHp: player.maxHp, dead: player.dead, _running: player._running, _crouching: player._crouching, reloading: player.reloading, shieldActive: player.shieldActive, activeWeapon: player.activeWeapon, viewMode: player.viewMode, slot: mySlot, lightOn: player.lightOn, cam1: fateCam ? { x: Math.round(fateCam.x), y: Math.round(fateCam.y), angle: fateCam.angle } : null, cam2: fateCam2 ? { x: Math.round(fateCam2.x), y: Math.round(fateCam2.y), angle: fateCam2.angle } : null, tower: fateTower ? { x: Math.round(fateTower.x), y: Math.round(fateTower.y), angle: fateTower.angle } : null });
           updateLobbyBadge();
-          setupLobbyModeSelectors();
         }
       }
 
@@ -3032,7 +3044,7 @@
       p.stamina = Math.max(0, p.stamina - def.staminaCost);
       p.abilityUseCooldown = 0.2;
 
-      if (socket && socket.connected) socket.emit('vfx', { type: 'dash', x: p.x, y: p.y });
+      if (socket && socket.connected) socket.emit('vfx', { type: 'dash', x: p.x, y: p.y, vx: Math.cos(ang), vy: Math.sin(ang) });
       playSound('shoot_knife', 0.6);
       spawnDashParticles(p.x, p.y, p.angle);
     }
@@ -3205,6 +3217,7 @@
       if (p.activeWeapon === 'sword') {
         p.swingHitIds = {}; // Reset hits for the new swing (damage handled in update loop)
         playSound('shoot_sword', 0.6);
+        if (socket && socket.connected) socket.emit('vfx', { type: 'sword_swing', x: p.x, y: p.y });
         return;
       }
 
@@ -3766,10 +3779,10 @@
         }
 
         // Híbrido: Tentar Sprite primeiro
-        const isWalking = (rs._running || rs._crouching);
-
+        const isMoving = rs.lastX !== undefined && (Math.abs(rs.x - rs.lastX) > 0.1 || Math.abs(rs.y - rs.lastY) > 0.1);
+        
         // --- Remote Footstep Sound ---
-        if (!rs.dead && !rs._crouching && isWalking) {
+        if (!rs.dead && !rs._crouching && isMoving) {
           if (!rs._fsTimer) rs._fsTimer = 0;
           rs._fsTimer -= dt;
           if (rs._fsTimer <= 0) {
@@ -4424,27 +4437,46 @@
     }
 
     // â”€â”€ Map fetching â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+
     async function fetchMaps() {
       try {
         const res = await fetch('/maps');
         availableMaps = await res.json();
-        const select = document.getElementById('lc-map-select');
-        select.innerHTML = '';
-        if (availableMaps.length === 0) {
-          select.innerHTML = '<option value="">Sem mapas</option>';
-          return;
-        }
-        availableMaps.forEach(m => {
-          const opt = document.createElement('option');
-          opt.value = m;
-          opt.textContent = m.replace('.json', '').replace(/_/g, ' ').toUpperCase();
-          select.appendChild(opt);
-        });
-        if (lobbyMap) select.value = lobbyMap;
-        updateMapSelectState();
+        populateMapSelect();
       } catch (err) {
         console.error('Failed to fetch maps', err);
       }
+    }
+
+    function populateMapSelect() {
+      const select = document.getElementById('lc-map-select');
+      if (!select) return;
+      
+      const currentSelection = select.value;
+      select.innerHTML = '';
+      
+      // Filter maps by current game mode
+      const filtered = availableMaps.filter(m => m.modes.includes(currentGameMode));
+      
+      if (filtered.length === 0) {
+        select.innerHTML = '<option value="">Sem mapas para este modo</option>';
+        return;
+      }
+      
+      filtered.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.filename;
+        opt.textContent = m.name.toUpperCase();
+        select.appendChild(opt);
+      });
+
+      // Restore selection if valid, else pick first
+      const exists = filtered.some(m => m.filename === currentSelection);
+      if (exists) select.value = currentSelection;
+      else if (lobbyMap && filtered.some(m => m.filename === lobbyMap)) select.value = lobbyMap;
+      
+      updateMapSelectState();
     }
 
     function updateMapSelectState() {
@@ -4460,6 +4492,7 @@
 
     // -- Auto-join from URL (tester link) ------------------------------------
     window.addEventListener('load', () => {
+      fetchMaps(); // Prefetch map list metadata for instant lobby
       const urlParams = new URLSearchParams(window.location.search);
       const rawCode = urlParams.get('room') || '';
       const roomCode = rawCode.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -4639,6 +4672,7 @@
 
     // ——— Socket events for lobby —————————————————————————————————————————
     function bindLobbyEvents() {
+      setupLobbyModeSelectors();
       fetchMaps();
       socket.on('lobby:state', ({ roomCode, players, myId: id, myName, selectedMap, gameMode, gameModeConfig: config, isHost }) => {
         lobbyMyId = id; myId = id; lobbyMyName = myName;

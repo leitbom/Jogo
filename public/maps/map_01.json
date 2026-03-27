@@ -1,5 +1,6 @@
 {
   "name": "Map_01",
+  "modes": ["survival", "deathmatch"],
   "version": 2,
   "size": {
     "width": 1024,

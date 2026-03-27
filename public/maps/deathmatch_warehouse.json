@@ -1,5 +1,6 @@
 {
   "name": "Labirinto Industrial — Deathmatch",
+  "modes": ["deathmatch"],
   "worldSize": 2500,
   "image": "tilesets/warehouse_tileset_night.png",
   "walls": [

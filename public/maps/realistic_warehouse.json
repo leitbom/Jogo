@@ -1,5 +1,6 @@
 {
   "name": "Armazém Realista",
+  "modes": ["survival"],
   "worldSize": 2048,
   "image": "tilesets/warehouse_realistic_topdown.png",
   "walls": [

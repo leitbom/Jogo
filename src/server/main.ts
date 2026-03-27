@@ -92,16 +92,38 @@ app.get('/status', (_req, res) => {
   });
 });
 
+let _mapMetadataCache: { filename: string; name: string; modes: string[] }[] | null = null;
 app.get('/maps', (_req, res) => {
   try {
+    if (_mapMetadataCache) {
+      res.json(_mapMetadataCache);
+      return;
+    }
+
     const mapsDir = path.join(__dirname, '..', '..', 'public', 'maps');
     if (!fs.existsSync(mapsDir)) {
       res.json([]);
       return;
     }
     const files = fs.readdirSync(mapsDir);
-    const maps = files.filter(f => f.endsWith('.json'));
-    res.json(maps);
+    const mapFiles = files.filter(f => f.endsWith('.json'));
+    
+    const metadata = mapFiles.map(filename => {
+      try {
+        const content = fs.readFileSync(path.join(mapsDir, filename), 'utf8');
+        const json = JSON.parse(content);
+        return {
+          filename,
+          name: json.name || filename.replace('.json', ''),
+          modes: json.modes || ['survival'] // fallback
+        };
+      } catch (e) {
+        return { filename, name: filename, modes: ['survival'] };
+      }
+    });
+
+    _mapMetadataCache = metadata;
+    res.json(metadata);
   } catch (err) {
     res.status(500).json({ error: 'Failed to read maps' });
   }

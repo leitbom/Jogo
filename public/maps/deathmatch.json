@@ -1,5 +1,6 @@
 {
   "name": "Deathmatch Arena — Complex",
+  "modes": ["deathmatch"],
   "worldSize": 3000,
   "image": "maps/default_bg.png",
   "walls": [
