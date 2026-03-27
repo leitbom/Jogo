@@ -2,7 +2,7 @@
   "name": "Mapa Padrão",
   "modes": ["survival", "deathmatch"],
   "worldSize": 2048,
-  "image": "maps/default_bg.png",
+  "image": "tilesets/warehouse_tileset.png",
   "walls": [
     { "x": 512, "y": 512, "w": 64, "h": 512 },
     { "x": 1472, "y": 512, "w": 64, "h": 512 },

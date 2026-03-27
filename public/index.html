@@ -2058,6 +2058,23 @@
     let screenShake = 0, playerBlind = 0, playerSlow = 0, playerSlowDeadline = null, playerBlindDeadline = null;
     let remoteFlashEffects = {}; // {rid: {slow:bool, blind:bool, deadline:ts}}
     let remoteBleedTimers = {};
+    let echoPulses = [];
+
+    function spawnEchoPulse(x, y, speedMult = 1.0, alphaMult = 1.0) {
+      echoPulses.push({ x, y, r: 0, life: 1.0, speedMult, alphaMult });
+    }
+
+    function isPointInPoly(px, py, poly) {
+      if (!poly || poly.length < 3) return false;
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i].x, yi = poly[i].y;
+        const xj = poly[j].x, yj = poly[j].y;
+        const intersect = ((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
 
     function applySwordBleed(rid) {
       if (remoteBleedTimers[rid]) clearInterval(remoteBleedTimers[rid].interval);
@@ -2236,6 +2253,10 @@
         grenades.push({ x: data.x, y: data.y, vx: data.vx, vy: data.vy, type: data.type, timer: def.fuseTime, maxTimer: def.fuseTime, bounces: 0, owner: 'remote', ownerCrouched: data._crouching || false });
       });
       socket.on('peer_vfx', data => {
+        const rp = remotePlayers[data.id];
+        if (rp && ['dash', 'spin', 'sword_swing'].includes(data.type)) {
+          rp._echoBoost = 0.8; // Echolocation boost when using abilities
+        }
         if (data.type === 'he_explode') {
           SoundManager.play('grenade_explode', 0.6, false, {x: data.x, y: data.y});
           explosions.push({ x: data.x, y: data.y, r: data.r || 180, timer: .45, maxTimer: .45 });
@@ -2401,17 +2422,19 @@
         SPAWN_POINTS = globalMapData.spawnPoints || [];
         if (globalMapData.image) {
           const img = new Image();
-          // Flexible path logic: handle assets/ prefix and optional folder
-          let cleanImg = globalMapData.image;
-          if (cleanImg.startsWith('assets/')) cleanImg = cleanImg.substring(7);
+          let path = globalMapData.image;
           
-          let path = cleanImg;
-          // If no folder prefix, default to maps/
+          // Se não houver pasta, assume maps/
           if (!path.includes('/')) {
             path = 'maps/' + path;
           }
           
-          img.src = 'assets/' + path;
+          // Adiciona assets/ apenas se não for da pasta maps/ ou já tiver assets/
+          if (!path.startsWith('maps/') && !path.startsWith('assets/')) {
+            path = 'assets/' + path;
+          }
+          
+          img.src = path;
           img.onload = () => { 
             mapBgImage = img;
             console.log('[Map] Background loaded:', img.src);
@@ -3577,6 +3600,65 @@
         });
       }
 
+      // § 14.1 · Echolocation Detection (Style Rek'Sai)
+      const canEcho = !p.lightOn || p.agentKey === 'nykora';
+      if (canEcho && !p.dead) {
+        for (const [rid, rs] of Object.entries(remotePlayers)) {
+          if (!rs || rs.dead || (rid === (specSt ? specTargetId : null))) continue;
+          
+          // Update echo boost timer
+          if (rs._echoBoost > 0) rs._echoBoost -= dt;
+
+          const dist = Math.hypot(p.x - rs.x, p.y - rs.y);
+          if (dist > 800) continue;
+
+          // Only pulses if enemy is moving OR has active echo boost (dashing/abilities)
+          const isMoving = rs.lastX !== undefined && (Math.abs(rs.x - rs.lastX) > 0.3 || Math.abs(rs.y - rs.lastY) > 0.3);
+          if (!isMoving && !(rs._echoBoost > 0)) continue;
+
+          // Only pulses if NOT visible in any FOV
+          let isVisible = false;
+          for (const fd of fovsData) {
+            if (isPointInPoly(rs.x, rs.y, fd.fov)) { isVisible = true; break; }
+          }
+          
+          if (!isVisible) {
+            if (!rs._echoTimer) rs._echoTimer = 0;
+            rs._echoTimer -= dt;
+            if (rs._echoTimer <= 0) {
+              // Calculate dynamic scale and alpha
+              let scale = 1.0;
+              let alpha = 1.0;
+              if (rs._crouching) {
+                scale = 0.5;
+                alpha = 0.8; // 80% transparent -> 0.20 alpha (relative to base)
+              } else if (rs._running || rs._echoBoost > 0) {
+                scale = 1.3;
+                alpha = 2.68; // 33% transparent -> 0.67 alpha (relative to 0.25 base is ~2.68x)
+                // Actually, let's just pass the TARGET alpha to make it easier
+              } else {
+                scale = 0.8; // Walking
+                alpha = 1.36; // 66% transparent -> 0.34 alpha
+              }
+              
+              // Wait, let's redefine alpha to be literal to avoid confusion
+              let targetAlpha = 0.34; // default walking
+              let nextInterval = 0.7; // default walking
+              if (rs._crouching) {
+                targetAlpha = 0.20;
+                nextInterval = 1.2;
+              } else if (rs._running || rs._echoBoost > 0) {
+                targetAlpha = 0.67;
+                nextInterval = 0.4;
+              }
+              
+              spawnEchoPulse(rs.x, rs.y, scale, targetAlpha);
+              rs._echoTimer = nextInterval;
+            }
+          }
+        }
+      }
+
       ctx.save();
       ctx.scale(sc, sc);
       ctx.translate(-camX, -camY);
@@ -3603,6 +3685,22 @@
       ctx.clip();
       ctx.fillStyle = 'rgba(0,0,0,0.45)';
       ctx.fillRect(camX - 50, camY - 50, W / sc + 100, H / sc + 100);
+      ctx.restore();
+
+      // § 14.2 · Draw Echo Pulses (Piercing through Fog)
+      ctx.save();
+      for (let i = echoPulses.length - 1; i >= 0; i--) {
+        const ep = echoPulses[i];
+        ep.r += 92 * (ep.speedMult || 1.0) * dt; // Expansion speed (increased by 15% from 80 -> 92)
+        ep.life -= 1.2 * dt;
+        if (ep.life <= 0) { echoPulses.splice(i, 1); continue; }
+        ctx.beginPath();
+        ctx.arc(ep.x, ep.y, ep.r, 0, Math.PI * 2);
+        const alpha = ep.life * (ep.alphaMult !== undefined ? ep.alphaMult : 0.25);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
       ctx.restore();
 
       ctx.globalCompositeOperation = 'lighter';
@@ -3793,9 +3891,9 @@
         } else {
           rs._fsTimer = 0;
         }
-        let state = rs.dead ? 'dead' : (rs.reloading ? 'reload' : (isWalking ? (rs._crouching ? 'crouch_walk' : 'walk') : 'idle'));
+        let state = rs.dead ? 'dead' : (rs.reloading ? 'reload' : (isMoving ? (rs._crouching ? 'crouch_walk' : 'walk') : 'idle'));
         
-        if (!a.sprite[state]) state = isWalking ? 'walk' : 'idle';
+        if (!a.sprite[state]) state = isMoving ? 'walk' : 'idle';
         if (!a.sprite[state]) state = rs.dead ? 'dead' : 'idle';
 
         const spDef = a.sprite[state];

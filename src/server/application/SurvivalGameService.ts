@@ -16,6 +16,7 @@ import {
 } from '../domain/entities/AgentStats';
 import type { SecurityGuard } from './SecurityGuard';
 import type { IGameModeService } from '../domain/ports/in/IGameModeService';
+import { PhysicsUtils } from '../domain/utils/PhysicsUtils';
 
 // ── Types ──────────────────────────────────────────────
 export interface PlayerStat {
@@ -255,7 +256,7 @@ export class SurvivalGameService implements IGameModeService {
         ? { x: (Math.random() - 0.5) * 60, y: (Math.random() - 0.5) * 60 }
         : { x: 0, y: 0 };
         
-      result[p.id] = { x: Math.round(sp.x + off.x), y: Math.round(sp.y + off.y) };
+      result[p.id] = PhysicsUtils.findSafeSpawn(Math.round(sp.x + off.x), Math.round(sp.y + off.y), 20, room.mapData || {});
     });
     return result;
   }
