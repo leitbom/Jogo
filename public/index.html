@@ -1697,8 +1697,19 @@
         audio.preload = 'auto';
         this.cache[name] = audio;
       },
+
+      getSpatialVolume(pos, baseVol, maxDist = 1000) {
+        if (!pos || !player) return baseVol;
+        const dx = pos.x - player.x;
+        const dy = pos.y - player.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > maxDist) return 0;
+        // Linear falloff: 1.0 at dist=0, 0.0 at dist=maxDist
+        const factor = 1 - (dist / maxDist);
+        return baseVol * factor;
+      },
       
-      play(name, vol = 0.4, loop = false) {
+      play(name, vol = 0.4, loop = false, pos = null) {
         let actualName = name;
         let rate = 1.0;
         let finalVol = vol;
@@ -1716,10 +1727,25 @@
           actualName = 'shoot_deagle';
         }
 
+        // Apply spatial attenuation if position is provided
+        if (pos) {
+          let maxDist = 1000;
+          if (gunShots.includes(name)) maxDist = 1200;
+          else if (name === 'grenade_explode') maxDist = 1500;
+          else if (name === 'walk' || name === 'run' || name === 'reload' || name === 'die') maxDist = 550;
+          
+          finalVol = this.getSpatialVolume(pos, finalVol, maxDist);
+        }
+
+        if (finalVol <= 0.01 && !loop) return; // Don't play if too quiet, unless it's a loop (which might become audible later)
+
         const path = 'assets/sounds/' + actualName + '.mp3';
         
         if (loop) {
-          if (this.loops[name]) return; 
+          if (this.loops[name]) {
+            this.loops[name].volume = finalVol; // Update volume for existing loop
+            return;
+          }
           const audio = new Audio(path);
           audio.loop = true;
           audio.volume = finalVol;
@@ -1730,7 +1756,7 @@
         }
         
         // Audio pooling for overlapping sounds
-        const poolKey = actualName + '_' + rate; // differentiate by rate if needed
+        const poolKey = actualName + '_' + rate;
         if (!this.pools[poolKey]) this.pools[poolKey] = [];
         let audio = this.pools[poolKey].find(a => a.paused || a.ended);
         
@@ -1754,8 +1780,8 @@
     };
 
     // Re-route legacy playSound
-    function playSound(name, vol = 0.4) {
-      SoundManager.play(name, vol);
+    function playSound(name, vol = 0.4, pos = null) {
+      SoundManager.play(name, vol, false, pos);
     }
 
 
@@ -2136,7 +2162,10 @@
       socket.on('connect_error', () => { showRoomMsg('Erro de ligação — tenta novamente'); showRoomSelect(); });
       // ——— In-game peers (scoped to room — sent by server after game:start) ———
       socket.on('peer_joined', data => { remotePlayers[data.id] = null; remoteDeployables[data.id] = { cam1: null, cam2: null, tower: null }; });
-      socket.on('peer_state', data => { remotePlayers[data.id] = data.state; });
+      socket.on('peer_state', data => {
+        if (!remotePlayers[data.id]) remotePlayers[data.id] = data.state;
+        else Object.assign(remotePlayers[data.id], data.state);
+      });
       socket.on('peer_agent', data => { if (remotePlayers[data.id]) remotePlayers[data.id].agentKey = data.agentKey; });
       socket.on('peer_left', data => { delete remotePlayers[data.id]; delete remoteDeployables[data.id]; updateLobbyBadge(); });
 
@@ -2193,27 +2222,27 @@
 
       socket.on('peer_shot', data => {
         const rp = remotePlayers[data.id];
-        if (rp) SoundManager.play('shoot_' + rp.activeWeapon, 0.3);
+        if (rp) SoundManager.play('shoot_' + rp.activeWeapon, 0.3, false, {x: data.x, y: data.y});
         bullets.push({ x: data.x, y: data.y, vx: data.vx, vy: data.vy, life: data.life, maxLife: data.life, damage: data.damage || 15, color: data.color || '#ffdd88', trail: [], wallPen: data.wallPen || false, wallPenFactor: data.wallPenFactor || 1, wallPenCount: 0, justPenetrated: false, owner: 'remote_vis', ownerCrouched: data._crouching || false });
       });
       socket.on('peer_grenade', data => {
-        SoundManager.play('deploy', 0.4);
+        SoundManager.play('deploy', 0.4, false, {x: data.x, y: data.y});
         const def = ABILITIES[data.type] || ABILITIES.he;
         grenades.push({ x: data.x, y: data.y, vx: data.vx, vy: data.vy, type: data.type, timer: def.fuseTime, maxTimer: def.fuseTime, bounces: 0, owner: 'remote', ownerCrouched: data._crouching || false });
       });
       socket.on('peer_vfx', data => {
         if (data.type === 'he_explode') {
-          SoundManager.play('grenade_explode', 0.6);
+          SoundManager.play('grenade_explode', 0.6, false, {x: data.x, y: data.y});
           explosions.push({ x: data.x, y: data.y, r: data.r || 180, timer: .45, maxTimer: .45 });
           for (let i = 0; i < 28; i++) { const a = Math.random() * Math.PI * 2, s = 80 + Math.random() * 350; particles.push({ x: data.x, y: data.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .4 + Math.random() * .4, maxLife: .8, color: i % 3 === 0 ? '#ff8800' : i % 3 === 1 ? '#ffcc44' : '#ff4400', r: 2 + Math.random() * 4 }); }
           screenShake = Math.max(screenShake, 10);
         } else if (data.type === 'flash_explode') {
-          SoundManager.play('grenade_explode', 0.4);
+          SoundManager.play('grenade_explode', 0.4, false, {x: data.x, y: data.y});
           // Visual apenas — blind/slow chegam via flash_hit
           flashRings.push({ x: data.x, y: data.y, r: data.r || 240, timer: .5, maxTimer: .5 });
           for (let i = 0; i < 14; i++) { const a = Math.random() * Math.PI * 2, s = 60 + Math.random() * 140; particles.push({ x: data.x, y: data.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .25 + Math.random() * .2, maxLife: .45, color: '#aaeeff', r: 1.5 + Math.random() * 2.5 }); }
         } else if (data.type === 'tower_explode') {
-          SoundManager.play('grenade_explode', 0.5);
+          SoundManager.play('grenade_explode', 0.5, false, {x: data.x, y: data.y});
           explosions.push({ x: data.x, y: data.y, r: data.r || 180, timer: .45, maxTimer: .45 });
         } else if (data.type === 'flash_hit') {
           if (data.to !== myId || player.dead) return;
@@ -2230,6 +2259,7 @@
           towerBlasts.push({ x: data.x, y: data.y, r: data.r || 180, timer: .5, maxTimer: .5 });
           for (let i = 0; i < 20; i++) { const a = Math.random() * Math.PI * 2, s = 90 + Math.random() * 280; particles.push({ x: data.x, y: data.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .35 + Math.random() * .35, maxLife: .7, color: i % 2 === 0 ? '#00ccff' : '#ffffff', r: 2 + Math.random() * 3 }); }
         } else if (data.type === 'tower_shot') {
+          SoundManager.play('shoot_deagle', 0.2, false, {x: data.x, y: data.y});
           bullets.push({ x: data.x, y: data.y, vx: data.vx, vy: data.vy, life: data.life, maxLife: data.life, damage: 0, color: '#f1c40f', trail: [], wallPen: false, wallPenFactor: 1, wallPenCount: 0, owner: 'remote_vis' });
         }
       });
@@ -2239,6 +2269,12 @@
         if (data.action === 'place') rd[data.type] = data.obj;
         else if (data.action === 'destroy') rd[data.type] = null;
         else if (data.action === 'destroy_all') { rd.cam1 = null; rd.cam2 = null; rd.tower = null; }
+      });
+      socket.on('peer_reload', data => {
+        SoundManager.play('reload', 0.6, false, {x: data.x, y: data.y});
+      });
+      socket.on('peer_hurt', data => {
+        SoundManager.play('hurt', 0.4, false, {x: data.x, y: data.y});
       });
       socket.on('kill_event', data => { if (data.killer === myId) { myKills++; updateKD(); addKF('✔ KILL · ' + data.cause); } });
       socket.on('disconnect', () => { 
@@ -2261,6 +2297,11 @@
       socket.on('game:kill', ({ killer_id, victim_id, cause }) => {
         // Track alive status
         if (victim_id !== myId) remoteAliveMap[victim_id] = false;
+        // Play death sound for peer
+        if (victim_id !== myId) {
+          const v = remotePlayers[victim_id];
+          if (v) SoundManager.play('die', 0.8, false, {x: v.x, y: v.y});
+        }
         // Update killfeed
         if (killer_id === myId) { myKills++; updateKD(); addKF('✔ KILL · ' + (cause || 'BALA')); }
         else if (victim_id === myId) {/* local death handled by applyDmg */ }
@@ -2673,7 +2714,7 @@
       const dt = Math.min((ts - _lastTime) / 1000, .05); _lastTime = ts;
       try {
         update(dt);
-        render();
+        render(dt);
         updateHUDDOM();
       } catch (err) {
         if (!window._loopErrLogged) {
@@ -3199,6 +3240,7 @@
       }
       p.reloading = true; p.reloadDeadline = Clock.deadline(wd.reloadTime);
       SoundManager.play('reload', 0.6);
+      if (socket && socket.connected) socket.emit('reload', {x: p.x, y: p.y});
       document.getElementById('wp-reload-track').style.display = 'block';
       document.getElementById('wp-reload-fill').style.width = '0%';
       // When reload completes (checked in updatePlayer), apply tactical reload
@@ -3401,7 +3443,7 @@
     // § 16 · RENDER
     // ════════════════════════════════════════════════════════════════════════════════
     let frameCount = 0;
-    function render() {
+    function render(dt) {
       if (!ctx || !W || !H || isNaN(W) || isNaN(H)) return;
 
       // Diagnostic Overlay (F3 Toggle)
@@ -3578,7 +3620,7 @@
       }
       ctx.clip();
 
-      drawRemotePlayers(sc);
+      drawRemotePlayers(sc, dt);
       drawRemoteDeployables(sc);
       if (fateCam) drawCameraEntity(fateCam, sc, false);
       if (fateCam2) drawCameraEntity(fateCam2, sc, true);
@@ -3707,7 +3749,7 @@
     // BUG-FIX: Cor neutra (não revela tipo de agente)
     // BUG-FIX: Fate cone oculto quando usa câmera
     // BUG-FIX: Escudo Foul visível para peers com geometria correcta
-    function drawRemotePlayers(scale) {
+    function drawRemotePlayers(scale, dt) {
       for (const [rid, rs] of Object.entries(remotePlayers)) {
         if (!rs) continue;
         if (rs._crouching && !player._crouching) {
@@ -3725,6 +3767,19 @@
 
         // Híbrido: Tentar Sprite primeiro
         const isWalking = (rs._running || rs._crouching);
+
+        // --- Remote Footstep Sound ---
+        if (!rs.dead && !rs._crouching && isWalking) {
+          if (!rs._fsTimer) rs._fsTimer = 0;
+          rs._fsTimer -= dt;
+          if (rs._fsTimer <= 0) {
+            const type = rs._running ? 'run' : 'walk';
+            SoundManager.play(type, rs._running ? 0.35 : 0.25, false, {x: rs.x, y: rs.y});
+            rs._fsTimer = rs._running ? 0.22 : 0.35;
+          }
+        } else {
+          rs._fsTimer = 0;
+        }
         let state = rs.dead ? 'dead' : (rs.reloading ? 'reload' : (isWalking ? (rs._crouching ? 'crouch_walk' : 'walk') : 'idle'));
         
         if (!a.sprite[state]) state = isWalking ? 'walk' : 'idle';

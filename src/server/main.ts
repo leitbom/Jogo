@@ -244,6 +244,11 @@ io.on('connection', (socket: Socket) => {
     relay(socket, 'peer_deployable', data);
   });
 
+  socket.on('reload', (data: unknown) => {
+    if (!security.checkActionRate(socket.id)) return;
+    relay(socket, 'peer_reload', data);
+  });
+
   socket.on('agent_change', (data: { agentKey: AgentKey }) => {
     if (!security.checkLobbyRate(socket.id)) return;
     const room = roomRepo.findBySocketId(socket.id);
@@ -291,6 +296,7 @@ io.on('connection', (socket: Socket) => {
     from.shotsHit++;
 
     io.to(data.to).emit('take_dmg', { dmg, cause, from: socket.id });
+    if (ts) socket.to(room.code).emit('peer_hurt', { id: data.to, x: ts.x, y: ts.y });
     logger.info(`[dmg] ${socket.id.slice(0, 6)}→${data.to.slice(0, 6)} ${dmg} (${cause})`);
   });
 
