@@ -311,9 +311,15 @@ export class SurvivalGameService implements IGameModeService {
           const radius = 14; 
 
           if (isDashing) {
-            // Nykora dash bypasses walls and uses dash-specific speed/angle
-            p.x += Math.cos(dashAngle) * speed * (safeDt / 1000);
-            p.y += Math.sin(dashAngle) * speed * (safeDt / 1000);
+            // Nykora dash Absolute Trajectory Interpolation
+            const vs = input.visualState;
+            if (vs.dashStartX !== undefined && vs.dashTargetX !== undefined) {
+              const f = 1 - Math.max(0, vs.dashRemaining / 0.15);
+              p.x = vs.dashStartX + (vs.dashTargetX - vs.dashStartX) * f;
+              p.y = vs.dashStartY + (vs.dashTargetY - vs.dashStartY) * f;
+            } else {
+              // Fallback for missing trajectory
+            }
           } else {
             // Check if stuck (due to ending a dash or teleports) and push out
             if (PhysicsUtils.isColliding(p.x, p.y, radius, room.mapData || {})) {

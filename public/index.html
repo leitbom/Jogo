@@ -2206,10 +2206,20 @@
           
           // Re-apply remaining inputs to re-predict from the authoritative server state
           for (const inp of pendingInputs) {
-            const speed = 250;
+            const vs = inp.visualState || {};
+            const isDashing = vs.dashRemaining > 0;
+            const speed = vs._running ? 380 : 250;
             const safeDt = Math.min(inp.dt, 50);
-            player.x += inp.dx * speed * (safeDt / 1000);
-            player.y += inp.dy * speed * (safeDt / 1000);
+
+            if (isDashing && vs.dashStartX !== undefined) {
+               // Absolute trajectory re-prediction for zero-drift
+               const f = 1 - Math.max(0, vs.dashRemaining / 0.15);
+               player.x = vs.dashStartX + (vs.dashTargetX - vs.dashStartX) * f;
+               player.y = vs.dashStartY + (vs.dashTargetY - vs.dashStartY) * f;
+            } else {
+               player.x += inp.dx * speed * (safeDt / 1000);
+               player.y += inp.dy * speed * (safeDt / 1000);
+            }
           }
         }
       });
@@ -2865,13 +2875,23 @@
       // ——————————————————————————————————————————————————————————————————————————
       mouseWorld.x = mousePx.x / sc + (p.x - W / (2 * sc)); mouseWorld.y = mousePx.y / sc + (p.y - H / (2 * sc));
       const frozen = (p.viewMode !== 0 && (fateCam || fateCam2));
+
+      const shift = keys['ShiftLeft'] || keys['ShiftRight'], crouch = keys['Space'];
+      let dx = 0, dy = 0;
+      if (!frozen) {
+        if (keys['KeyW'] || keys['ArrowUp']) dy -= 1; if (keys['KeyS'] || keys['ArrowDown']) dy += 1;
+        if (keys['KeyA'] || keys['ArrowLeft']) dx -= 1; if (keys['KeyD'] || keys['ArrowRight']) dx += 1;
+      }
+      const len = Math.sqrt(dx * dx + dy * dy); if (len > 0) { dx /= len; dy /= len; }
+      const running = shift && p.canRun, consuming = running && len > 0;
+
       if (p.dashRemaining > 0) {
         p.dashRemaining -= dt;
         const f = 1 - Math.max(0, p.dashRemaining / 0.15);
         p.x = p.dashStartX + (p.dashTargetX - p.dashStartX) * f;
         p.y = p.dashStartY + (p.dashTargetY - p.dashStartY) * f;
         if (p.dashRemaining <= 0) {
-          // Wall-clip prevention: binary-search the last safe point along the dash ray
+          // Wall-clip prevention
           const r = a.radius;
           if (Physics.hitWalls(p.dashTargetX, p.dashTargetY, r)) {
             let lo = 0, hi = 1;
@@ -2890,12 +2910,6 @@
           p.dashRemaining = 0;
         }
       } else if (!frozen) {
-        const shift = keys['ShiftLeft'] || keys['ShiftRight'], crouch = keys['Space'];
-        let dx = 0, dy = 0;
-        if (keys['KeyW'] || keys['ArrowUp']) dy -= 1; if (keys['KeyS'] || keys['ArrowDown']) dy += 1;
-        if (keys['KeyA'] || keys['ArrowLeft']) dx -= 1; if (keys['KeyD'] || keys['ArrowRight']) dx += 1;
-        const len = Math.sqrt(dx * dx + dy * dy); if (len > 0) { dx /= len; dy /= len; }
-        const running = shift && p.canRun, consuming = running && len > 0;
         if (consuming) { p.stamina = Math.max(0, p.stamina - a.staminaDrain * dt); p.staminaIdleTimer = 0; if (p.stamina === 0) p.canRun = false; }
         else { p.staminaIdleTimer += dt; if (p.staminaIdleTimer >= STAMINA_REGEN_DELAY) p.stamina = Math.min(a.staminaMax, p.stamina + a.staminaRegen * dt); if (!p.canRun && p.stamina >= STAMINA_RUN_THRESHOLD) p.canRun = true; }
         const speed = (running && len > 0 ? a.runSpeed : crouch ? a.crouchSpeed : a.speed) * (playerSlow > 0 ? 1 - ABILITIES.flash.slowAmount : 1);
@@ -2903,20 +2917,6 @@
         if (!Physics.hitWalls(nx, p.y, a.radius)) p.x = nx; if (!Physics.hitWalls(p.x, ny, a.radius)) p.y = ny;
         p.x = Math.max(a.radius, Math.min(WORLD - a.radius, p.x)); p.y = Math.max(a.radius, Math.min(WORLD - a.radius, p.y));
         p._running = running && len > 0; p._crouching = crouch;
-
-        if (socket && socket.connected) {
-          const inp = {
-            seq: inputSeq++,
-            dx, dy,
-            angle: p.angle,
-            dt: dt * 1000,
-            fire: mouseJustDown,
-            clientTime: Date.now(),
-            visualState: { agentKey: p.agentKey, hp: p.hp, maxHp: p.maxHp, dead: p.dead, _running: p._running, _crouching: p._crouching, reloading: p.reloading, shieldActive: p.shieldActive, activeWeapon: p.activeWeapon, viewMode: p.viewMode, slot: mySlot, lightOn: p.lightOn, dashRemaining: p.dashRemaining, dashAngle: p.dashAngle, cam1: window.fateCam ? { x: Math.round(fateCam.x), y: Math.round(fateCam.y), angle: fateCam.angle } : null, cam2: window.fateCam2 ? { x: Math.round(fateCam2.x), y: Math.round(fateCam2.y), angle: fateCam2.angle } : null, tower: window.fateTower ? { x: Math.round(fateTower.x), y: Math.round(fateTower.y), angle: fateTower.angle } : null }
-          };
-          pendingInputs.push(inp);
-          socket.emit('cl_input', inp);
-        }
 
         // --- Sound: Footstep loops ---
         if (len > 0 && !p.dead && !p._crouching) {
@@ -2936,6 +2936,21 @@
         p._running = false; 
         SoundManager.stop('walk');
         SoundManager.stop('run');
+      }
+
+      // SEND INPUT PACKET CONTINUOUSLY (even during dash)
+      if (socket && socket.connected && !frozen) {
+        const inp = {
+          seq: inputSeq++,
+          dx, dy, // Note: dx/dy are pre-calculated before the dash check
+          angle: p.angle,
+          dt: dt * 1000,
+          fire: mouseJustDown,
+          clientTime: Date.now(),
+          visualState: { agentKey: p.agentKey, hp: p.hp, maxHp: p.maxHp, dead: p.dead, _running: p._running, _crouching: p._crouching, reloading: p.reloading, shieldActive: p.shieldActive, activeWeapon: p.activeWeapon, viewMode: p.viewMode, slot: mySlot, lightOn: p.lightOn, dashRemaining: p.dashRemaining, dashAngle: p.dashAngle, dashStartX: p.dashStartX, dashStartY: p.dashStartY, dashTargetX: p.dashTargetX, dashTargetY: p.dashTargetY, cam1: window.fateCam ? { x: Math.round(fateCam.x), y: Math.round(fateCam.y), angle: fateCam.angle } : null, cam2: window.fateCam2 ? { x: Math.round(fateCam2.x), y: Math.round(fateCam2.y), angle: fateCam2.angle } : null, tower: window.fateTower ? { x: Math.round(fateTower.x), y: Math.round(fateTower.y), angle: fateTower.angle } : null }
+        };
+        pendingInputs.push(inp);
+        socket.emit('cl_input', inp);
       }
       if (!(p.dashRemaining > 0)) p.angle = Math.atan2(mouseWorld.y - p.y, mouseWorld.x - p.x);
       // Recarga via Clock
