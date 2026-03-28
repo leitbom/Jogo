@@ -24,4 +24,9 @@ export interface IGameModeService {
    * Increments the shot counter for accuracy tracking.
    */
   incrementShotsFired(socketId: string): void;
+
+  /**
+   * Processes player inputs for authoritative movement.
+   */
+  onClientInput(socketId: string, input: any): void;
 }

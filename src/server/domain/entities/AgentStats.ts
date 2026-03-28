@@ -38,7 +38,7 @@ export const MAX_HIT_RANGE = 1_600;
 
 // ── Dynamic tick rates ────────────────────────────────────────
 export const TICK_HZ_LOBBY = 10;  // Hz while in lobby / menu
-export const TICK_HZ_GAME = 30;  // Hz while a survival match is running
+export const TICK_HZ_GAME = 60;  // Hz while a survival match is running
 
 // ── SecurityGuard limits ──────────────────────────────────────
 /** Max action events (dmg, grenade, i_died…) a socket can send per second */

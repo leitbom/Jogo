@@ -164,6 +164,19 @@ export class SurvivalGameService implements IGameModeService {
     if (player && room?.state === 'in_game') player.shotsFired++;
   }
 
+  // ── INPUT HANDLING ──────────────────────────────────────
+  onClientInput(socketId: string, input: any): void {
+    const room = this.rooms.findBySocketId(socketId);
+    const p = room?.players.get(socketId);
+    if (!p || room?.state !== 'in_game') return;
+    
+    // Validate input basic structure
+    if (typeof input.dt !== 'number') return;
+    if (p.pendingInputs.length < 30) {
+      p.pendingInputs.push(input);
+    }
+  }
+
   // ── WIN CONDITION ────────────────────────────────────
   private checkWinCondition(room: Room): void {
     if (room.state !== 'in_game') return;
@@ -257,27 +270,94 @@ export class SurvivalGameService implements IGameModeService {
         : { x: 0, y: 0 };
         
       result[p.id] = PhysicsUtils.findSafeSpawn(Math.round(sp.x + off.x), Math.round(sp.y + off.y), 20, room.mapData || {});
+      p.x = result[p.id].x;
+      p.y = result[p.id].y;
+      p.pendingInputs = [];
     });
     return result;
   }
 
-  // ── STATE TICK (30 Hz) ────────────────────────────────
+  // ── STATE TICK (60 Hz) ────────────────────────────────
   private startStateTick(room: Room): void {
     const intervalMs = Math.round(1_000 / TICK_HZ_GAME);
+    const historyBuffer: Array<{ time: number, players: Record<string, {x: number, y: number}> }> = [];
+    (room as any).stateTickHistory = historyBuffer; // stash for lag comp
+
     room.stateTickIntervalId = setInterval(() => {
       if (room.state !== 'in_game') {
         clearInterval(room.stateTickIntervalId!);
         room.stateTickIntervalId = null;
         return;
       }
-      const states: Array<{ id: string; state: unknown }> = [];
+      
+      const now = Date.now();
+      const changedFields: Record<string, any> = {};
+      const snapshotPlayers: Record<string, {x: number, y: number}> = {};
+
       for (const [id, p] of room.players) {
-        if (p.stateRelay !== null) {
-          states.push({ id, state: p.stateRelay });
+        if (!p.alive) continue;
+
+        const inputs = p.pendingInputs || [];
+        let walked = false;
+        let latestVisual: any = null;
+
+        while (inputs.length > 0) {
+          const input = inputs.shift()!;
+          const isDashing = input.visualState && input.visualState.dashRemaining > 0;
+          const dashAngle = (input.visualState && input.visualState.dashAngle !== undefined) ? input.visualState.dashAngle : input.angle;
+          const speed = isDashing ? 1466 : (input.visualState?._running ? 380 : 255); 
+          const safeDt = Math.min(input.dt, 50); // cap to 50ms per input
+
+          const radius = 14; 
+
+          if (isDashing) {
+            // Nykora dash bypasses walls and uses dash-specific speed/angle
+            p.x += Math.cos(dashAngle) * speed * (safeDt / 1000);
+            p.y += Math.sin(dashAngle) * speed * (safeDt / 1000);
+          } else {
+            // Check if stuck (due to ending a dash or teleports) and push out
+            if (PhysicsUtils.isColliding(p.x, p.y, radius, room.mapData || {})) {
+              const safe = PhysicsUtils.findSafeSpawn(p.x, p.y, radius, room.mapData || {});
+              p.x = safe.x; p.y = safe.y;
+            }
+
+            const nx = p.x + input.dx * speed * (safeDt / 1000);
+            const ny = p.y + input.dy * speed * (safeDt / 1000);
+            
+            if (!PhysicsUtils.isColliding(nx, p.y, radius, room.mapData || {})) p.x = nx;
+            if (!PhysicsUtils.isColliding(p.x, ny, radius, room.mapData || {})) p.y = ny;
+          }
+
+          // Clamp to world bounds
+          const worldSize = (room.mapData?.size?.width) || (room.mapData?.worldSize) || 2048;
+          p.x = Math.max(radius, Math.min(worldSize - radius, p.x));
+          p.y = Math.max(radius, Math.min(worldSize - radius, p.y));
+
+          p.angle = input.angle;
+          p.lastProcessedSeq = input.seq;
+          latestVisual = input.visualState;
+          walked = true;
         }
+
+        if (latestVisual) p.stateRelay = latestVisual;
+
+        // Delta compression: only send fields if updated
+        changedFields[id] = {
+           x: Math.round(p.x),
+           y: Math.round(p.y),
+           angle: Math.round(p.angle),
+           lastProcessedSeq: p.lastProcessedSeq,
+           visual: p.stateRelay
+        };
+
+        snapshotPlayers[id] = { x: p.x, y: p.y };
       }
-      if (states.length > 0) {
-        this.emitter.broadcastStates(room.code, states);
+
+      historyBuffer.push({ time: now, players: snapshotPlayers });
+      if (historyBuffer.length > 60) historyBuffer.shift();
+
+      if (Object.keys(changedFields).length > 0) {
+        this.emitter.toRoom(room.code, 'sv_state_update', { t: now, data: changedFields });
       }
     }, intervalMs);
   }

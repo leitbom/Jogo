@@ -1928,6 +1928,8 @@
       castRay(ox, oy, ex, ey, opts = {}) {
         let bT = 1, bX = ex, bY = ey;
         const dx = ex - ox, dy = ey - oy;
+        const totalDist = Math.hypot(dx, dy);
+
         const checkWalls = (list, isFov = false) => {
           for (const w of list) {
             // Se for cálculo de FOV e a parede for janela ou marcada para não projetar sombra, pulamos
@@ -1952,6 +1954,8 @@
               }
             }
             if (hitT !== null) {
+              // Nykora: ignore walls beyond limit distance
+              if (opts.wallLimitDist !== undefined && hitT * totalDist > opts.wallLimitDist) continue;
               if (hitT < bT) { bT = hitT; bX = ox + dx * hitT; bY = oy + dy * hitT; }
             }
           }
@@ -2167,12 +2171,18 @@
     // ════════════════════════════════════════════════════════════════════════════════
     // § 12 · NETWORK ADAPTER
     // ════════════════════════════════════════════════════════════════════════════════
+    let inputSeq = 0;
+    let pendingInputs = [];
+    let remoteSnapshots = [];
+    const INTERPOLATION_DELAY = 100;
+
     function connectSocket(afterConnect) {
       if (socket && socket.connected) { afterConnect && afterConnect(); return; }
       socket = io({ reconnection: false });
       let _lobbyBound = false;
       socket.on('connect', () => { 
         if (!_lobbyBound) { _lobbyBound = true; bindLobbyEvents(); } 
+        myId = socket.id;
         const ms = document.getElementById('menu-status');
         if (ms) { ms.textContent = '● LIGADO'; ms.style.color = '#2ecc71'; }
         afterConnect && afterConnect(); 
@@ -2180,12 +2190,27 @@
       socket.on('connect_error', () => { showRoomMsg('Erro de ligação — tenta novamente'); showRoomSelect(); });
       // ——— In-game peers (scoped to room — sent by server after game:start) ———
       socket.on('peer_joined', data => { remotePlayers[data.id] = null; remoteDeployables[data.id] = { cam1: null, cam2: null, tower: null }; });
-      socket.on('peer_state', data => {
-        if (!remotePlayers[data.id]) remotePlayers[data.id] = data.state;
-        else {
-          const rp = remotePlayers[data.id];
-          rp.lastX = rp.x; rp.lastY = rp.y;
-          Object.assign(rp, data.state);
+      socket.on('sv_state_update', snapshot => {
+        // Delta Compression handling + Interpolation buffer
+        remoteSnapshots.push(snapshot);
+        if (remoteSnapshots.length > 30) remoteSnapshots.shift();
+        
+        // Server Reconciliation for local player
+        if (snapshot.data[myId]) {
+          const svState = snapshot.data[myId];
+          player.x = svState.x;
+          player.y = svState.y;
+          
+          // Remove inputs that the server already processed
+          pendingInputs = pendingInputs.filter(inp => inp.seq > svState.lastProcessedSeq);
+          
+          // Re-apply remaining inputs to re-predict from the authoritative server state
+          for (const inp of pendingInputs) {
+            const speed = 250;
+            const safeDt = Math.min(inp.dt, 50);
+            player.x += inp.dx * speed * (safeDt / 1000);
+            player.y += inp.dy * speed * (safeDt / 1000);
+          }
         }
       });
       socket.on('peer_agent', data => { if (remotePlayers[data.id]) remotePlayers[data.id].agentKey = data.agentKey; });
@@ -2217,6 +2242,7 @@
 
       socket.on('game:respawn', data => {
         if (data.id === myId) {
+          pendingInputs = []; // Evita inputs fantasmas puxando o jogador
           player.x = data.x;
           player.y = data.y;
           player.hp = data.hp;
@@ -2471,6 +2497,7 @@
       Object.keys(keys).forEach(k => keys[k] = false);
       mouseDown = false;
       mouseJustDown = false;
+      pendingInputs = [];
 
       // Populate remote players from lobby data
       if (data?.players) {
@@ -2766,7 +2793,6 @@
         stateEmitTimer -= dt;
         if (stateEmitTimer <= 0) {
           stateEmitTimer = STATE_EMIT_INTERVAL;
-          socket.emit('state', { agentKey: player.agentKey, x: Math.round(player.x), y: Math.round(player.y), angle: player.angle, hp: player.hp, maxHp: player.maxHp, dead: player.dead, _running: player._running, _crouching: player._crouching, reloading: player.reloading, shieldActive: player.shieldActive, activeWeapon: player.activeWeapon, viewMode: player.viewMode, slot: mySlot, lightOn: player.lightOn, cam1: fateCam ? { x: Math.round(fateCam.x), y: Math.round(fateCam.y), angle: fateCam.angle } : null, cam2: fateCam2 ? { x: Math.round(fateCam2.x), y: Math.round(fateCam2.y), angle: fateCam2.angle } : null, tower: fateTower ? { x: Math.round(fateTower.x), y: Math.round(fateTower.y), angle: fateTower.angle } : null });
           updateLobbyBadge();
         }
       }
@@ -2789,6 +2815,7 @@
     // ════════════════════════════════════════════════════════════════════════════════
     function update(dt) { 
       updatePlayer(dt); 
+      updateRemotePlayers(dt);
       updateBullets(dt); 
       updateGrenades(dt); 
       updateParticles(dt); 
@@ -2876,6 +2903,20 @@
         if (!Physics.hitWalls(nx, p.y, a.radius)) p.x = nx; if (!Physics.hitWalls(p.x, ny, a.radius)) p.y = ny;
         p.x = Math.max(a.radius, Math.min(WORLD - a.radius, p.x)); p.y = Math.max(a.radius, Math.min(WORLD - a.radius, p.y));
         p._running = running && len > 0; p._crouching = crouch;
+
+        if (socket && socket.connected) {
+          const inp = {
+            seq: inputSeq++,
+            dx, dy,
+            angle: p.angle,
+            dt: dt * 1000,
+            fire: mouseJustDown,
+            clientTime: Date.now(),
+            visualState: { agentKey: p.agentKey, hp: p.hp, maxHp: p.maxHp, dead: p.dead, _running: p._running, _crouching: p._crouching, reloading: p.reloading, shieldActive: p.shieldActive, activeWeapon: p.activeWeapon, viewMode: p.viewMode, slot: mySlot, lightOn: p.lightOn, dashRemaining: p.dashRemaining, dashAngle: p.dashAngle, cam1: window.fateCam ? { x: Math.round(fateCam.x), y: Math.round(fateCam.y), angle: fateCam.angle } : null, cam2: window.fateCam2 ? { x: Math.round(fateCam2.x), y: Math.round(fateCam2.y), angle: fateCam2.angle } : null, tower: window.fateTower ? { x: Math.round(fateTower.x), y: Math.round(fateTower.y), angle: fateTower.angle } : null }
+          };
+          pendingInputs.push(inp);
+          socket.emit('cl_input', inp);
+        }
 
         // --- Sound: Footstep loops ---
         if (len > 0 && !p.dead && !p._crouching) {
@@ -2978,7 +3019,7 @@
           if (Math.abs(angTo) < tolerance) {
             p.swingHitIds[rid] = true;
             if (socket && socket.connected) {
-              socket.emit('dmg', { to: rid, dmg: wd.damage, cause: 'MELEE' });
+              socket.emit('dmg', { to: rid, dmg: wd.damage, cause: 'MELEE', clientTime: Date.now() });
               applySwordBleed(rid);
               showHitMark(true);
             }
@@ -3059,6 +3100,7 @@
       p.dashTargetY = p.y + Math.sin(ang) * dst;
       p.dashTargetX = Math.max(a.radius, Math.min(WORLD - a.radius, p.dashTargetX));
       p.dashTargetY = Math.max(a.radius, Math.min(WORLD - a.radius, p.dashTargetY));
+      p.dashAngle = ang;
 
       p.dashRemaining = 0.15;
       p.dashStartX = p.x;
@@ -3088,7 +3130,7 @@
           if (!rs || rs.dead) continue;
           const d = Math.hypot(rs.x - p.x, rs.y - p.y);
           if (d < def.radius + (AGENTS[rs.agentKey]?.radius || 14)) {
-            socket.emit('dmg', { to: rid, dmg: Math.round(def.damage), cause: 'SPIN' });
+            socket.emit('dmg', { to: rid, dmg: Math.round(def.damage), cause: 'SPIN', clientTime: Date.now() });
             applySwordBleed(rid);
             hitEnemy = true;
           }
@@ -3217,6 +3259,57 @@
         }
       }
     }
+
+    function updateRemotePlayers() {
+      const now = Date.now();
+      const renderTime = now - INTERPOLATION_DELAY;
+
+      let p0 = null;
+      let p1 = null;
+      for (let i = 0; i < remoteSnapshots.length - 1; i++) {
+        if (remoteSnapshots[i].t <= renderTime && remoteSnapshots[i+1].t >= renderTime) {
+          p0 = remoteSnapshots[i];
+          p1 = remoteSnapshots[i+1];
+          break;
+        }
+      }
+
+      if (p0 && p1) {
+        let alpha = (renderTime - p0.t) / (p1.t - p0.t);
+        for (const [id, state1] of Object.entries(p1.data)) {
+          if (id === myId) continue;
+          const state0 = p0.data[id] || state1; 
+          if (!remotePlayers[id]) remotePlayers[id] = { x: state1.x, y: state1.y, angle: state1.angle };
+          
+          const rp = remotePlayers[id];
+          rp.lastX = rp.x;
+          rp.lastY = rp.y;
+
+          rp.x = state0.x + (state1.x - state0.x) * alpha;
+          rp.y = state0.y + (state1.y - state0.y) * alpha;
+          
+          let diff = state1.angle - state0.angle;
+          while (diff < -Math.PI) diff += 2 * Math.PI;
+          while (diff > Math.PI) diff -= 2 * Math.PI;
+          rp.angle = state0.angle + diff * alpha;
+
+          if (state1.visual) Object.assign(rp, state1.visual);
+        }
+      } else if (remoteSnapshots.length > 0) {
+        const latest = remoteSnapshots[remoteSnapshots.length - 1];
+        for (const [id, state1] of Object.entries(latest.data)) {
+          if (id === myId) continue;
+          if (!remotePlayers[id]) remotePlayers[id] = { x: state1.x, y: state1.y, angle: state1.angle };
+          const rp = remotePlayers[id];
+          rp.lastX = rp.x;
+          rp.lastY = rp.y;
+          rp.x = state1.x;
+          rp.y = state1.y;
+          rp.angle = state1.angle;
+          if (state1.visual) Object.assign(rp, state1.visual);
+        }
+      }
+    }
     function fireBullet() {
       const p = player, a = p.agent, wd = WEAPONS[p.activeWeapon];
       let sp = wd.spread; if (p._running) sp = wd.spreadMove; else if (p._crouching) sp *= .4; if (p.activeWeapon === 'minigun') sp = 0.05 + p.spinHeat;
@@ -3339,11 +3432,11 @@
         let hit = false;
         if (b.owner === 'player' || b.owner === 'tower') {
           const cause = b.owner === 'tower' ? 'TORRE' : 'BALA';
-          if (socket && socket.connected) { for (const [rid, rs] of Object.entries(remotePlayers)) { if (!rs || rs.dead) continue; if (Math.hypot(nx - rs.x, ny - rs.y) < (AGENTS[rs.agentKey]?.radius || 14) + 3) { socket.emit('dmg', { to: rid, dmg: b.damage, cause }); spawnImpact(nx, ny, b.color); showHitMark(false); hit = true; break; } } }
+          if (socket && socket.connected) { for (const [rid, rs] of Object.entries(remotePlayers)) { if (!rs || rs.dead) continue; if (Math.hypot(nx - rs.x, ny - rs.y) < (AGENTS[rs.agentKey]?.radius || 14) + 3) { socket.emit('dmg', { to: rid, dmg: b.damage, cause, clientTime: Date.now() }); spawnImpact(nx, ny, b.color); showHitMark(false); hit = true; break; } } }
         } else if (b.owner === 'foul_reflected') {
           // BUG-FIX: ricochetes causam dano ao local E remotos
           if (!player.dead && Math.hypot(nx - player.x, ny - player.y) < player.agent.radius + 3) { applyDmg(player, b.damage, 'REFLEX'); spawnImpact(nx, ny, '#2ecc71'); hit = true; }
-          if (!hit && socket && socket.connected) { for (const [rid, rs] of Object.entries(remotePlayers)) { if (!rs || rs.dead) continue; if (Math.hypot(nx - rs.x, ny - rs.y) < (AGENTS[rs.agentKey]?.radius || 14) + 3) { socket.emit('dmg', { to: rid, dmg: b.damage, cause: 'REFLEX' }); spawnImpact(nx, ny, '#2ecc71'); showHitMark(false); hit = true; break; } } }
+          if (!hit && socket && socket.connected) { for (const [rid, rs] of Object.entries(remotePlayers)) { if (!rs || rs.dead) continue; if (Math.hypot(nx - rs.x, ny - rs.y) < (AGENTS[rs.agentKey]?.radius || 14) + 3) { socket.emit('dmg', { to: rid, dmg: b.damage, cause: 'REFLEX', clientTime: Date.now() }); spawnImpact(nx, ny, '#2ecc71'); showHitMark(false); hit = true; break; } } }
         }
         if (hit) { bullets.splice(i, 1); continue; }
         b.x = nx; b.y = ny;
@@ -3391,7 +3484,7 @@
         screenShake = Math.max(screenShake, 12);
         if (isOwner) {
           if (!player.dead) { const d = Math.hypot(player.x - g.x, player.y - g.y); if (d <= def.blastRadius + player.radius) { const f = 1 - Math.max(0, (d - player.radius) / def.blastRadius); applyDmg(player, Math.round(def.damage * f), 'EXPLOSÃO'); } }
-          if (socket && socket.connected) { for (const [rid, rs] of Object.entries(remotePlayers)) { if (!rs || rs.dead) continue; const rr = AGENTS[rs.agentKey]?.radius || 14, d = Math.hypot(rs.x - g.x, rs.y - g.y); if (d > def.blastRadius + rr) continue; socket.emit('dmg', { to: rid, dmg: Math.round(def.damage * (1 - Math.max(0, (d - rr) / def.blastRadius))), cause: 'EXPLOSÃO' }); } socket.emit('vfx', { type: 'he_explode', x: g.x, y: g.y, r: def.blastRadius }); }
+          if (socket && socket.connected) { for (const [rid, rs] of Object.entries(remotePlayers)) { if (!rs || rs.dead) continue; const rr = AGENTS[rs.agentKey]?.radius || 14, d = Math.hypot(rs.x - g.x, rs.y - g.y); if (d > def.blastRadius + rr) continue; socket.emit('dmg', { to: rid, dmg: Math.round(def.damage * (1 - Math.max(0, (d - rr) / def.blastRadius))), cause: 'EXPLOSÃO', clientTime: Date.now() }); } socket.emit('vfx', { type: 'he_explode', x: g.x, y: g.y, r: def.blastRadius }); }
         }
       } else if (g.type === 'flash') {
         SoundManager.play('grenade_explode', 0.5);
@@ -3574,7 +3667,8 @@
         const isFateInCam = (observer.agentKey === 'fate' && isEffCamView);
         // Only cast player shadows if flashlight is ON. Small vision circles (light OFF) should NOT produce shadows.
         const useEnts = observer.lightOn ? shadowEntities : [];
-        const finalFov = (isFateInCam && !observer.lightOn) ? [] : Physics.buildFOV(observer.x, observer.y, observer.angle, actDeg, actDist, { noWalls: isNykora, isCrouching: observer._crouching, entities: useEnts });
+        const wlDist = isNykora ? (ta.fovDist * 0.5) : undefined;
+        const finalFov = (isFateInCam && !observer.lightOn) ? [] : Physics.buildFOV(observer.x, observer.y, observer.angle, actDeg, actDist, { wallLimitDist: wlDist, isCrouching: observer._crouching, entities: useEnts });
 
         fovsData.push({
           fov: finalFov,
@@ -3812,10 +3906,42 @@
           }
         }
       }
-      ctx.strokeStyle = '#ff4400'; ctx.lineWidth = 4; ctx.strokeRect(0, 0, WORLD, WORLD);
     }
     function drawWalls() {
+      const p = player;
+      const isNykora = p.agentKey === 'nykora';
+      const limit = isNykora ? (AGENTS.nykora.fovDist * 0.5) : 9999;
+
+      // Draw world border with distance check for Nykora
+      if (isNykora) {
+        // Simple 4-side check for world bounds
+        const dN = p.y, dS = WORLD - p.y, dW = p.x, dE = WORLD - p.x;
+        const sides = [
+          { d: dN, x: 0, y: 0, w: WORLD, h: 4 }, // North
+          { d: dS, x: 0, y: WORLD - 4, w: WORLD, h: 4 }, // South
+          { d: dW, x: 0, y: 0, w: 4, h: WORLD }, // West
+          { d: dE, x: WORLD - 4, y: 0, w: 4, h: WORLD } // East
+        ];
+        for (const s of sides) {
+          if (s.d > limit + 64) continue;
+          ctx.globalAlpha = Math.max(0, Math.min(1, (limit + 32 - s.d) / 64));
+          ctx.fillStyle = '#ff4400';
+          ctx.fillRect(s.x, s.y, s.w, s.h);
+        }
+        ctx.globalAlpha = 1.0;
+      } else {
+        ctx.strokeStyle = '#ff4400'; ctx.lineWidth = 4; ctx.strokeRect(0, 0, WORLD, WORLD);
+      }
+
       for (const w of WALLS) {
+        if (isNykora) {
+          const ww = w.width || w.w || 0, wh = w.height || w.h || 0;
+          const cx = w.x + ww/2, cy = w.y + wh/2;
+          const dist = Math.hypot(cx - p.x, cy - p.y);
+          if (dist > limit + 64) continue;
+          ctx.globalAlpha = Math.max(0, Math.min(1, (limit + 32 - dist) / 64));
+        }
+
         if (w.isWindow) {
           ctx.fillStyle = 'rgba(100, 200, 255, 0.25)'; 
           ctx.strokeStyle = 'rgba(150, 220, 255, 0.5)';
@@ -3836,8 +3962,17 @@
              ctx.fillStyle = '#25252a'; ctx.fillRect(w.x + 4, w.y + 4, ww - 8, wh - 8);
           }
         }
+        ctx.globalAlpha = 1.0;
       }
       for (const w of LOW_OBSTACLES) {
+        if (isNykora) {
+          const ww = w.width || w.w || 0, wh = w.height || w.h || 0;
+          const cx = w.x + ww/2, cy = w.y + wh/2;
+          const dist = Math.hypot(cx - p.x, cy - p.y);
+          if (dist > limit + 64) continue;
+          ctx.globalAlpha = Math.max(0, Math.min(1, (limit + 32 - dist) / 64));
+        }
+
         // Objetos baixos têm um look mais detalhado
         ctx.fillStyle = '#15151a'; ctx.strokeStyle = '#2a2a2f'; ctx.lineWidth = 1;
         if (w.shape === 'circle') { 
@@ -3853,6 +3988,7 @@
           ctx.beginPath(); ctx.moveTo(w.x + 5, w.y + 5); ctx.lineTo(w.x + ww - 5, w.y + wh - 5); ctx.stroke();
           ctx.beginPath(); ctx.moveTo(w.x + ww - 5, w.y + 5); ctx.lineTo(w.x + 5, w.y + wh - 5); ctx.stroke();
         }
+        ctx.globalAlpha = 1.0;
       }
     }
 

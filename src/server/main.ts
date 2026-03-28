@@ -233,6 +233,13 @@ io.on('connection', (socket: Socket) => {
     p.stateRelay = st;  // Buffer — the 30Hz game tick will broadcast
   });
 
+  socket.on('cl_input', (input: any) => {
+    const room = roomRepo.findBySocketId(socket.id);
+    if (!room || room.state !== 'in_game') return;
+    const svc = getGameSvc(room.gameMode);
+    svc.onClientInput(socket.id, input);
+  });
+
   // SHOT: validate shot rate then relay immediately (needs low latency)
   socket.on('shot', (data: any) => {
     const room = roomRepo.findBySocketId(socket.id);
@@ -282,7 +289,7 @@ io.on('connection', (socket: Socket) => {
   });
 
   // AUTHORITATIVE DAMAGE — full server-side validation
-  socket.on('dmg', (data: { to: string; dmg: number; cause: string }) => {
+  socket.on('dmg', (data: { to: string; dmg: number; cause: string; clientTime?: number }) => {
     if (!security.checkActionRate(socket.id)) return;
 
     const room = roomRepo.findBySocketId(socket.id);
@@ -310,15 +317,37 @@ io.on('connection', (socket: Socket) => {
     }
 
     // Distance check (anti-aimbot teleport)
-    const fs = from.stateRelay, ts = target.stateRelay;
-    if (fs && ts && Math.hypot(fs.x - ts.x, fs.y - ts.y) > MAX_HIT_RANGE) return;
+    // Basic Lag Compensation: Check against target's historical position if clientTime is provided
+    let tx = target.x, ty = target.y;
+    // @ts-ignore
+    const history = room.stateTickHistory;
+    if (history && data.clientTime) {
+      // Find snapshot closest to clientTime
+      let closest = history[history.length - 1];
+      let minDiff = Infinity;
+      for (const h of history) {
+        const diff = Math.abs(h.time - data.clientTime);
+        if (diff < minDiff) { minDiff = diff; closest = h; }
+      }
+      if (closest && closest.players[data.to]) {
+        tx = closest.players[data.to].x;
+        ty = closest.players[data.to].y;
+      }
+    } else if (target.stateRelay) {
+      tx = target.stateRelay.x; ty = target.stateRelay.y;
+    }
+
+    const fx = from.x || from.stateRelay?.x || 0;
+    const fy = from.y || from.stateRelay?.y || 0;
+
+    if (tx !== undefined && ty !== undefined && Math.hypot(fx - tx, fy - ty) > MAX_HIT_RANGE) return;
 
     from.damageDealt += dmg;
     target.damageTaken += dmg;
     from.shotsHit++;
 
     io.to(data.to).emit('take_dmg', { dmg, cause, from: socket.id });
-    if (ts) socket.to(room.code).emit('peer_hurt', { id: data.to, x: ts.x, y: ts.y });
+    if (tx !== undefined && ty !== undefined) socket.to(room.code).emit('peer_hurt', { id: data.to, x: tx, y: ty });
     logger.info(`[dmg] ${socket.id.slice(0, 6)}→${data.to.slice(0, 6)} ${dmg} (${cause})`);
   });
 
@@ -363,6 +392,6 @@ server.listen(PORT, () => {
   logger.info(`\n  ╔════════════════════════════════════╗`);
   logger.info(`  ║  Tactical Shooter  ·  port ${PORT}     ║`);
   logger.info(`  ║  Survival Mode · ${TICK_HZ_LOBBY}Hz lobby tick  ║`);
-  logger.info(`  ║  Survival Mode · 30Hz game tick   ║`);
+  logger.info(`  ║  Survival Mode · 60Hz game tick   ║`);
   logger.info(`  ╚════════════════════════════════════╝\n`);
 });

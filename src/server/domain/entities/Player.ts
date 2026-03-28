@@ -37,6 +37,13 @@ export interface Player extends PublicPlayer {
   // State relay (last known position from client)
   stateRelay: PlayerStateRelay | null;
 
+  // Authoritative movement & sync
+  x: number;
+  y: number;
+  angle: number;
+  pendingInputs: any[];
+  lastProcessedSeq: number;
+
   // Internal / housekeeping
   disconnectTimerId: ReturnType<typeof setTimeout> | null;
 }
@@ -78,6 +85,11 @@ export function createPlayer(id: string, name: string): Player {
     deathTime: null,
     winner: false,
     stateRelay: null,
+    x: 0,
+    y: 0,
+    angle: 0,
+    pendingInputs: [],
+    lastProcessedSeq: -1,
     disconnectTimerId: null,
   };
 }
