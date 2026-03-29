@@ -177,8 +177,12 @@ io.on('connection', (socket: Socket) => {
 
   socket.on('lobby:select_agent', ({ agentKey }: { agentKey: AgentKey }) => {
     if (!security.checkLobbyRate(socket.id)) return;
-    const validAgents: AgentKey[] = ['fable', 'fate', 'foul', 'nykora'];
-    if (!validAgents.includes(agentKey)) return;
+    const validAgents: AgentKey[] = ['fable', 'fate', 'foul', 'nykora', 'naac'];
+    console.log(`[LOBBY] select_agent from ${socket.id.slice(0,6)}: ${agentKey}`);
+    if (!validAgents.includes(agentKey)) {
+      console.log(`[LOBBY] REJECTED select_agent from ${socket.id.slice(0,6)}: ${agentKey}`);
+      return;
+    }
     lobbySvc.selectAgent(socket.id, agentKey);
   });
 
@@ -206,6 +210,7 @@ io.on('connection', (socket: Socket) => {
 
   socket.on('lobby:start', () => {
     if (!security.checkLobbyRate(socket.id)) return;
+    console.log(`[LOBBY] requestStart from ${socket.id.slice(0,6)}`);
     lobbySvc.requestStart(socket.id);
   });
 
@@ -250,6 +255,7 @@ io.on('connection', (socket: Socket) => {
     if (room.state === 'in_game') {
       const weapon = data?.owner === 'tower' ? 'TORRE' : (AGENT_STATS[p.agentKey]?.weapon ?? 'ak47');
       if (!security.checkShotRate(socket.id, weapon as any)) return;
+      if (!security.validateShotOrigin(socket.id, data.x, data.y, room.mapData || {})) return;
       const svc = getGameSvc(room.gameMode);
       svc.incrementShotsFired(socket.id);
     }
@@ -257,9 +263,84 @@ io.on('connection', (socket: Socket) => {
     socket.to(room.code).emit('peer_shot', { id: socket.id, ...(data as object) });
   });
 
-  // GRENADE / VFX / DEPLOYABLE: action rate-limited relay
-  socket.on('grenade', (data: unknown) => {
+  socket.on('shot_cone', (data: any) => {
+    const room = roomRepo.findBySocketId(socket.id);
+    if (!room) return;
+    const p = room.players.get(socket.id);
+    if (!p) return;
+
+    if (room.state === 'in_game') {
+      const weapon = AGENT_STATS[p.agentKey]?.weapon ?? 'ak47';
+      if (!data.isRecuo && !security.checkShotRate(socket.id, weapon as any)) return;
+      if (!security.validateShotOrigin(socket.id, data.x, data.y, room.mapData || {})) return;
+      const svc = getGameSvc(room.gameMode);
+      svc.incrementShotsFired(socket.id);
+    }
+    
+    // The client already calculated hitIds { [rid]: { zone, dmg, dist } }. 
+    // We just relay the VFX and let the 'dmg' event or direct validation handle the rest.
+    // For shotgun, the client itself sends 'shot_cone'. Instead of waiting for 'dmg' from the client,
+    // the server should definitively apply the zone effects here for simplicity.
+    if (data.hits) {
+      for (const [rid, hit] of Object.entries(data.hits)) {
+        const target = room.players.get(rid);
+        if (target && target.alive) {
+          const h = hit as any;
+          target.damageTaken += h.dmg;
+          p.damageDealt += h.dmg;
+          p.shotsHit++;
+          // Apply status effects based on zones
+          if (h.zone === 'C') {
+            target.slowDeadline = Date.now() + 500;
+          }
+          const cause = data.isRecuo ? 'RECUO' : 'SHOTGUN';
+          io.to(rid).emit('take_dmg', { dmg: h.dmg, cause, from: socket.id, zone: h.zone, pushbackDist: h.zone === 'A' ? 2 * (data.X_unit || 1) : 0 });
+          socket.to(room.code).emit('peer_hurt', { id: rid, x: target.x, y: target.y });
+        }
+      }
+    }
+
+    socket.to(room.code).emit('peer_shot_cone', { id: socket.id, ...(data as object) });
+  });
+
+  socket.on('light_toggle', (data: { lightOn: boolean }) => {
+    const room = roomRepo.findBySocketId(socket.id);
+    if (!room) return;
+    socket.to(room.code).emit('peer_light', { id: socket.id, lightOn: data.lightOn });
+  });
+
+  socket.on('event', (data: any) => {
     if (!security.checkActionRate(socket.id)) return;
+    const room = roomRepo.findBySocketId(socket.id);
+    if (!room) return;
+    
+    if (data.type === 'avanco_start') {
+      socket.to(room.code).emit('peer_event', { id: socket.id, ...data });
+    } else if (data.type === 'avanco_land') {
+      const p = room.players.get(socket.id);
+      if (p && data.hits && Array.isArray(data.hits)) {
+        for (const rid of data.hits) {
+          const target = room.players.get(rid);
+          if (target && target.alive) {
+            target.damageTaken += 25;
+            p.damageDealt += 25;
+            target.stunDeadline = Date.now() + 1000;
+            io.to(rid).emit('take_dmg', { dmg: 25, cause: 'AVANCO', from: socket.id });
+            socket.to(room.code).emit('peer_hurt', { id: rid, x: target.x, y: target.y });
+          }
+        }
+      }
+      socket.to(room.code).emit('peer_event', { id: socket.id, ...data });
+    }
+  });
+
+  // GRENADE / VFX / DEPLOYABLE: action rate-limited relay
+  socket.on('grenade', (data: any) => {
+    if (!security.checkActionRate(socket.id)) return;
+    const room = roomRepo.findBySocketId(socket.id);
+    if (room && room.state === 'in_game') {
+      if (!security.validateShotOrigin(socket.id, data.x, data.y, room.mapData || {})) return;
+    }
     relay(socket, 'peer_grenade', data);
   });
 
@@ -282,14 +363,26 @@ io.on('connection', (socket: Socket) => {
     if (!security.checkLobbyRate(socket.id)) return;
     const room = roomRepo.findBySocketId(socket.id);
     const p = room?.players.get(socket.id);
-    const validAgents: AgentKey[] = ['fable', 'fate', 'foul', 'nykora'];
+    const validAgents: AgentKey[] = ['fable', 'fate', 'foul', 'nykora', 'naac'];
     if (!validAgents.includes(data?.agentKey)) return;
     if (p) p.agentKey = data.agentKey;
     if (room) socket.to(room.code).emit('peer_agent', { id: socket.id, agentKey: data.agentKey });
   });
 
   // AUTHORITATIVE DAMAGE — full server-side validation
-  socket.on('dmg', (data: { to: string; dmg: number; cause: string; clientTime?: number }) => {
+  socket.on('dmg', (data: { 
+    to: string; 
+    dmg: number; 
+    cause: string; 
+    clientTime?: number;
+    shotgunEffect?: string;
+    shotgunDistance?: number;
+    shotgunRange?: number;
+    shooterAngle?: number;
+    shooterX?: number;
+    shooterY?: number;
+    stunDuration?: number;
+  }) => {
     if (!security.checkActionRate(socket.id)) return;
 
     const room = roomRepo.findBySocketId(socket.id);
@@ -349,6 +442,43 @@ io.on('connection', (socket: Socket) => {
     io.to(data.to).emit('take_dmg', { dmg, cause, from: socket.id });
     if (tx !== undefined && ty !== undefined) socket.to(room.code).emit('peer_hurt', { id: data.to, x: tx, y: ty });
     logger.info(`[dmg] ${socket.id.slice(0, 6)}→${data.to.slice(0, 6)} ${dmg} (${cause})`);
+    
+    // Apply stun if specified (for Naac abilities)
+    if (data.stunDuration && typeof data.stunDuration === 'number' && data.stunDuration > 0) {
+      target.stunDeadline = Date.now() + (data.stunDuration * 1000);
+      io.to(room.code).emit('stun_effect', { 
+        id: data.to, 
+        duration: data.stunDuration 
+      });
+    }
+    
+    // Apply shotgun-specific effects
+    if (cause === 'SHOTGUN' && data.shotgunEffect) {
+      if (data.shotgunEffect === 'critical_knockback') {
+        // Calculate knockback direction (away from shooter)
+        const angle = Math.atan2(ty - fy, tx - fx);
+        // Knockback distance: from hit point to end of cone
+        const knockbackDist = (data.shotgunRange || 400) - (data.shotgunDistance || 0);
+        // Apply knockback (will be processed in next game tick)
+        target.knockbackX = Math.cos(angle) * knockbackDist;
+        target.knockbackY = Math.sin(angle) * knockbackDist;
+        
+        // Emit knockback event to clients for visual effect
+        io.to(room.code).emit('knockback', { 
+          id: data.to, 
+          x: target.knockbackX, 
+          y: target.knockbackY,
+          duration: 0.3
+        });
+      } else if (data.shotgunEffect === 'slow') {
+        // Apply slow for 1 second
+        target.slowDeadline = Date.now() + 1000;
+        io.to(room.code).emit('slow_effect', { 
+          id: data.to, 
+          duration: 1.0 
+        });
+      }
+    }
   });
 
   // DEATH — action-rate-limited; server re-validates alive state

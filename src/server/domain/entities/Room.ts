@@ -38,6 +38,13 @@ export interface Room {
   // Deathmatch-specific
   killLeader: string | null;
   killLimit: number;
+
+  // King of the Hill specific
+  teamScores: Record<number, number>;
+  controlZoneState: 'neutral' | 'contested' | 'team_a' | 'team_b';
+  controlZoneOwner: number | null;
+  controlZoneTimer: number;
+  pointsToWin: number;
 }
 
 /** Creates an empty room in lobby state */
@@ -62,5 +69,10 @@ export function createRoom(code: string): Room {
     lastDeadIds: [],
     killLeader: null,
     killLimit: defaultConfig.killLimit,
+    teamScores: { 0: 0, 1: 0 },
+    controlZoneState: 'neutral',
+    controlZoneOwner: null,
+    controlZoneTimer: 0,
+    pointsToWin: defaultConfig.pointsToWin ?? 100,
   };
 }

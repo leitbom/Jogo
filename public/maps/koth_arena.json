@@ -1,0 +1,59 @@
+{
+  "name": "KOTH Arena",
+  "modes": ["king_of_the_hill"],
+  "version": 1,
+  "size": { "width": 1024, "height": 1024 },
+  "image": "maps/koth_arena_bg.png",
+  "config": {
+    "vision_distance": 600,
+    "vision_fov": 70,
+    "ambient_sound": "none"
+  },
+  "walls": [
+    { "x": 0, "y": 0, "width": 1024, "height": 32 },
+    { "x": 0, "y": 992, "width": 1024, "height": 32 },
+    { "x": 0, "y": 0, "width": 32, "height": 1024 },
+    { "x": 992, "y": 0, "width": 32, "height": 1024 },
+    { "x": 320, "y": 180, "width": 200, "height": 24 },
+    { "x": 504, "y": 180, "width": 200, "height": 24 },
+    { "x": 320, "y": 820, "width": 200, "height": 24 },
+    { "x": 504, "y": 820, "width": 200, "height": 24 },
+    { "x": 180, "y": 280, "width": 24, "height": 180 },
+    { "x": 820, "y": 280, "width": 24, "height": 180 },
+    { "x": 180, "y": 564, "width": 24, "height": 180 },
+    { "x": 820, "y": 564, "width": 24, "height": 180 },
+    { "x": 440, "y": 440, "width": 24, "height": 144 },
+    { "x": 560, "y": 440, "width": 24, "height": 144 },
+    { "x": 440, "y": 440, "width": 144, "height": 24 },
+    { "x": 440, "y": 560, "width": 144, "height": 24 }
+  ],
+  "windows": [],
+  "lowObstacles": [
+    { "x": 380, "y": 380, "width": 80, "height": 80 },
+    { "x": 564, "y": 380, "width": 80, "height": 80 },
+    { "x": 380, "y": 564, "width": 80, "height": 80 },
+    { "x": 564, "y": 564, "width": 80, "height": 80 }
+  ],
+  "spawnPoints": [
+    { "x": 100, "y": 200, "team": "A" },
+    { "x": 100, "y": 512, "team": "A" },
+    { "x": 100, "y": 824, "team": "A" },
+    { "x": 924, "y": 200, "team": "B" },
+    { "x": 924, "y": 512, "team": "B" },
+    { "x": 924, "y": 824, "team": "B" }
+  ],
+  "objectiveZones": [
+    {
+      "id": "koth_center",
+      "type": "control_zone",
+      "label": "CENTRO",
+      "x": 362,
+      "y": 362,
+      "width": 300,
+      "height": 300
+    }
+  ],
+  "pointLights": [
+    { "x": 512, "y": 512, "range": 600, "color": "#ffaa44" }
+  ]
+}

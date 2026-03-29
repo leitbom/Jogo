@@ -12,6 +12,7 @@
 
 import type { ILogger }  from '../domain/ports/out/ILogger';
 import type { WeaponKey } from '../domain/entities/AgentStats';
+import { PhysicsUtils } from '../domain/utils/PhysicsUtils';
 import {
   SHOT_COOLDOWN_MS,
   MAX_ACTION_PER_SECOND,
@@ -36,9 +37,9 @@ interface PosSnapshot {
 const MAP_MIN = -200;
 const MAP_MAX = 4_200;
 
-const VALID_AGENTS: ReadonlySet<string> = new Set(['fable', 'fate', 'foul', 'nykora']);
+const VALID_AGENTS: ReadonlySet<string> = new Set(['fable', 'fate', 'foul', 'nykora', 'naac']);
 const VALID_CAUSES: ReadonlySet<string> = new Set([
-  'BALA', 'BACKSTAB', 'MELEE', 'EXPLOSÃO', 'TORRE', 'REFLEX', 'FLASH', 'SPIN', 'SANGRAMENTO'
+  'BALA', 'BACKSTAB', 'MELEE', 'EXPLOSÃO', 'TORRE', 'REFLEX', 'FLASH', 'SPIN', 'SANGRAMENTO', 'SHOTGUN', 'AVANCO'
 ]);
 
 // ── SecurityGuard ───────────────────────────────────────────────
@@ -150,17 +151,20 @@ export class SecurityGuard {
       x,
       y,
       angle:        sanitizeAngle(d['angle']),
-      hp:           clamp(Number(d['hp'])    || 0, 0, 100),
-      maxHp:        clamp(Number(d['maxHp']) || 100, 1, 100),
+      hp:           clamp(Number(d['hp'])    || 0, 0, 300),
+      maxHp:        clamp(Number(d['maxHp']) || 100, 1, 300),
       dead:         Boolean(d['dead']),
       agentKey,
       slot:         clamp(Math.floor(Number(d['slot']) || 0), 0, 5),
       _running:     Boolean(d['_running']),
       _crouching:   Boolean(d['_crouching']),
-      shieldActive: Boolean(d['shieldActive']),
+      shieldHp:     clamp(Number(d['shieldHp']) || 0, 0, 200),
+      intangible:   Boolean(d['intangible']),
+      stunDeadline: Number(d['stunDeadline']) || 0,
       lightOn:      Boolean(d['lightOn']),
       activeWeapon: typeof d['activeWeapon'] === 'string' ? d['activeWeapon'] : 'ak47',
       viewMode:     Number(d['viewMode']) || 0,
+      dashDuration: Number(d['dashDuration']) || 0.15,
       cam1:         d['cam1'] && typeof d['cam1'] === 'object' ? d['cam1'] : null,
       cam2:         d['cam2'] && typeof d['cam2'] === 'object' ? d['cam2'] : null,
       tower:        d['tower'] && typeof d['tower'] === 'object' ? d['tower'] : null,
@@ -187,6 +191,34 @@ export class SecurityGuard {
   /** Reset position tracker (e.g. on game start / spawn). */
   resetPosition(socketId: string): void {
     this.lastPos.delete(socketId);
+  }
+
+  /**
+   * Returns true if the shot/grenade origin is valid:
+   * 1. Not inside a wall.
+   * 2. Not too far from the player's last known position.
+   */
+  validateShotOrigin(socketId: string, x: number, y: number, mapData: any): boolean {
+    const prev = this.lastPos.get(socketId);
+    if (!prev) return true; // Accept if no pos yet
+
+    // 1. Wall and World bounds check
+    const worldSize = (mapData?.size?.width) || (mapData?.worldSize) || 2048;
+    if (PhysicsUtils.isColliding(x, y, 1, mapData, worldSize)) {
+      this.logger.warn(`[SEC] shot from inside wall or outside world ${socketId.slice(0, 6)} at ${Math.round(x)},${Math.round(y)}`);
+      return false;
+    }
+
+    // 2. Proximity check (barrel length)
+    // Most weapons have muzzleLen < 2.5. Radius is max 20.
+    // 20 * 4 = 80px should be plenty.
+    const dist = Math.hypot(x - prev.x, y - prev.y);
+    if (dist > 100) {
+      this.logger.warn(`[SEC] shot origin too far ${socketId.slice(0, 6)} dist=${Math.round(dist)}px`);
+      return false;
+    }
+
+    return true;
   }
 
   // ── Private helpers ───────────────────────────────────────────

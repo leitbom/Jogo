@@ -30,6 +30,10 @@ export interface GameModeConfig {
   hpRegen: boolean;
   /** Default map filename */
   defaultMap: string;
+  /** Points needed to win (KOTH mode) */
+  pointsToWin?: number;
+  /** Points per second while controlling zone */
+  controlPointsPerSecond?: number;
 }
 
 export const GAME_MODE_PRESETS: Readonly<Record<GameMode, GameModeConfig>> = {
@@ -65,17 +69,19 @@ export const GAME_MODE_PRESETS: Readonly<Record<GameMode, GameModeConfig>> = {
 
   king_of_the_hill: {
     label: 'KING OF THE HILL',
-    description: '2v2 — controle a zona central.',
-    available: false,
+    description: '2v2 — controle a zona central. Primeiro a 100 pontos vence.',
+    available: true,
     teamSize: 2,
     maxPlayers: 4,
     respawnEnabled: true,
     respawnTimeS: 5,
     killLimit: 0,
-    matchTimeLimitS: 0,
+    matchTimeLimitS: 300,
     roundBased: false,
     hpRegen: true,
-    defaultMap: 'default.json',
+    defaultMap: 'koth_arena.json',
+    pointsToWin: 100,
+    controlPointsPerSecond: 1,
   },
 
   search_and_destroy: {

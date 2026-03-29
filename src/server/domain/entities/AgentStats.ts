@@ -7,16 +7,18 @@ import type { AgentKey } from './Player';
 export interface AgentStats {
   hp: number;
   armor: number;
+  radius: number;
   weapon: WeaponKey;
 }
 
-export type WeaponKey = 'ak47' | 'deagle' | 'minigun' | 'sword' | 'TORRE';
+export type WeaponKey = 'ak47' | 'deagle' | 'minigun' | 'sword' | 'sxs_shotgun' | 'TORRE';
 
 export const AGENT_STATS: Readonly<Record<AgentKey, AgentStats>> = {
-  fable: { hp: 100, armor: 0, weapon: 'ak47' },
-  fate: { hp: 100, armor: 30, weapon: 'deagle' },
-  foul: { hp: 100, armor: 60, weapon: 'minigun' },
-  nykora: { hp: 100, armor: 0, weapon: 'sword' },
+  fable: { hp: 100, armor: 0, radius: 14, weapon: 'ak47' },
+  fate: { hp: 100, armor: 30, radius: 14, weapon: 'deagle' },
+  foul: { hp: 100, armor: 60, radius: 19, weapon: 'minigun' },
+  nykora: { hp: 100, armor: 0, radius: 13, weapon: 'sword' },
+  naac: { hp: 100, armor: 0, radius: 14, weapon: 'sxs_shotgun' },
 };
 
 export const WEAPON_MAG: Readonly<Record<WeaponKey, number>> = {
@@ -24,6 +26,7 @@ export const WEAPON_MAG: Readonly<Record<WeaponKey, number>> = {
   deagle: 7,
   minigun: 150,
   sword: 1, // Melee weapon doesn't really use mag, but needs a value
+  sxs_shotgun: 3,
   TORRE: 50,
 };
 
@@ -54,6 +57,7 @@ export const SHOT_COOLDOWN_MS: Readonly<Record<WeaponKey, number>> = {
   deagle: 380,  // ≈  2.6 shots/s
   minigun: 55,   // ≈ 18 shots/s
   sword: 400,  // ≈ 2.5 swings/s
+  sxs_shotgun: 450, // ≈ 2 shots/s
   TORRE: 120,    // ≈ 8 shots/s
 };
 
@@ -61,13 +65,16 @@ export const DMG_RANGES: Readonly<Record<string, [number, number]>> = {
   BALA: [13, 82],
   BACKSTAB: [38, 160],
   MELEE: [30, 50],
-  'EXPLOSÃO': [1, 110],
+  'EXPLOSAO': [1, 110],
   TORRE: [6, 75],
   REFLEX: [1, 82],
   FLASH: [0, 0],
   DASH: [0, 0],
   SPIN: [30, 80],
   SANGRAMENTO: [4, 6],
+  SHOTGUN: [15, 85],
+  'AVANCO': [15, 30],
+  RECUO: [15, 85],
 };
 
 export const SPAWN_POINTS = [

@@ -1,0 +1,43 @@
+<svg width="512" height="64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Frame 1 -->
+  <g transform="translate(32,32)">
+    <circle r="14" fill="#e67e22" stroke="#2c3e50" stroke-width="2"/>
+    <rect x="4" y="-8" width="16" height="6" rx="2" fill="#34495e"/>
+  </g>
+  <!-- Frame 2 (pulling mag) -->
+  <g transform="translate(96,32)">
+    <circle r="14" fill="#666" opacity="0.4" />
+    <circle r="14" fill="#e67e22" stroke="#2c3e50" stroke-width="2"/>
+    <rect x="2" y="-4" width="12" height="4" rx="1" fill="#7f8c8d" transform="rotate(-30, 2, -4)"/>
+  </g>
+  <!-- Frame 3 -->
+  <g transform="translate(160,32)">
+    <circle r="14" fill="#e67e22" stroke="#2c3e50" stroke-width="2"/>
+    <rect x="-2" y="8" width="12" height="4" rx="1" fill="#7f8c8d" transform="rotate(-60, -2, 8)"/>
+  </g>
+  <!-- Frame 4 -->
+  <g transform="translate(224,32)">
+    <circle r="14" fill="#e67e22" stroke="#2c3e50" stroke-width="2"/>
+    <rect x="4" y="6" width="12" height="4" rx="1" fill="#7f8c8d"/>
+  </g>
+  <!-- Frame 5 -->
+  <g transform="translate(288,32)">
+    <circle r="14" fill="#e67e22" stroke="#2c3e50" stroke-width="2"/>
+    <rect x="6" y="2" width="12" height="4" rx="1" fill="#f1c40f"/>
+  </g>
+  <!-- Frame 6 -->
+  <g transform="translate(352,32)">
+    <circle r="14" fill="#e67e22" stroke="#2c3e50" stroke-width="2"/>
+    <rect x="8" y="-4" width="12" height="4" rx="1" fill="#f1c40f"/>
+  </g>
+  <!-- Frame 7 (slap in) -->
+  <g transform="translate(416,32)">
+    <circle r="14" fill="#e67e22" stroke="#2c3e50" stroke-width="2"/>
+    <rect x="6" y="-8" width="16" height="6" rx="2" fill="#34495e"/>
+  </g>
+  <!-- Frame 8 -->
+  <g transform="translate(480,32)">
+    <circle r="14" fill="#e67e22" stroke="#2c3e50" stroke-width="2"/>
+    <rect x="4" y="-8" width="16" height="6" rx="2" fill="#34495e"/>
+  </g>
+</svg>

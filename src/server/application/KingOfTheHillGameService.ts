@@ -1,37 +1,36 @@
 // ═══════════════════════════════════════════════════════
-// Application Service: SurvivalGameService
-// Responsibility: match lifecycle — countdown, spawn,
-//   180s timer, kill handling, win conditions, end match.
+// Application Service: KingOfTheHillGameService
+// Responsibility: match lifecycle for King of the Hill mode —
+//   countdown, spawn, control zones, team scoring, respawn,
+//   win condition (first to X points), timer fallback.
 // ═══════════════════════════════════════════════════════
 
 import type { IRoomRepository }   from '../domain/ports/out/IRoomRepository';
 import type { IGameEventEmitter } from '../domain/ports/out/IGameEventEmitter';
 import type { ILogger }           from '../domain/ports/out/ILogger';
 import type { Room, SpawnPoint }  from '../domain/entities/Room';
-import { toPublicPlayer }         from '../domain/entities/Player';
+import { toPublicPlayer, Player } from '../domain/entities/Player';
 import {
   AGENT_STATS, WEAPON_MAG,
-  MATCH_TIME_S, COUNTDOWN_S, SPAWN_POINTS,
+  SPAWN_POINTS,
   TICK_HZ_GAME,
 } from '../domain/entities/AgentStats';
 import type { SecurityGuard } from './SecurityGuard';
 import type { IGameModeService } from '../domain/ports/in/IGameModeService';
 import { PhysicsUtils } from '../domain/utils/PhysicsUtils';
 
-// ── Types ──────────────────────────────────────────────
-export interface PlayerStat {
-  name: string;
-  agentKey: string;
-  kills: number;
-  damage_dealt: number;
-  damage_taken: number;
-  accuracy: number;
-  survival_time: number;
-  winner: boolean;
+interface ControlZone {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  label: string;
 }
-export type StatsMap = Record<string, PlayerStat>;
 
-export class SurvivalGameService implements IGameModeService {
+export class KingOfTheHillGameService implements IGameModeService {
+  private controlZones: ControlZone[] = [];
+
   constructor(
     private readonly rooms: IRoomRepository,
     private readonly emitter: IGameEventEmitter,
@@ -45,7 +44,7 @@ export class SurvivalGameService implements IGameModeService {
     if (!room) return;
     room.state = 'countdown';
 
-    let n = COUNTDOWN_S;
+    let n = 3;
     this.emitter.toRoom(roomCode, 'game:countdown', { count: n });
 
     const iv = setInterval(() => {
@@ -65,13 +64,20 @@ export class SurvivalGameService implements IGameModeService {
     if (!room) return;
     room.state = 'in_game';
 
+    this.initControlZones(room);
+    this.assignTeams(room);
     const spawnPoints = this.assignSpawns(room);
     const now         = Date.now();
 
-    room.aliveCount    = room.players.size;
-    room.totalPlayers  = room.players.size;
-    room.lastDeadIds   = [];
+    room.aliveCount     = room.players.size;
+    room.totalPlayers   = room.players.size;
+    room.lastDeadIds    = [];
     room.matchStartTime = now;
+    room.teamScores     = { 0: 0, 1: 0 };
+    room.controlZoneState = 'neutral';
+    room.controlZoneOwner = null;
+    room.controlZoneTimer = 0;
+    room.pointsToWin    = room.gameModeConfig.pointsToWin ?? 100;
 
     for (const p of room.players.values()) {
       const stats = AGENT_STATS[p.agentKey] ?? AGENT_STATS.fable;
@@ -98,15 +104,138 @@ export class SurvivalGameService implements IGameModeService {
       players:      [...room.players.values()].map(toPublicPlayer),
       roomCode,
       totalPlayers: room.totalPlayers,
-      timerTotal:   MATCH_TIME_S,
+      timerTotal:   room.gameModeConfig.matchTimeLimitS,
       mapData:      room.mapData,
+      controlZones: this.controlZones,
+      pointsToWin:  room.pointsToWin,
     });
-    this.emitter.toRoom(roomCode, 'game:timer',       { remaining_s: MATCH_TIME_S });
+    this.emitter.toRoom(roomCode, 'game:timer',       { remaining_s: room.gameModeConfig.matchTimeLimitS });
     this.emitter.toRoom(roomCode, 'game:alive_count', { alive: room.aliveCount, total: room.totalPlayers });
+    this.emitter.toRoom(roomCode, 'game:score',       { teamScores: room.teamScores });
+    this.emitter.toRoom(roomCode, 'game:control_update', { 
+      state: room.controlZoneState, 
+      owner: room.controlZoneOwner,
+      timer: room.controlZoneTimer 
+    });
 
-    this.logger.info(`[survival:start] ${roomCode} ${room.players.size}p`);
+    this.logger.info(`[koth:start] ${roomCode} ${room.players.size}p`);
     this.startTimer(room);
-    this.startStateTick(room);  // 30 Hz state-broadcast tick
+    this.startControlZoneTick(room);
+    this.startStateTick(room);
+  }
+
+  // ── TEAMS ──────────────────────────────────────────────
+  private assignTeams(room: Room): void {
+    const players = [...room.players.values()];
+    players.forEach((p, i) => {
+      p.team = i % 2 === 0 ? 'A' : 'B';
+    });
+    this.logger.info(`[koth:teams] ${room.code} assigned teams`);
+  }
+
+  // ── CONTROL ZONES ────────────────────────────────────────
+  private initControlZones(room: Room): void {
+    const mapZones = room.mapData?.objectiveZones?.filter(
+      (z: any) => z.type === 'control_zone'
+    ) || [];
+
+    if (mapZones.length > 0) {
+      this.controlZones = mapZones.map((z: any, i: number) => ({
+        id: z.id || `koth${i + 1}`,
+        x: z.x,
+        y: z.y,
+        width: z.width || 144,
+        height: z.height || 144,
+        label: z.label || `Zone ${i + 1}`,
+      }));
+    } else {
+      this.controlZones = [{
+        id: 'koth_center',
+        x: 400,
+        y: 400,
+        width: 224,
+        height: 224,
+        label: 'CENTRO',
+      }];
+    }
+  }
+
+  private startControlZoneTick(room: Room): void {
+    room.controlZoneTimer = 0;
+    
+    const controlInterval = setInterval(() => {
+      if (room.state !== 'in_game') {
+        clearInterval(controlInterval);
+        return;
+      }
+
+      this.updateControlZone(room, controlInterval);
+    }, 1000);
+
+    (room as any).controlZoneInterval = controlInterval;
+  }
+
+  private updateControlZone(room: Room, controlInterval: ReturnType<typeof setInterval>): void {
+    if (!this.controlZones.length) return;
+
+    const zone = this.controlZones[0];
+    const playersInZone = this.getPlayersInZone(room, zone);
+    
+    const teamAInZone = playersInZone.filter((p: Player) => p.team === 'A');
+    const teamBInZone = playersInZone.filter((p: Player) => p.team === 'B');
+
+    const hasTeamA = teamAInZone.length > 0;
+    const hasTeamB = teamBInZone.length > 0;
+
+    if (hasTeamA && hasTeamB) {
+      room.controlZoneState = 'contested';
+      room.controlZoneTimer = 0;
+    } else if (hasTeamA) {
+      room.controlZoneState = 'team_a';
+      room.controlZoneOwner = 0;
+      room.controlZoneTimer++;
+      const pointsPerSec = room.gameModeConfig.controlPointsPerSecond || 1;
+      room.teamScores[0] += pointsPerSec;
+    } else if (hasTeamB) {
+      room.controlZoneState = 'team_b';
+      room.controlZoneOwner = 1;
+      room.controlZoneTimer++;
+      const pointsPerSec = room.gameModeConfig.controlPointsPerSecond || 1;
+      room.teamScores[1] += pointsPerSec;
+    } else {
+      room.controlZoneState = 'neutral';
+      room.controlZoneOwner = null;
+      room.controlZoneTimer = 0;
+    }
+
+    this.emitter.toRoom(room.code, 'game:control_update', {
+      state: room.controlZoneState,
+      owner: room.controlZoneOwner,
+      timer: room.controlZoneTimer,
+    });
+
+    this.emitter.toRoom(room.code, 'game:score', {
+      teamScores: room.teamScores,
+    });
+
+    this.checkWinCondition(room, controlInterval);
+  }
+
+  private getPlayersInZone(room: Room, zone: ControlZone): Player[] {
+    const playersInZone: Player[] = [];
+    
+    for (const p of room.players.values()) {
+      if (!p.alive) continue;
+      
+      const inZone = p.x >= zone.x && p.x <= zone.x + zone.width &&
+                     p.y >= zone.y && p.y <= zone.y + zone.height;
+      
+      if (inZone) {
+        playersInZone.push(p);
+      }
+    }
+    
+    return playersInZone;
   }
 
   // ── HANDLE PLAYER DEATH ───────────────────────────────
@@ -120,10 +249,11 @@ export class SurvivalGameService implements IGameModeService {
     player.deaths++;
 
     const killer = killedBy ? room!.players.get(killedBy) : null;
-    if (killer?.alive) killer.kills++;
+    if (killer && killer.id !== socketId) {
+      killer.kills++;
+    }
 
     room!.lastDeadIds = [socketId];
-    room!.aliveCount  = [...room!.players.values()].filter(p => p.alive).length;
 
     this.emitter.toRoom(room!.code, 'game:kill', {
       killer_id: killedBy,
@@ -137,13 +267,61 @@ export class SurvivalGameService implements IGameModeService {
       y: player.y,
       angle: player.angle,
     });
-    this.emitter.toRoom(room!.code, 'game:alive_count', {
-      alive: room!.aliveCount,
-      total: room!.totalPlayers,
-    });
+    
     this.logger.info(`[kill] ${(killedBy ?? '??').slice(0,6)}→${socketId.slice(0,6)} (${cause})`);
 
-    this.checkWinCondition(room!);
+    // Start respawn timer
+    if (room!.state === 'in_game') {
+      const deadline = Date.now() + room!.gameModeConfig.respawnTimeS * 1000;
+      this.emitter.toSocket(socketId, 'respawn_at', { deadline });
+      
+      setTimeout(() => {
+        this.respawnPlayer(room!, socketId);
+      }, room!.gameModeConfig.respawnTimeS * 1000);
+    }
+  }
+
+  private respawnPlayer(room: Room, socketId: string): void {
+    const p = room.players.get(socketId);
+    if (!p || p.alive || room.state !== 'in_game') return;
+
+    const stats = AGENT_STATS[p.agentKey] ?? AGENT_STATS.fable;
+    const mag   = WEAPON_MAG[stats.weapon] ?? 30;
+    
+    const mapSpawns = room.mapData?.spawnPoints || [];
+    let sp: SpawnPoint;
+    if (mapSpawns.length > 0) {
+      sp = mapSpawns[Math.floor(Math.random() * mapSpawns.length)];
+    } else {
+      sp = SPAWN_POINTS[Math.floor(Math.random() * 4)];
+    }
+
+    const safePos = PhysicsUtils.findSafeSpawn(sp.x, sp.y, 20, room.mapData || {});
+    sp = { x: safePos.x, y: safePos.y };
+
+    p.alive = true;
+    p.hp = stats.hp;
+    p.armor = stats.armor;
+    p.ammoCurrentMag = mag;
+    p.ammoReserve = mag;
+    p.deathTime = null;
+    p.x = sp.x;
+    p.y = sp.y;
+    p.pendingInputs = [];
+    
+    if (this.security) this.security.resetPosition(p.id);
+
+    this.emitter.toRoom(room.code, 'game:respawn', {
+      id: p.id,
+      x: sp.x,
+      y: sp.y,
+      hp: p.hp,
+      armor: p.armor,
+      ammoCurrentMag: p.ammoCurrentMag,
+      ammoReserve: p.ammoReserve
+    });
+
+    this.logger.info(`[respawn] ${p.id.slice(0,6)} at (${sp.x},${sp.y})`);
   }
 
   // ── DISCONNECT DEATH ─────────────────────────────────
@@ -177,7 +355,6 @@ export class SurvivalGameService implements IGameModeService {
     const p = room?.players.get(socketId);
     if (!p || room?.state !== 'in_game') return;
     
-    // Validate input basic structure
     if (typeof input.dt !== 'number') return;
     if (p.pendingInputs.length < 30) {
       p.pendingInputs.push(input);
@@ -185,40 +362,43 @@ export class SurvivalGameService implements IGameModeService {
   }
 
   // ── WIN CONDITION ────────────────────────────────────
-  private checkWinCondition(room: Room): void {
+  private checkWinCondition(room: Room, controlInterval: ReturnType<typeof setInterval>): void {
     if (room.state !== 'in_game') return;
-    const alive = [...room.players.values()].filter(p => p.alive);
-
-    if (alive.length === 1) {
-      alive[0].winner = true;
-      this.endMatch(room, [alive[0].id]);
-    } else if (alive.length === 0) {
-      const tieIds = room.lastDeadIds.length > 0 ? room.lastDeadIds : [];
-      this.endMatch(room, tieIds);
-    } else {
-      room.aliveCount = alive.length;
-      this.emitter.toRoom(room.code, 'game:alive_count', { alive: alive.length, total: room.totalPlayers });
+    
+    const pointsToWin = room.pointsToWin;
+    
+    if (room.teamScores[0] >= pointsToWin) {
+      clearInterval(controlInterval);
+      this.endMatch(room, [0]);
+    } else if (room.teamScores[1] >= pointsToWin) {
+      clearInterval(controlInterval);
+      this.endMatch(room, [1]);
     }
   }
 
   // ── END MATCH ────────────────────────────────────────
-  private endMatch(room: Room, winnerIds: string[]): void {
+  private endMatch(room: Room, winningTeams: number[]): void {
     if (room.state === 'ended') return;
     room.state = 'ended';
     if (room.timerIntervalId)    { clearInterval(room.timerIntervalId);    room.timerIntervalId    = null; }
     if (room.stateTickIntervalId) { clearInterval(room.stateTickIntervalId); room.stateTickIntervalId = null; }
+    if ((room as any).controlZoneInterval) { clearInterval((room as any).controlZoneInterval); }
 
-    winnerIds.forEach(id => {
-      const p = room.players.get(id);
-      if (p) p.winner = true;
-    });
+    const winnerIds: string[] = [];
+    for (const p of room.players.values()) {
+      if (p.team !== 'NONE' && winningTeams.includes(p.team === 'A' ? 0 : 1)) {
+        p.winner = true;
+        winnerIds.push(p.id);
+      }
+    }
 
-    const stats: StatsMap = {};
+    const stats: any = {};
     const now = Date.now();
     for (const p of room.players.values()) {
       const elapsed = p.deathTime != null
         ? Math.round((p.deathTime - (p.spawnTime ?? p.deathTime)) / 1_000)
         : Math.round((now - (p.spawnTime ?? now)) / 1_000);
+      const teamScore = p.team === 'A' ? room.teamScores[0] : (p.team === 'B' ? room.teamScores[1] : 0);
       stats[p.id] = {
         name:          p.name,
         agentKey:      p.agentKey,
@@ -228,16 +408,18 @@ export class SurvivalGameService implements IGameModeService {
         accuracy:      p.shotsFired > 0 ? Math.round((p.shotsHit / p.shotsFired) * 100) : 0,
         survival_time: elapsed,
         winner:        p.winner,
+        team:          p.team,
+        teamScore:     teamScore,
       };
     }
 
-    this.logger.info(`[game:end] ${room.code} winners=${winnerIds.join(',')}`);
+    this.logger.info(`[game:end] ${room.code} winners=team_${winningTeams.join(',_')}`);
     this.emitter.toRoom(room.code, 'game:end', { winners: winnerIds, stats });
   }
 
   // ── TIMER ────────────────────────────────────────────
   private startTimer(room: Room): void {
-    room.timerRemaining = MATCH_TIME_S;
+    room.timerRemaining = room.gameModeConfig.matchTimeLimitS;
     room.timerIntervalId = setInterval(() => {
       if (room.state !== 'in_game') {
         clearInterval(room.timerIntervalId!);
@@ -249,9 +431,19 @@ export class SurvivalGameService implements IGameModeService {
       if (room.timerRemaining <= 0) {
         clearInterval(room.timerIntervalId!);
         room.timerIntervalId = null;
-        const alive = [...room.players.values()].filter(p => p.alive);
-        alive.forEach(p => { p.winner = true; });
-        this.endMatch(room, alive.map(p => p.id));
+        
+        let maxScore = -1;
+        let winners: number[] = [];
+        for (const [team, score] of Object.entries(room.teamScores)) {
+          const teamNum = parseInt(team);
+          if (score > maxScore) {
+            maxScore = score;
+            winners = [teamNum];
+          } else if (score === maxScore) {
+            winners.push(teamNum);
+          }
+        }
+        this.endMatch(room, winners);
       }
     }, 1_000);
   }
@@ -261,20 +453,23 @@ export class SurvivalGameService implements IGameModeService {
     const players = [...room.players.values()].sort(() => Math.random() - 0.5);
     const result: Record<string, SpawnPoint> = {};
     
-    // Prioritize spawn points from map data
-    const mapSpawns = room.mapData?.spawnPoints || [];
+    const allSpawns = room.mapData?.spawnPoints || [];
+    const teamASpawns = allSpawns.filter((s: any) => s.team === 'A');
+    const teamBSpawns = allSpawns.filter((s: any) => s.team === 'B');
     
     players.forEach((p, i) => {
       let sp: SpawnPoint;
-      if (mapSpawns.length > 0) {
-        sp = mapSpawns[i % mapSpawns.length];
+      if (p.team === 'A' && teamASpawns.length > 0) {
+        sp = teamASpawns[i % teamASpawns.length];
+      } else if (p.team === 'B' && teamBSpawns.length > 0) {
+        sp = teamBSpawns[i % teamBSpawns.length];
+      } else if (allSpawns.length > 0) {
+        sp = allSpawns[i % allSpawns.length];
       } else {
         sp = SPAWN_POINTS[i % 4];
       }
       
-      const off = i >= (mapSpawns.length || 4)
-        ? { x: (Math.random() - 0.5) * 60, y: (Math.random() - 0.5) * 60 }
-        : { x: 0, y: 0 };
+      const off = { x: (Math.random() - 0.5) * 60, y: (Math.random() - 0.5) * 60 };
         
       result[p.id] = PhysicsUtils.findSafeSpawn(Math.round(sp.x + off.x), Math.round(sp.y + off.y), 20, room.mapData || {});
       p.x = result[p.id].x;
@@ -288,7 +483,7 @@ export class SurvivalGameService implements IGameModeService {
   private startStateTick(room: Room): void {
     const intervalMs = Math.round(1_000 / TICK_HZ_GAME);
     const historyBuffer: Array<{ time: number, players: Record<string, {x: number, y: number}> }> = [];
-    (room as any).stateTickHistory = historyBuffer; // stash for lag comp
+    (room as any).stateTickHistory = historyBuffer;
 
     room.stateTickIntervalId = setInterval(() => {
       if (room.state !== 'in_game') {
@@ -300,8 +495,8 @@ export class SurvivalGameService implements IGameModeService {
       const now = Date.now();
       const changedFields: Record<string, any> = {};
       const snapshotPlayers: Record<string, {x: number, y: number}> = {};
-      const worldSize = (room.mapData?.size?.width) || (room.mapData?.worldSize) || 2048;
 
+      const worldSize = (room.mapData?.size?.width) || (room.mapData?.worldSize) || 2048;
       for (const [id, p] of room.players) {
         if (!p.alive) continue;
         
@@ -344,25 +539,24 @@ export class SurvivalGameService implements IGameModeService {
           if (p.stunDeadline && now < p.stunDeadline) speedMultiplier = 0;
           else if (p.slowDeadline && now < p.slowDeadline) speedMultiplier = 0.5;
 
-          const speed = (isDashing ? 1466 : (input.visualState?._running ? 380 : 255)) * speedMultiplier; 
-          const safeDt = Math.min(input.dt, 50); // cap to 50ms per input
+          const speed = (isDashing ? 1466 : (input.visualState?._running ? 380 : 255)) * speedMultiplier;
+          const safeDt = Math.min(input.dt, 50);
 
-          const radius = AGENT_STATS[p.agentKey]?.radius || 14; 
+          const radius = AGENT_STATS[p.agentKey]?.radius || 14;
 
           if (isDashing) {
-            // Nykora dash Absolute Trajectory Interpolation
             const vs = input.visualState;
             if (vs.dashStartX !== undefined && vs.dashTargetX !== undefined) {
               const f = 1 - Math.max(0, vs.dashRemaining / 0.15);
               p.x = vs.dashStartX + (vs.dashTargetX - vs.dashStartX) * f;
               p.y = vs.dashStartY + (vs.dashTargetY - vs.dashStartY) * f;
             } else {
-              // Fallback for missing trajectory
+              p.x += Math.cos(dashAngle) * speed * (safeDt / 1000);
+              p.y += Math.sin(dashAngle) * speed * (safeDt / 1000);
             }
           } else {
-            // Check if stuck (deeply inside wall) and push out
-            if (PhysicsUtils.isColliding(p.x, p.y, radius - 1, room.mapData || {}, worldSize)) {
-              const safe = PhysicsUtils.findSafeSpawn(p.x, p.y, radius, room.mapData || {});
+            if (PhysicsUtils.isColliding(p.x, p.y, radius, room.mapData || {}, worldSize, -1)) {
+              const safe = PhysicsUtils.resolveCollision(p.x, p.y, radius, room.mapData || {}, worldSize);
               p.x = safe.x; p.y = safe.y;
             }
 
@@ -393,7 +587,6 @@ export class SurvivalGameService implements IGameModeService {
             }
           }
 
-          // Clamp to world bounds
           p.x = Math.max(radius, Math.min(worldSize - radius, p.x));
           p.y = Math.max(radius, Math.min(worldSize - radius, p.y));
 
@@ -405,8 +598,7 @@ export class SurvivalGameService implements IGameModeService {
 
         if (latestVisual) p.stateRelay = latestVisual;
 
-        // Delta compression: only send fields if updated
-         changedFields[id] = {
+        changedFields[id] = {
            x: p.x,
            y: p.y,
            angle: p.angle,

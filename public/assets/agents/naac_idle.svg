@@ -1,0 +1,26 @@
+<svg width="256" height="64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Frame 1 -->
+  <g transform="translate(32,32)">
+    <circle r="14" fill="#e67e22" stroke="#2c3e50" stroke-width="2"/>
+    <rect x="4" y="-8" width="16" height="6" rx="2" fill="#34495e"/>
+    <rect x="-6" y="-12" width="12" height="4" rx="1" fill="#2c3e50"/>
+  </g>
+  <!-- Frame 2 (subtle pulse) -->
+  <g transform="translate(96,32) scale(1.02)">
+    <circle r="14" fill="#e67e22" stroke="#2c3e50" stroke-width="2"/>
+    <rect x="4" y="-8" width="16" height="6" rx="2" fill="#34495e"/>
+    <rect x="-6" y="-12" width="12" height="4" rx="1" fill="#2c3e50"/>
+  </g>
+  <!-- Frame 3 -->
+  <g transform="translate(160,32)">
+    <circle r="14" fill="#e67e22" stroke="#2c3e50" stroke-width="2"/>
+    <rect x="4" y="-8" width="16" height="6" rx="2" fill="#34495e"/>
+    <rect x="-6" y="-12" width="12" height="4" rx="1" fill="#2c3e50"/>
+  </g>
+  <!-- Frame 4 (subtle pulse) -->
+  <g transform="translate(224,32) scale(0.98)">
+    <circle r="14" fill="#e67e22" stroke="#2c3e50" stroke-width="2"/>
+    <rect x="4" y="-8" width="16" height="6" rx="2" fill="#34495e"/>
+    <rect x="-6" y="-12" width="12" height="4" rx="1" fill="#2c3e50"/>
+  </g>
+</svg>

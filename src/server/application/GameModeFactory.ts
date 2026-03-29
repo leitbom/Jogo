@@ -6,6 +6,7 @@ import type { ILogger } from '../domain/ports/out/ILogger';
 import type { SecurityGuard } from './SecurityGuard';
 import { SurvivalGameService } from './SurvivalGameService';
 import { DeathmatchGameService } from './DeathmatchGameService';
+import { KingOfTheHillGameService } from './KingOfTheHillGameService';
 
 export class GameModeFactory {
   static create(
@@ -16,6 +17,8 @@ export class GameModeFactory {
     security?: SecurityGuard
   ): IGameModeService {
     switch (mode) {
+      case 'king_of_the_hill':
+        return new KingOfTheHillGameService(rooms, emitter, logger, security);
       case 'deathmatch':
         return new DeathmatchGameService(rooms, emitter, logger, security);
       case 'survival':

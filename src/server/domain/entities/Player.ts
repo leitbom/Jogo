@@ -2,7 +2,7 @@
 // Domain Entity: Player
 // ═══════════════════════════════════════════════════════
 
-export type AgentKey = 'fable' | 'fate' | 'foul' | 'nykora';
+export type AgentKey = 'fable' | 'fate' | 'foul' | 'nykora' | 'naac';
 
 export type Team = 'A' | 'B' | 'NONE';
 
@@ -44,6 +44,14 @@ export interface Player extends PublicPlayer {
   pendingInputs: any[];
   lastProcessedSeq: number;
 
+  // New Status Effects
+  shieldHp: number;
+  shieldActive: boolean;
+  stunDeadline: number | null;
+  slowDeadline: number | null;
+  knockbackX: number;
+  knockbackY: number;
+
   // Internal / housekeeping
   disconnectTimerId: ReturnType<typeof setTimeout> | null;
 }
@@ -66,7 +74,7 @@ export function createPlayer(id: string, name: string): Player {
   return {
     id,
     name,
-    agentKey: 'nykora',
+    agentKey: 'fable',
     ready: false,
     isHost: false,
     team: 'NONE',
@@ -90,6 +98,12 @@ export function createPlayer(id: string, name: string): Player {
     angle: 0,
     pendingInputs: [],
     lastProcessedSeq: -1,
+    shieldHp: 0,
+    shieldActive: false,
+    stunDeadline: null,
+    slowDeadline: null,
+    knockbackX: 0,
+    knockbackY: 0,
     disconnectTimerId: null,
   };
 }

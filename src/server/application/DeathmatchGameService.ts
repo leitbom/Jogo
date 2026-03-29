@@ -124,6 +124,13 @@ export class DeathmatchGameService implements IGameModeService {
       victim_id: socketId,
       cause,
     });
+    this.emitter.toRoom(room!.code, 'peer_dead', {
+      id: socketId,
+      dead: true,
+      x: player.x,
+      y: player.y,
+      angle: player.angle,
+    });
     
     this.logger.info(`[kill] ${(killedBy ?? '??').slice(0,6)}→${socketId.slice(0,6)} (${cause})`);
 
@@ -255,14 +262,14 @@ export class DeathmatchGameService implements IGameModeService {
         ? Math.round((p.deathTime - (p.spawnTime ?? p.deathTime)) / 1_000)
         : Math.round((now - (p.spawnTime ?? now)) / 1_000);
       stats[p.id] = {
-        name:         p.name,
-        agentKey:     p.agentKey,
-        kills:        p.kills,
-        damageDealt:  p.damageDealt,
-        damageTaken:  p.damageTaken,
-        accuracy:     p.shotsFired > 0 ? Math.round((p.shotsHit / p.shotsFired) * 100) : 0,
-        survivalTime: elapsed,
-        winner:       p.winner,
+        name:          p.name,
+        agentKey:      p.agentKey,
+        kills:         p.kills,
+        damage_dealt:  p.damageDealt,
+        damage_taken:  p.damageTaken,
+        accuracy:      p.shotsFired > 0 ? Math.round((p.shotsHit / p.shotsFired) * 100) : 0,
+        survival_time: elapsed,
+        winner:        p.winner,
       };
     }
 
@@ -345,8 +352,35 @@ export class DeathmatchGameService implements IGameModeService {
       const changedFields: Record<string, any> = {};
       const snapshotPlayers: Record<string, {x: number, y: number}> = {};
 
+      const worldSize = (room.mapData?.size?.width) || (room.mapData?.worldSize) || 2048;
       for (const [id, p] of room.players) {
         if (!p.alive) continue;
+        
+        // Apply knockback if any
+        if (p.knockbackX !== 0 || p.knockbackY !== 0) {
+          const radius = AGENT_STATS[p.agentKey]?.radius || 14;
+          const newX = p.x + p.knockbackX;
+          const newY = p.y + p.knockbackY;
+          
+          // Check if knockback position is valid (not inside walls)
+          if (!PhysicsUtils.isColliding(newX, newY, radius, room.mapData || {}, worldSize, 2.0)) {
+            p.x = newX;
+            p.y = newY;
+          } else {
+            // Try to slide along walls
+            if (!PhysicsUtils.isColliding(newX, p.y, radius, room.mapData || {}, worldSize, 2.0)) {
+              p.x = newX;
+            } else if (!PhysicsUtils.isColliding(p.x, newY, radius, room.mapData || {}, worldSize, 2.0)) {
+              p.y = newY;
+            }
+          }
+          
+          // Decay knockback
+          p.knockbackX *= 0.8;
+          p.knockbackY *= 0.8;
+          if (Math.abs(p.knockbackX) < 0.1) p.knockbackX = 0;
+          if (Math.abs(p.knockbackY) < 0.1) p.knockbackY = 0;
+        }
 
         const inputs = p.pendingInputs || [];
         let walked = false;
@@ -356,10 +390,15 @@ export class DeathmatchGameService implements IGameModeService {
           const input = inputs.shift()!;
           const isDashing = input.visualState && input.visualState.dashRemaining > 0;
           const dashAngle = (input.visualState && input.visualState.dashAngle !== undefined) ? input.visualState.dashAngle : input.angle;
-          const speed = isDashing ? 1466 : (input.visualState?._running ? 380 : 255); 
+          let speedMultiplier = 1;
+          const now = Date.now();
+          if (p.stunDeadline && now < p.stunDeadline) speedMultiplier = 0;
+          else if (p.slowDeadline && now < p.slowDeadline) speedMultiplier = 0.5;
+
+          const speed = (isDashing ? 1466 : (input.visualState?._running ? 380 : 255)) * speedMultiplier;
           const safeDt = Math.min(input.dt, 50); // cap to 50ms per input
 
-          const radius = 14; 
+          const radius = AGENT_STATS[p.agentKey]?.radius || 14; 
 
           if (isDashing) {
             // Nykora dash Absolute Trajectory Interpolation
@@ -373,22 +412,41 @@ export class DeathmatchGameService implements IGameModeService {
               p.x += Math.cos(dashAngle) * speed * (safeDt / 1000);
               p.y += Math.sin(dashAngle) * speed * (safeDt / 1000);
             }
-          } else {
             // Check if stuck (due to ending a dash or teleports) and push out
-            if (PhysicsUtils.isColliding(p.x, p.y, radius, room.mapData || {})) {
-              const safe = PhysicsUtils.findSafeSpawn(p.x, p.y, radius, room.mapData || {});
-              p.x = safe.x; p.y = safe.y;
+            if (PhysicsUtils.isColliding(p.x, p.y, radius, room.mapData || {}, worldSize, -1)) {
+              const safe = PhysicsUtils.resolveCollision(p.x, p.y, radius, room.mapData || {}, worldSize);
+              p.x = safe.x;
+              p.y = safe.y;
             }
-
+          } else {
             const nx = p.x + input.dx * speed * (safeDt / 1000);
             const ny = p.y + input.dy * speed * (safeDt / 1000);
             
-            if (!PhysicsUtils.isColliding(nx, p.y, radius, room.mapData || {})) p.x = nx;
-            if (!PhysicsUtils.isColliding(p.x, ny, radius, room.mapData || {})) p.y = ny;
+            // Only move if no collision - prevent any penetration (using 2.0px buffer)
+            if (!PhysicsUtils.isColliding(nx, ny, radius, room.mapData || {}, worldSize, 2.0)) { 
+              p.x = nx; p.y = ny; 
+            }
+            // If blocked, try sliding along walls but only if movement is valid
+            else {
+              // Check if we can move partially in X direction
+              if (!PhysicsUtils.isColliding(nx, p.y, radius, room.mapData || {}, worldSize, 2.0)) {
+                p.x = nx;
+              }
+              // Check if we can move partially in Y direction
+              if (!PhysicsUtils.isColliding(p.x, ny, radius, room.mapData || {}, worldSize, 2.0)) {
+                p.y = ny;
+              }
+            }
+            
+            // Server-side validation: if somehow in collision, push player out
+            if (PhysicsUtils.isColliding(p.x, p.y, radius, room.mapData || {}, worldSize, -1)) {
+              const safe = PhysicsUtils.resolveCollision(p.x, p.y, radius, room.mapData || {}, worldSize);
+              p.x = safe.x;
+              p.y = safe.y;
+            }
           }
 
           // Clamp to world bounds
-          const worldSize = (room.mapData?.size?.width) || (room.mapData?.worldSize) || 2048;
           p.x = Math.max(radius, Math.min(worldSize - radius, p.x));
           p.y = Math.max(radius, Math.min(worldSize - radius, p.y));
 
@@ -401,11 +459,14 @@ export class DeathmatchGameService implements IGameModeService {
         if (latestVisual) p.stateRelay = latestVisual;
 
         // Delta compression: only send fields if updated
-        changedFields[id] = {
-           x: Math.round(p.x),
-           y: Math.round(p.y),
-           angle: Math.round(p.angle),
+         changedFields[id] = {
+           x: p.x,
+           y: p.y,
+           angle: p.angle,
            lastProcessedSeq: p.lastProcessedSeq,
+           stunDeadline: p.stunDeadline,
+           shieldActive: p.shieldActive,
+           shieldHp: p.shieldHp,
            visual: p.stateRelay
         };
 
