@@ -1885,7 +1885,7 @@
       naac: {
         name: 'NAAC', color: '#e67e22', radius: 14, zoom: 680, speed: 235, runSpeed: 350, crouchSpeed: 120,
         staminaDrain: 16, staminaRegen: 16, staminaMax: 150, fovAngle: 80, fovAngleRun: 60, fovAngleCrouch: 95, fovDist: 750,
-        hp: 120, armor: 50, weapon: 'sxs_shotgun', slot_e: 'advance', slot_q: null, slot_t: null, hpRegenPerSecond: 10, hpRegenDelayMs: 2000,
+        hp: 120, armor: 75, weapon: 'sxs_shotgun', slot_e: 'advance', slot_q: null, slot_t: null, hpRegenPerSecond: 10, hpRegenDelayMs: 2000,
         sprite: {
           idle: { src: 'assets/agents/naac_idle.svg', frames: 4, speed: 0.15 },
           walk: { src: 'assets/agents/naac_walk.svg', frames: 8, speed: 0.1 },
@@ -2179,7 +2179,7 @@
 
     // Jogador local - todos os timers de duracao usam Clock.deadline()
     const player = {
-      x: WORLD / 2, y: WORLD / 2, angle: 0, hp: 100, maxHp: 100, armor: 0,
+      x: WORLD / 2, y: WORLD / 2, angle: 0, hp: 100, maxHp: 100, armor: 0, maxArmor: 0,
       lastDamageTime: null,
       stamina: 100, canRun: true, staminaIdleTimer: 0,
       lightOn: true, agentKey: 'fable',
@@ -2339,9 +2339,13 @@
         
         applyDmg(player, data.dmg, data.cause || 'BALA');
         
+        if (!player.dead && data.shotgunEffect === 'slow') {
+          playerSlow = 0.6;
+          playerSlowDeadline = Clock.deadline(1.5);
+        }
+        
         // Sound triggers
         if (player.hp <= 0 && !player.dead) {
-          // Death sound handled by applyDmg check or here
           SoundManager.stop('walk');
           SoundManager.stop('run');
           SoundManager.play('die', 0.7);
@@ -2787,6 +2791,7 @@
       player.agentKey = key;
       player.maxHp = a.hp || 100;
       player.armor = a.armor || 0;
+      player.maxArmor = a.armor || 0;
       if (!player.dead) player.hp = player.maxHp;
       player.stamina = a.staminaMax || 100; player.canRun = true; player.staminaIdleTimer = 0;
       player.lightOn = key === 'nykora' ? false : true;
@@ -3083,6 +3088,11 @@
           const regenRate = a.hpRegenPerSecond || 10;
           p.hp = Math.min(p.hp + regenRate * dt, p.maxHp);
         }
+      }
+      // Armor Regeneration (1 armor/sec for all agents)
+      const pMaxArmor = p.maxArmor || 0;
+      if (pMaxArmor > 0 && p.armor < pMaxArmor) {
+        p.armor = Math.min(pMaxArmor, p.armor + 1 * dt);
       }
       const sc = W / p._currentZoom;
       // --- Zoom direcional suave -------------------------------------------------
@@ -3518,7 +3528,7 @@
       if (p.recoilCooldown && !Clock.expired(p.recoilCooldown)) return;
       if (p.ammo <= 0) { flashEmptyClip(); return; }
 
-      // Fire recoil shot (AOE + Damage + Shield-on-hit)
+      // Fire recoil shot (AOE + Damage + Armor-on-hit)
       const totalDamage = fireShotgun(true);
       
       // Movement Recoil (Backward Dash)
@@ -3618,7 +3628,7 @@
       if (tgt.intangible) return;
       if (!isFinite(raw) || isNaN(raw) || raw <= 0) return;
       
-      // Check if shield is active (Naac recoil shield)
+      // Check if shield is active (Foul shield only)
       if (tgt.shieldActive && tgt.shieldHp > 0) {
         const absorbed = Math.min(raw, tgt.shieldHp);
         tgt.shieldHp -= absorbed;
@@ -3633,6 +3643,8 @@
       
       const ar = tgt.armor || 0, dmg = Math.max(1, Math.round(raw * (1 - ar / (ar + 50))));
       if (!isFinite(tgt.hp) || isNaN(tgt.hp)) tgt.hp = tgt.maxHp;
+      const absorbed = raw - dmg;
+      tgt.armor = Math.max(0, Math.round((tgt.armor || 0) - absorbed));
       tgt.hp = Math.round(tgt.hp) - dmg; tgt.hitFlash = .12;
       tgt.lastDamageTime = performance.now();
       if (tgt.x !== undefined) spawnHitNum(tgt.x, tgt.y - (tgt.radius || 14) - 10, dmg, cause === 'BACKSTAB');
@@ -3775,13 +3787,13 @@
           // In cone! Calculate zone damage based on 4 equidistant arcs
           let dmg, effect;
           if (dist <= 40) {
-            dmg = 80;
+            dmg = 85;
             effect = 'critical_knockback';
           } else if (dist <= 80) {
-            dmg = 40;
+            dmg = 55;
             effect = 'normal';
           } else if (dist <= 120) {
-            dmg = 40;
+            dmg = 35;
             effect = 'normal';
           } else { // dist <= coneRange (160)
             dmg = 20;
@@ -3805,12 +3817,10 @@
         }
       }
 
-      // Shield on hit for Recoil (RMB)
+      // Armor generation on hit for Recoil (RMB)
       if (isRecoil && totalDamageDealt > 0) {
-        // Shield gained = Total damage dealt in this shot
-        p.shieldHp = Math.min(100, (p.shieldHp || 0) + totalDamageDealt);
-        p.shieldActive = true;
-        p.shieldDeadline = Clock.deadline(2); // 2s shield
+        const maxArm = player.maxArmor || AGENTS.naac.armor || 50;
+        player.armor = Math.min(maxArm, (player.armor || 0) + totalDamageDealt);
       }
       
       // Common Shotgun Core Updates
@@ -5261,8 +5271,8 @@
       if (badge) badge.textContent = agentName.toUpperCase();
 
 
-      const maxArmor  = (a && a.armor) ? a.armor : 0;
-      const curArmor  = p.armor || 0;
+      const maxArmor  = p.maxArmor || (a && a.armor) || 0;
+      const curArmor  = Math.round(p.armor || 0);
       const armorRow  = document.getElementById('hud-armor-row');
       if (armorRow) armorRow.style.display = maxArmor > 0 ? '' : 'none';
       const armorVal  = document.getElementById('hud-armor-val');
@@ -5408,6 +5418,7 @@
       else if (p.agentKey === 'fate')   l2.innerHTML = '<b>R</b> recarregar &middot; <b>E/Q</b> cÃ¢meras &middot; <b>T</b> torre';
       else if (p.agentKey === 'foul')   l2.innerHTML = '<b>R</b> recarregar &middot; <b>E</b> granada flash &middot; <b>Q</b> escudo';
       else if (p.agentKey === 'nykora') l2.innerHTML = '<b>R</b> recarregar &middot; <b>E</b> corte giratorio &middot; <b>RMB</b> dash';
+      else if (p.agentKey === 'naac')   l2.innerHTML = '<b>R</b> recarregar &middot; <b>E</b> avan&ccedil;o &middot; <b>RMB</b> recuo (armadura)';
     }
 
     // ----------------------------------------------------------------------------
@@ -5451,7 +5462,7 @@
       { key: 'fate', name: 'FATE', role: 'Intel', color: '#3498db', icon: 'B', weapon: 'Desert Eagle', equip: 'Cam . Drone . Torre' },
       { key: 'foul', name: 'FOUL', role: 'Tanque', color: '#2ecc71', icon: 'G', weapon: 'Minigun', equip: 'Escudo . Flash x2' },
       { key: 'nykora', name: 'NYKORA', role: 'Velocidade', color: '#9b59b6', icon: 'P', weapon: 'Espada', equip: 'Dash . Giro' },
-      { key: 'naac', name: 'NAAC', role: 'Breacher', color: '#e67e22', icon: 'N', weapon: 'SXS Shotgun', equip: 'Avanco x2' },
+      { key: 'naac', name: 'NAAC', role: 'Breacher', color: '#e67e22', icon: 'N', weapon: 'SXS Shotgun', equip: 'Avanco x2 . Recuo' },
     ];
 
     // --- Lobby state ---

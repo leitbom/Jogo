@@ -53,6 +53,7 @@ export interface Player extends PublicPlayer {
   knockbackY: number;
   lastDamageTime: number | null;
   maxHp: number;
+  maxArmor: number;
 
   // Internal / housekeeping
   disconnectTimerId: ReturnType<typeof setTimeout> | null;
@@ -108,6 +109,7 @@ export function createPlayer(id: string, name: string): Player {
     knockbackY: 0,
     lastDamageTime: null,
     maxHp: 100,
+    maxArmor: 50,
     disconnectTimerId: null,
   };
 }

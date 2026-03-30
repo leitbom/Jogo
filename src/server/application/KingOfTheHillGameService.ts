@@ -86,6 +86,7 @@ export class KingOfTheHillGameService implements IGameModeService {
       p.hp            = stats.hp;
       p.maxHp         = stats.hp;
       p.armor         = stats.armor;
+      p.maxArmor      = stats.armor;
       p.ammoCurrentMag = mag;
       p.ammoReserve   = mag;
       p.kills         = 0;
@@ -307,6 +308,7 @@ export class KingOfTheHillGameService implements IGameModeService {
     p.hp = stats.hp;
     p.maxHp = stats.hp;
     p.armor = stats.armor;
+    p.maxArmor = stats.armor;
     p.lastDamageTime = null;
     p.ammoCurrentMag = mag;
     p.ammoReserve = mag;
@@ -542,6 +544,10 @@ export class KingOfTheHillGameService implements IGameModeService {
         if (p.hp< p.maxHp && p.lastDamageTime !== null && (now - p.lastDamageTime) >= agentStats.hpRegenDelayMs) {
           const regenAmount = agentStats.hpRegenPerSecond * (intervalMs / 1000);
           p.hp= Math.min(p.hp + regenAmount, p.maxHp);
+        }
+
+        if (p.maxArmor > 0 && p.armor < p.maxArmor) {
+          p.armor = Math.min(p.maxArmor, p.armor + 1 * (intervalMs / 1000));
         }
 
         const inputs = p.pendingInputs || [];

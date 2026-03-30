@@ -445,7 +445,7 @@ io.on('connection', (socket: Socket) => {
     from.shotsHit++;
     target.lastDamageTime = Date.now();
 
-    io.to(data.to).emit('take_dmg', { dmg, cause, from: socket.id });
+    io.to(data.to).emit('take_dmg', { dmg, cause, from: socket.id, shotgunEffect: data.shotgunEffect, shooterX: fx, shooterY: fy });
     if (tx !== undefined && ty !== undefined) socket.to(room.code).emit('peer_hurt', { id: data.to, x: tx, y: ty });
     logger.info(`[dmg] ${socket.id.slice(0, 6)}→${data.to.slice(0, 6)} ${dmg} (${cause})`);
     
@@ -461,13 +461,11 @@ io.on('connection', (socket: Socket) => {
     // Apply shotgun-specific effects
     if ((cause === 'SHOTGUN' || cause === 'RECUO') && data.shotgunEffect) {
       if (data.shotgunEffect === 'critical_knockback') {
-        // Validate coordinates before calculating angle
         const shooterX = fx;
         const shooterY = fy;
         const targetX = tx;
         const targetY = ty;
         
-        // Ensure all coordinates are valid numbers
         if (typeof shooterX !== 'number' || typeof shooterY !== 'number' ||
             typeof targetX !== 'number' || typeof targetY !== 'number' ||
             !isFinite(shooterX) || !isFinite(shooterY) ||
@@ -476,20 +474,22 @@ io.on('connection', (socket: Socket) => {
           return;
         }
         
-        // Calculate knockback direction (away from shooter)
         const angle = Math.atan2(targetY - shooterY, targetX - shooterX);
-        // Knockback distance: fixed 100px for critical hit
         const knockbackDist = 100;
-        // Apply knockback (will be processed in next game tick)
         target.knockbackX = Math.cos(angle) * knockbackDist;
         target.knockbackY = Math.sin(angle) * knockbackDist;
         
-        // Emit knockback event to clients for visual effect
         io.to(room.code).emit('knockback', { 
           id: data.to, 
           x: target.knockbackX, 
           y: target.knockbackY,
           duration: 0.3
+        });
+      } else if (data.shotgunEffect === 'slow') {
+        target.slowDeadline = Date.now() + 1500;
+        io.to(room.code).emit('slow_effect', { 
+          id: data.to, 
+          duration: 1.5
         });
       }
     }

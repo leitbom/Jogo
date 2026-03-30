@@ -20,7 +20,7 @@ export const AGENT_STATS: Readonly<Record<AgentKey, AgentStats>> = {
   fate: { hp: 100, armor: 50, radius: 14, weapon: 'deagle', hpRegenPerSecond: 10, hpRegenDelayMs: 2000 },
   foul: { hp: 100, armor: 50, radius: 19, weapon: 'minigun', hpRegenPerSecond: 10, hpRegenDelayMs: 2000 },
   nykora: { hp: 100, armor: 50, radius: 13, weapon: 'sword', hpRegenPerSecond: 10, hpRegenDelayMs: 2000 },
-  naac: { hp: 120, armor: 50, radius: 14, weapon: 'sxs_shotgun', hpRegenPerSecond: 10, hpRegenDelayMs: 2000 },
+  naac: { hp: 120, armor: 75, radius: 14, weapon: 'sxs_shotgun', hpRegenPerSecond: 10, hpRegenDelayMs: 2000 },
 };
 
 export const WEAPON_MAG: Readonly<Record<WeaponKey, number>> = {
