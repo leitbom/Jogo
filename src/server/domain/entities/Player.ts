@@ -51,6 +51,8 @@ export interface Player extends PublicPlayer {
   slowDeadline: number | null;
   knockbackX: number;
   knockbackY: number;
+  lastDamageTime: number | null;
+  maxHp: number;
 
   // Internal / housekeeping
   disconnectTimerId: ReturnType<typeof setTimeout> | null;
@@ -104,6 +106,8 @@ export function createPlayer(id: string, name: string): Player {
     slowDeadline: null,
     knockbackX: 0,
     knockbackY: 0,
+    lastDamageTime: null,
+    maxHp: 100,
     disconnectTimerId: null,
   };
 }

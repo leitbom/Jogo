@@ -9,23 +9,25 @@ export interface AgentStats {
   armor: number;
   radius: number;
   weapon: WeaponKey;
+  hpRegenPerSecond: number;
+  hpRegenDelayMs: number;
 }
 
 export type WeaponKey = 'ak47' | 'deagle' | 'minigun' | 'sword' | 'sxs_shotgun' | 'TORRE';
 
 export const AGENT_STATS: Readonly<Record<AgentKey, AgentStats>> = {
-  fable: { hp: 100, armor: 0, radius: 14, weapon: 'ak47' },
-  fate: { hp: 100, armor: 30, radius: 14, weapon: 'deagle' },
-  foul: { hp: 100, armor: 60, radius: 19, weapon: 'minigun' },
-  nykora: { hp: 100, armor: 0, radius: 13, weapon: 'sword' },
-  naac: { hp: 100, armor: 0, radius: 14, weapon: 'sxs_shotgun' },
+  fable: { hp: 100, armor: 50, radius: 14, weapon: 'ak47', hpRegenPerSecond: 10, hpRegenDelayMs: 2000 },
+  fate: { hp: 100, armor: 50, radius: 14, weapon: 'deagle', hpRegenPerSecond: 10, hpRegenDelayMs: 2000 },
+  foul: { hp: 100, armor: 50, radius: 19, weapon: 'minigun', hpRegenPerSecond: 10, hpRegenDelayMs: 2000 },
+  nykora: { hp: 100, armor: 50, radius: 13, weapon: 'sword', hpRegenPerSecond: 10, hpRegenDelayMs: 2000 },
+  naac: { hp: 120, armor: 50, radius: 14, weapon: 'sxs_shotgun', hpRegenPerSecond: 10, hpRegenDelayMs: 2000 },
 };
 
 export const WEAPON_MAG: Readonly<Record<WeaponKey, number>> = {
   ak47: 30,
   deagle: 7,
   minigun: 150,
-  sword: 1, // Melee weapon doesn't really use mag, but needs a value
+  sword: 1,
   sxs_shotgun: 3,
   TORRE: 50,
 };
@@ -40,25 +42,21 @@ export const DISCONNECT_DEAD_MS = 5_000;
 export const MAX_HIT_RANGE = 1_600;
 
 // ── Dynamic tick rates ────────────────────────────────────────
-export const TICK_HZ_LOBBY = 10;  // Hz while in lobby / menu
-export const TICK_HZ_GAME = 60;  // Hz while a survival match is running
+export const TICK_HZ_LOBBY = 10;
+export const TICK_HZ_GAME = 60;
 
 // ── SecurityGuard limits ──────────────────────────────────────
-/** Max action events (dmg, grenade, i_died…) a socket can send per second */
 export const MAX_ACTION_PER_SECOND = 20;
-/** Max lobby events (create_room, join_room, start…) per second */
 export const MAX_LOBBY_PER_SECOND = 5;
-/** Maximum player movement speed in pixels/second (anti-speedhack) */
 export const MAX_PLAYER_SPEED_PPS = 1600;
 
-/** Minimum milliseconds between shots, per weapon (anti-rapid-fire) */
 export const SHOT_COOLDOWN_MS: Readonly<Record<WeaponKey, number>> = {
-  ak47: 90,   // ≈ 11 shots/s
-  deagle: 380,  // ≈  2.6 shots/s
-  minigun: 55,   // ≈ 18 shots/s
-  sword: 400,  // ≈ 2.5 swings/s
-  sxs_shotgun: 450, // ≈ 2 shots/s
-  TORRE: 120,    // ≈ 8 shots/s
+  ak47: 90,
+  deagle: 380,
+  minigun: 55,
+  sword: 400,
+  sxs_shotgun: 450,
+  TORRE: 120,
 };
 
 export const DMG_RANGES: Readonly<Record<string, [number, number]>> = {

@@ -67,6 +67,7 @@ export class DeathmatchGameService implements IGameModeService {
       const mag   = WEAPON_MAG[stats.weapon] ?? 30;
       p.alive         = true;
       p.hp            = stats.hp;
+      p.maxHp         = stats.hp;
       p.armor         = stats.armor;
       p.ammoCurrentMag = mag;
       p.ammoReserve   = mag;
@@ -79,6 +80,7 @@ export class DeathmatchGameService implements IGameModeService {
       p.spawnTime     = now;
       p.deathTime     = null;
       p.winner        = false;
+      p.lastDamageTime = null;
       if (this.security) this.security.resetPosition(p.id);
     }
 
@@ -171,27 +173,18 @@ export class DeathmatchGameService implements IGameModeService {
 
     p.alive = true;
     p.hp = stats.hp;
+    p.maxHp = stats.hp;
     p.armor = stats.armor;
     p.ammoCurrentMag = mag;
     p.ammoReserve = mag;
+    p.spawnTime = Date.now();
     p.deathTime = null;
-    p.x = sp.x;
-    p.y = sp.y;
-    p.pendingInputs = []; // Clear old inputs so they don't drag the player back
-    p.knockbackX = 0; // Ensure knockback is cleared on respawn
-    p.knockbackY = 0; // Ensure knockback is cleared on respawn
-    
+    p.knockbackX = 0;
+    p.knockbackY = 0;
+    p.stunDeadline = null;
+    p.slowDeadline = null;
+    p.lastDamageTime = null;
     if (this.security) this.security.resetPosition(p.id);
-
-    this.emitter.toRoom(room.code, 'game:respawn', {
-      id: p.id,
-      x: sp.x,
-      y: sp.y,
-      hp: p.hp,
-      armor: p.armor,
-      ammoCurrentMag: p.ammoCurrentMag,
-      ammoReserve: p.ammoReserve
-    });
 
     this.logger.info(`[respawn] ${p.id.slice(0,6)} at (${sp.x},${sp.y})`);
   }
@@ -388,6 +381,12 @@ export class DeathmatchGameService implements IGameModeService {
           p.knockbackY *= 0.8;
           if (Math.abs(p.knockbackX) < 0.1) p.knockbackX = 0;
           if (Math.abs(p.knockbackY) < 0.1) p.knockbackY = 0;
+        }
+
+        const agentStats = AGENT_STATS[p.agentKey] ?? AGENT_STATS.fable;
+        if (p.hp < p.maxHp && p.lastDamageTime !== null && (now - p.lastDamageTime) >= agentStats.hpRegenDelayMs) {
+          const regenAmount = agentStats.hpRegenPerSecond * (intervalMs / 1000);
+          p.hp = Math.min(p.hp + regenAmount, p.maxHp);
         }
 
         const inputs = p.pendingInputs || [];

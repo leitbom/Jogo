@@ -1837,7 +1837,7 @@
       fable: {
         name: 'FABLE', color: '#e74c3c', radius: 14, zoom: 700, speed: 225, runSpeed: 340, crouchSpeed: 115,
         staminaDrain: 18, staminaRegen: 14, staminaMax: 160, fovAngle: 85, fovAngleRun: 65, fovAngleCrouch: 100, fovDist: 850,
-        hp: 130, armor: 0, weapon: 'ak47', slot_e: 'he', slot_q: null, slot_t: null,
+        hp: 100, armor: 50, weapon: 'ak47', slot_e: 'he', slot_q: null, slot_t: null, hpRegenPerSecond: 10, hpRegenDelayMs: 2000,
         sprite: {
           idle: { src: 'assets/agents/fable_idle.svg', frames: 4, speed: 0.15 },
           walk: { src: 'assets/agents/fable_walk.svg', frames: 8, speed: 0.1 },
@@ -1849,7 +1849,7 @@
       fate: {
         name: 'FATE', color: '#3498db', radius: 14, zoom: 950, speed: 195, runSpeed: 290, crouchSpeed: 95,
         staminaDrain: 22, staminaRegen: 18, staminaMax: 130, fovAngle: 75, fovAngleRun: 55, fovAngleCrouch: 90, fovDist: 900,
-        hp: 110, armor: 0, weapon: 'deagle', slot_e: 'camera', slot_q: 'camera', slot_t: 'tower', cam2_via_e: true,
+        hp: 100, armor: 50, weapon: 'deagle', slot_e: 'camera', slot_q: 'camera', slot_t: 'tower', cam2_via_e: true, hpRegenPerSecond: 10, hpRegenDelayMs: 2000,
         sprite: {
           idle: { src: 'assets/agents/fate_idle.svg', frames: 4, speed: 0.15 },
           walk: { src: 'assets/agents/fate_walk.svg', frames: 8, speed: 0.1 },
@@ -1861,7 +1861,7 @@
       foul: {
         name: 'FOUL', color: '#2ecc71', radius: 19, zoom: 850, speed: 140, runSpeed: 200, crouchSpeed: 80,
         staminaDrain: 28, staminaRegen: 10, staminaMax: 120, fovAngle: 90, fovAngleRun: 70, fovAngleCrouch: 110, fovDist: 800,
-        hp: 180, armor: 80, weapon: 'minigun', slot_e: 'flash', slot_q: 'shield', slot_t: null,
+        hp: 100, armor: 50, weapon: 'minigun', slot_e: 'flash', slot_q: 'shield', slot_t: null, hpRegenPerSecond: 10, hpRegenDelayMs: 2000,
         sprite: {
           idle: { src: 'assets/agents/foul_idle.svg', frames: 4, speed: 0.15 },
           walk: { src: 'assets/agents/foul_walk.svg', frames: 8, speed: 0.1 },
@@ -1873,7 +1873,7 @@
       nykora: {
         name: 'NYKORA', color: '#9b59b6', radius: 13, zoom: 750, speed: 255, runSpeed: 380, crouchSpeed: 130,
         staminaDrain: 12, staminaRegen: 20, staminaMax: 200, fovAngle: 360, fovAngleRun: 360, fovAngleCrouch: 360, fovDist: 220,
-        hp: 100, armor: 0, weapon: 'sword', slot_e: 'spin', slot_q: null, slot_t: null,
+        hp: 100, armor: 50, weapon: 'sword', slot_e: 'spin', slot_q: null, slot_t: null, hpRegenPerSecond: 10, hpRegenDelayMs: 2000,
         sprite: {
           idle: { src: 'assets/agents/nykora_idle.svg', frames: 4, speed: 0.15 },
           walk: { src: 'assets/agents/nykora_walk.svg', frames: 8, speed: 0.1 },
@@ -1885,7 +1885,7 @@
       naac: {
         name: 'NAAC', color: '#e67e22', radius: 14, zoom: 680, speed: 235, runSpeed: 350, crouchSpeed: 120,
         staminaDrain: 16, staminaRegen: 16, staminaMax: 150, fovAngle: 80, fovAngleRun: 60, fovAngleCrouch: 95, fovDist: 750,
-        hp: 120, armor: 0, weapon: 'sxs_shotgun', slot_e: 'advance', slot_q: null, slot_t: null,
+        hp: 120, armor: 50, weapon: 'sxs_shotgun', slot_e: 'advance', slot_q: null, slot_t: null, hpRegenPerSecond: 10, hpRegenDelayMs: 2000,
         sprite: {
           idle: { src: 'assets/agents/naac_idle.svg', frames: 4, speed: 0.15 },
           walk: { src: 'assets/agents/naac_walk.svg', frames: 8, speed: 0.1 },
@@ -2179,7 +2179,8 @@
 
     // Jogador local - todos os timers de duracao usam Clock.deadline()
     const player = {
-      x: WORLD / 2, y: WORLD / 2, angle: 0, hp: 100, maxHp: 100,
+      x: WORLD / 2, y: WORLD / 2, angle: 0, hp: 100, maxHp: 100, armor: 0,
+      lastDamageTime: null,
       stamina: 100, canRun: true, staminaIdleTimer: 0,
       lightOn: true, agentKey: 'fable',
       _running: false, _crouching: false, dead: false,
@@ -2403,6 +2404,7 @@
           player.ammo = data.ammoCurrentMag;
           ammoReserve = data.ammoReserve;
           player.dead = false;
+          player.lastDamageTime = null;
           player.respawnDeadline = null;
           isSpectating = false;
           hideDeathScreen();
@@ -2784,6 +2786,7 @@
       const wd = WEAPONS[a.weapon] || WEAPONS.ak47;
       player.agentKey = key;
       player.maxHp = a.hp || 100;
+      player.armor = a.armor || 0;
       if (!player.dead) player.hp = player.maxHp;
       player.stamina = a.staminaMax || 100; player.canRun = true; player.staminaIdleTimer = 0;
       player.lightOn = key === 'nykora' ? false : true;
@@ -3072,6 +3075,15 @@
         return;
       }
       const a = p.agent; if (!a) return;
+      // HP Regeneration
+      if (p.hp < p.maxHp && p.lastDamageTime !== null) {
+        const regenDelay = (a.hpRegenDelayMs || 2000) / 1000;
+        const timeSinceDmg = (performance.now() - p.lastDamageTime) / 1000;
+        if (timeSinceDmg >= regenDelay) {
+          const regenRate = a.hpRegenPerSecond || 10;
+          p.hp = Math.min(p.hp + regenRate * dt, p.maxHp);
+        }
+      }
       const sc = W / p._currentZoom;
       // --- Zoom direcional suave -------------------------------------------------
       // N/S (+/-Ï€/2) = zoom minimo (afastado); E/W (0, Ï€) = zoom mÃ¡ximo (proximo)
@@ -3622,6 +3634,7 @@
       const ar = tgt.armor || 0, dmg = Math.max(1, Math.round(raw * (1 - ar / (ar + 50))));
       if (!isFinite(tgt.hp) || isNaN(tgt.hp)) tgt.hp = tgt.maxHp;
       tgt.hp = Math.round(tgt.hp) - dmg; tgt.hitFlash = .12;
+      tgt.lastDamageTime = performance.now();
       if (tgt.x !== undefined) spawnHitNum(tgt.x, tgt.y - (tgt.radius || 14) - 10, dmg, cause === 'BACKSTAB');
       showHitMark(cause === 'BACKSTAB');
       if (tgt.hp <= 0) {
@@ -3797,7 +3810,7 @@
         // Shield gained = Total damage dealt in this shot
         p.shieldHp = Math.min(100, (p.shieldHp || 0) + totalDamageDealt);
         p.shieldActive = true;
-        p.shieldDeadline = Clock.deadline(4); // 4s shield
+        p.shieldDeadline = Clock.deadline(2); // 2s shield
       }
       
       // Common Shotgun Core Updates
@@ -5249,10 +5262,13 @@
 
 
       const maxArmor  = (a && a.armor) ? a.armor : 0;
+      const curArmor  = p.armor || 0;
       const armorRow  = document.getElementById('hud-armor-row');
       if (armorRow) armorRow.style.display = maxArmor > 0 ? '' : 'none';
       const armorVal  = document.getElementById('hud-armor-val');
-      if (armorVal)  armorVal.textContent  = maxArmor;
+      if (armorVal)  armorVal.textContent  = curArmor;
+      const armorFill = document.getElementById('hud-armor-fill');
+      if (armorFill && maxArmor > 0) armorFill.style.width = Math.round((curArmor / maxArmor) * 100) + '%';
 
       const staPct  = Math.max(0, Math.min(1, (p.stamina || 0) / (a && a.staminaMax ? a.staminaMax : 100)));
       // HP/Stamina bars are now on player back; removed from bottom HUD as requested.
@@ -5900,7 +5916,7 @@
         if (lobbyMap) document.getElementById('lc-map-select').value = lobbyMap;
         lobbyPlayers.forEach(p => { if (p.id === lobbyMyId) { lobbyAgentIdx = LOBBY_AGENTS.findIndex(a => a.key === p.agentKey); if (lobbyAgentIdx < 0) lobbyAgentIdx = 0; updateLobbyAgentUI(); applyReadyUI(false); } });
         // Reset game canvas
-        player.dead = false; player.hp = player.maxHp;
+        player.dead = false; player.hp = player.maxHp; player.lastDamageTime = null;
         remotePlayers = {}; remoteDeployables = {}; remoteAliveMap = {};
         isSpectating = false; specTargetId = null;
         bullets = []; grenades = []; particles = [];

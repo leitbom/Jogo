@@ -78,6 +78,7 @@ export class SurvivalGameService implements IGameModeService {
       const mag   = WEAPON_MAG[stats.weapon] ?? 30;
       p.alive         = true;
       p.hp            = stats.hp;
+      p.maxHp         = stats.hp;
       p.armor         = stats.armor;
       p.ammoCurrentMag = mag;
       p.ammoReserve   = mag;
@@ -92,6 +93,7 @@ export class SurvivalGameService implements IGameModeService {
       p.winner        = false;
       p.knockbackX    = 0;
       p.knockbackY    = 0;
+      p.lastDamageTime = null;
       if (this.security) this.security.resetPosition(p.id);
     }
 
@@ -337,6 +339,12 @@ export class SurvivalGameService implements IGameModeService {
           p.knockbackY *= 0.8;
           if (Math.abs(p.knockbackX) < 0.1) p.knockbackX = 0;
           if (Math.abs(p.knockbackY) < 0.1) p.knockbackY = 0;
+        }
+
+        const agentStats = AGENT_STATS[p.agentKey] ?? AGENT_STATS.fable;
+        if (p.hp < p.maxHp && p.lastDamageTime !== null && (now - p.lastDamageTime) >= agentStats.hpRegenDelayMs) {
+          const regenAmount = agentStats.hpRegenPerSecond * (intervalMs / 1000);
+          p.hp= Math.min(p.hp + regenAmount, p.maxHp);
         }
 
         const inputs = p.pendingInputs || [];
