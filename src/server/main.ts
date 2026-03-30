@@ -457,8 +457,8 @@ io.on('connection', (socket: Socket) => {
       if (data.shotgunEffect === 'critical_knockback') {
         // Calculate knockback direction (away from shooter)
         const angle = Math.atan2(ty - fy, tx - fx);
-        // Knockback distance: from hit point to end of cone
-        const knockbackDist = (data.shotgunRange || 400) - (data.shotgunDistance || 0);
+        // Knockback distance: fixed 100px for critical hit
+        const knockbackDist = 100;
         // Apply knockback (will be processed in next game tick)
         target.knockbackX = Math.cos(angle) * knockbackDist;
         target.knockbackY = Math.sin(angle) * knockbackDist;

@@ -3516,7 +3516,7 @@
       p.dashTargetX = p.x + Math.cos(ang) * recoilDist;
       p.dashTargetY = p.y + Math.sin(ang) * recoilDist;
       p.dashRemaining = 0.16;
-      p.recoilCooldown = Clock.deadline(1.5); // 1.5s cooldown
+      p.recoilCooldown = Clock.deadline(10); // 10s cooldown
       
       if (socket && socket.connected) {
         socket.emit('vfx', { type: 'recoil_blast', x: p.x, y: p.y, angle: p.angle });
@@ -3759,15 +3759,20 @@
         while (angToE > Math.PI) angToE -= Math.PI * 2;
         
         if (Math.abs(angToE) <= coneAngle / 2) {
-          // In cone! Calculate zone damage
-          let dmg = 20;
-          let effect = 'slow';
-          if (dist < 40) {
+          // In cone! Calculate zone damage based on 4 equidistant arcs
+          let dmg, effect;
+          if (dist <= 40) {
             dmg = 80;
             effect = 'critical_knockback';
-          } else if (dist < 120) {
+          } else if (dist <= 80) {
             dmg = 40;
             effect = 'normal';
+          } else if (dist <= 120) {
+            dmg = 40;
+            effect = 'normal';
+          } else { // dist <= coneRange (160)
+            dmg = 20;
+            effect = 'slow';
           }
           
           totalDamageDealt += dmg;
@@ -4795,35 +4800,22 @@
     }
     function drawShield(p, scale) {
       const r = p.radius;
-      const pulse = Math.sin(Clock.now() / 150) * .5 + .5;
+      const verts = shieldVerts(p.x, p.y, p.angle, r);
+      const t = p.shieldDeadline ? Clock.pct(p.shieldDeadline, ABILITIES.shield.duration) : 0;
+      const pulse = Math.sin(Clock.now() / 200) * .5 + .5;
       ctx.save();
-      // Aura/Energy shell around the player (Survival Armor)
-      const grad = ctx.createRadialGradient(p.x, p.y, r * 0.8, p.x, p.y, r + 10 / scale);
-      grad.addColorStop(0, 'rgba(230, 126, 34, 0)');
-      grad.addColorStop(0.7, 'rgba(230, 126, 34, ' + (0.3 + pulse * 0.2) + ')');
-      grad.addColorStop(1, 'rgba(230, 126, 34, 0)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, r + 10 / scale, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Sharp outer glimmer ring
-      ctx.globalAlpha = 0.6 + pulse * 0.4;
-      ctx.strokeStyle = '#e67e22';
-      ctx.lineWidth = 1.5 / scale;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, r + 8 / scale, 0, Math.PI * 2);
-      ctx.stroke();
-      
-      // HP indicator (mini arc)
-      if (p.shieldHp) {
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 3 / scale;
-        const shPct = Math.min(1, p.shieldHp / 100);
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, r + 12 / scale, -Math.PI/2, -Math.PI/2 + Math.PI*2 * shPct);
-        ctx.stroke();
-      }
+      // fill (fecho para fill, sem fechar o arco do stroke)
+      ctx.globalAlpha = 0.12 + pulse * 0.06; ctx.fillStyle = '#2ecc71';
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); for (const v of verts) ctx.lineTo(v.x, v.y); ctx.closePath(); ctx.fill();
+      // glow ring
+      ctx.globalAlpha = 0.18 + pulse * 0.08; ctx.strokeStyle = '#44ff88'; ctx.lineWidth = 8 / scale;
+      ctx.beginPath(); ctx.moveTo(verts[0].x, verts[0].y); for (let i = 1; i < verts.length; i++)ctx.lineTo(verts[i].x, verts[i].y); ctx.stroke();
+      // sharp edge
+      ctx.globalAlpha = 0.85; ctx.strokeStyle = '#44ff88'; ctx.lineWidth = 2.5 / scale; ctx.shadowColor = '#2ecc71'; ctx.shadowBlur = 12 / scale;
+      ctx.beginPath(); ctx.moveTo(verts[0].x, verts[0].y); for (let i = 1; i < verts.length; i++)ctx.lineTo(verts[i].x, verts[i].y); ctx.stroke(); ctx.shadowBlur = 0;
+      // timer arc (anel exterior)
+      ctx.globalAlpha = 0.7; ctx.strokeStyle = t > .5 ? '#2ecc71' : t > .25 ? '#ffcc00' : '#ff4444'; ctx.lineWidth = 2 / scale;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.radius + 20 / scale, p.angle - Math.PI / 2, p.angle - Math.PI / 2 + Math.PI * 2 * t); ctx.stroke();
       ctx.restore();
     }
     
@@ -4859,7 +4851,7 @@
       if (p.dead || p.activeWeapon !== 'sxs_shotgun') return;
       const wd = WEAPONS.sxs_shotgun;
       const ml = (wd.muzzleLen || 1.6) * p.radius;
-      const x = p.radius + ml;
+      const x = 0; // Start from player center (same as light cone)
       const coneRange = 160;
       const coneAngle = Math.PI * 70 / 180;
       
@@ -5071,7 +5063,9 @@
 
       // â”€â”€ Vitals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const badge = document.getElementById('hud-agent-badge');
-      if (badge) badge.textContent = (a && a.name) ? a.name.toUpperCase() : (p.agentKey || 'AGENT').toUpperCase();
+      // Always use agentKey for name, ignore a.name to avoid stale agent object
+      const agentName = AGENTS[p.agentKey]?.name || p.agentKey || 'AGENT';
+      if (badge) badge.textContent = agentName.toUpperCase();
 
 
       const maxArmor  = (a && a.armor) ? a.armor : 0;
