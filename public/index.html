@@ -2140,7 +2140,7 @@
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     let fateCam = null, fateCamProj = null, fateCam2 = null, fateCamProj2 = null;
     let fateTower = null, towerBlasts = [];
-    let bullets = [], particles = [], hitNums = [], grenades = [], explosions = [], flashRings = [], muzzFX = null;
+    let bullets = [], particles = [], hitNums = [], grenades = [], explosions = [], flashRings = [], shotgunWaves = [], muzzFX = null;
     let screenShake = 0, playerBlind = 0, playerSlow = 0, playerSlowDeadline = null, playerBlindDeadline = null;
     let remoteFlashEffects = {}; // {rid: {slow:bool, blind:bool, deadline:ts}}
     let remoteBleedTimers = {};
@@ -3805,17 +3805,57 @@
       p.fireCooldown = 1 / wd.fireRate;
       p.recoil = 1.6;
       screenShake = Math.max(screenShake, wd.recoilShake);
-      muzzFX = { x: tip.x, y: tip.y, angle: p.angle, life: 0.1 };
       playSound('shoot_deagle', 0.6);
       
+      // Shotgun Wave Effect (expanding cone wave)
+      shotgunWaves.push({
+        x: p.x,
+        y: p.y,
+        angle: p.angle,
+        coneAngle: coneAngle,
+        maxRange: coneRange,
+        progress: 0,
+        duration: 0.12
+      });
+      
+      // Muzzle flash occupying the cone area
+      muzzFX = { 
+        x: tip.x, 
+        y: tip.y, 
+        angle: p.angle, 
+        life: 0.12,
+        coneAngle: coneAngle,
+        range: 60
+      };
+      
       // Shotgun Particles (instant blast)
-      for (let i = 0; i < 12; i++) {
-        const a2 = p.angle + (Math.random() - 0.5) * 0.7;
+      for (let i = 0; i < 18; i++) {
+        const a2 = p.angle + (Math.random() - 0.5) * coneAngle;
+        const speed = 400 + Math.random() * 600;
         particles.push({ 
           x: tip.x, y: tip.y, 
-          vx: Math.cos(a2) * (300 + Math.random() * 500), 
-          vy: Math.sin(a2) * (300 + Math.random() * 500), 
-          life: 0.12, maxLife: 0.12, color: '#ffcc44', r: 2.5 
+          vx: Math.cos(a2) * speed, 
+          vy: Math.sin(a2) * speed, 
+          life: 0.08 + Math.random() * 0.1, 
+          maxLife: 0.18, 
+          color: i % 3 === 0 ? '#ffffff' : (i % 3 === 1 ? '#ffdd66' : '#ffaa33'), 
+          r: 2 + Math.random() * 3 
+        });
+      }
+      
+      // Additional spark particles along cone edges
+      for (let i = 0; i < 8; i++) {
+        const edgeAngle = p.angle + (i < 4 ? coneAngle/2 : -coneAngle/2);
+        const dist = 20 + Math.random() * 40;
+        particles.push({
+          x: tip.x + Math.cos(edgeAngle) * dist * 0.5,
+          y: tip.y + Math.sin(edgeAngle) * dist * 0.5,
+          vx: Math.cos(edgeAngle) * (200 + Math.random() * 300),
+          vy: Math.sin(edgeAngle) * (200 + Math.random() * 300),
+          life: 0.1 + Math.random() * 0.08,
+          maxLife: 0.18,
+          color: '#ffffff',
+          r: 1.5 + Math.random() * 1.5
         });
       }
       
@@ -4067,6 +4107,11 @@
       for (let i = explosions.length - 1; i >= 0; i--) { explosions[i].timer -= dt; if (explosions[i].timer <= 0) explosions.splice(i, 1); }
       for (let i = flashRings.length - 1; i >= 0; i--) { flashRings[i].timer -= dt; if (flashRings[i].timer <= 0) flashRings.splice(i, 1); }
       for (let i = towerBlasts.length - 1; i >= 0; i--) { towerBlasts[i].timer -= dt; if (towerBlasts[i].timer <= 0) towerBlasts.splice(i, 1); }
+      for (let i = shotgunWaves.length - 1; i >= 0; i--) { 
+        const w = shotgunWaves[i];
+        w.progress += dt / w.duration;
+        if (w.progress >= 1) shotgunWaves.splice(i, 1); 
+      }
       if (muzzFX) { muzzFX.life -= dt; if (muzzFX.life <= 0) muzzFX = null; }
     }
     function spawnImpact(x, y, col) { for (let i = 0; i < 7; i++) { const a = Math.random() * Math.PI * 2, s = 80 + Math.random() * 200; particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .2 + Math.random() * .15, maxLife: .35, color: col, r: 1.5 + Math.random() * 2 }); } }
@@ -4396,6 +4441,7 @@
       }
 
       if (!p.dead) {
+        drawShotgunWaves(sc);
         drawMuzzFX(sc);
         if (p.agentKey === 'naac') drawShotgunCone(p, sc);
         drawPlayer(p, a, sc);
@@ -4851,52 +4897,93 @@
       if (p.dead || p.activeWeapon !== 'sxs_shotgun') return;
       const wd = WEAPONS.sxs_shotgun;
       const ml = (wd.muzzleLen || 1.6) * p.radius;
-      const x = 0; // Start from player center (same as light cone)
+      const x = 0;
       const coneRange = 160;
       const coneAngle = Math.PI * 70 / 180;
+      const halfAngle = coneAngle / 2;
       
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.angle);
       
-      // Main semi-transparent cone
-      ctx.globalAlpha = 0.3;
-      ctx.fillStyle = 'rgba(255, 170, 85, 0.4)';
+      const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, coneRange);
+      gradient.addColorStop(0, 'rgba(255, 200, 100, 0.35)');
+      gradient.addColorStop(0.25, 'rgba(255, 170, 85, 0.25)');
+      gradient.addColorStop(0.75, 'rgba(255, 130, 60, 0.12)');
+      gradient.addColorStop(1, 'rgba(255, 100, 50, 0)');
+      
+      ctx.fillStyle = gradient;
       ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.arc(0, 0, x + coneRange, -coneAngle/2, coneAngle/2);
-      ctx.lineTo(x * Math.cos(coneAngle/2), x * Math.sin(coneAngle/2)); // Close to muzzle
-      ctx.arc(0, 0, x, coneAngle/2, -coneAngle/2, true);
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, coneRange, -halfAngle, halfAngle);
       ctx.closePath();
       ctx.fill();
-
-      // Dotted arcs for zones
-      ctx.globalAlpha = 0.8;
-      ctx.strokeStyle = 'rgba(255, 170, 85, 0.8)';
-      ctx.lineWidth = 1.5 / scale;
-      ctx.setLineDash([5 / scale, 5 / scale]);
-
-      const drawArc = (radius) => {
+      
+      ctx.globalAlpha = 0.5;
+      ctx.strokeStyle = 'rgba(255, 180, 80, 0.6)';
+      ctx.lineWidth = 1 / scale;
+      ctx.setLineDash([4 / scale, 6 / scale]);
+      
+      const drawZoneArc = (radius, color) => {
         ctx.beginPath();
-        ctx.arc(0, 0, x + radius, -coneAngle/2, coneAngle/2);
+        ctx.arc(0, 0, radius, -halfAngle, halfAngle);
         ctx.stroke();
       };
-
-      drawArc(40);  // Zone 1 boundary: 40px
-      drawArc(120); // Zone 2 boundary: 120px
-      drawArc(160); // Zone 3 boundary: 160px
-
-      // Side lines
+      
+      ctx.strokeStyle = 'rgba(255, 100, 100, 0.7)';
+      ctx.lineWidth = 2 / scale;
+      drawZoneArc(40);
+      
+      ctx.strokeStyle = 'rgba(255, 180, 80, 0.5)';
+      ctx.lineWidth = 1.5 / scale;
+      drawZoneArc(80);
+      drawZoneArc(120);
+      
+      ctx.strokeStyle = 'rgba(255, 200, 100, 0.4)';
+      ctx.lineWidth = 1 / scale;
+      drawZoneArc(160);
+      
       ctx.setLineDash([]);
+      ctx.globalAlpha = 0.6;
+      ctx.strokeStyle = 'rgba(255, 170, 85, 0.8)';
+      ctx.lineWidth = 1.5 / scale;
+      ctx.shadowColor = 'rgba(255, 150, 50, 0.5)';
+      ctx.shadowBlur = 8 / scale;
+      
+      const fx = Math.cos(halfAngle);
+      const fy = Math.sin(halfAngle);
+      
       ctx.beginPath();
-      ctx.moveTo(x, 0);
-      const fx = Math.cos(coneAngle/2);
-      const fy = Math.sin(coneAngle/2);
-      ctx.lineTo((x + coneRange) * fx, (x + coneRange) * fy);
-      ctx.moveTo(x, 0);
-      ctx.lineTo((x + coneRange) * fx, -(x + coneRange) * fy);
+      ctx.moveTo(20, 0);
+      ctx.lineTo(coneRange * fx, coneRange * fy);
+      ctx.moveTo(20, 0);
+      ctx.lineTo(coneRange * fx, -coneRange * fy);
       ctx.stroke();
-
+      
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = 'rgba(255, 50, 50, 0.3)';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, 40, -halfAngle, halfAngle);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.globalAlpha = 0.15;
+      ctx.fillStyle = 'rgba(255, 150, 80, 0.2)';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, 80, -halfAngle, halfAngle);
+      ctx.arc(0, 0, 40, halfAngle, -halfAngle, true);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, 120, -halfAngle, halfAngle);
+      ctx.arc(0, 0, 80, halfAngle, -halfAngle, true);
+      ctx.closePath();
+      ctx.fill();
+      
       ctx.restore();
     }
     function drawMeleeArc(p, a, scale) {
@@ -4935,7 +5022,100 @@
 
       ctx.restore();
     }
-    function drawMuzzFX(scale) { if (!muzzFX) return; ctx.save(); ctx.translate(muzzFX.x, muzzFX.y); ctx.rotate(muzzFX.angle); const al = muzzFX.life / .06; ctx.globalAlpha = al; ctx.fillStyle = '#ffffaa'; ctx.beginPath(); ctx.ellipse(0, 0, 14, 9, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.ellipse(0, 0, 7, 4, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+    
+    function drawMuzzFX(scale) {
+      if (!muzzFX) return;
+      ctx.save();
+      ctx.translate(muzzFX.x, muzzFX.y);
+      ctx.rotate(muzzFX.angle);
+      
+      const al = muzzFX.life / 0.12;
+      
+      if (muzzFX.coneAngle) {
+        const coneAngle = muzzFX.coneAngle;
+        const range = muzzFX.range || 60;
+        const halfAngle = coneAngle / 2;
+        
+        ctx.globalAlpha = al * 0.9;
+        
+        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, range);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        gradient.addColorStop(0.2, 'rgba(255, 230, 150, 0.9)');
+        gradient.addColorStop(0.5, 'rgba(255, 170, 85, 0.6)');
+        gradient.addColorStop(1, 'rgba(255, 100, 50, 0)');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, range, -halfAngle, halfAngle);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.globalAlpha = al * 0.7;
+        ctx.strokeStyle = '#ffcc66';
+        ctx.lineWidth = 3 / scale;
+        ctx.shadowColor = '#ff8800';
+        ctx.shadowBlur = 15 / scale;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, range, -halfAngle, halfAngle);
+        ctx.closePath();
+        ctx.stroke();
+        
+        ctx.globalAlpha = al * 0.5;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 12, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.globalAlpha = al;
+        ctx.fillStyle = '#ffffaa';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 14, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 7, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      ctx.restore();
+    }
+    
+    function drawShotgunWaves(scale) {
+      for (const wave of shotgunWaves) {
+        const currentRange = wave.maxRange * wave.progress;
+        const halfAngle = wave.coneAngle / 2;
+        const al = 1 - wave.progress;
+        
+        ctx.save();
+        ctx.translate(wave.x, wave.y);
+        ctx.rotate(wave.angle);
+        
+        ctx.globalAlpha = al * 0.6;
+        ctx.strokeStyle = '#ffaa55';
+        ctx.lineWidth = (4 + wave.progress * 3) / scale;
+        ctx.shadowColor = '#ff6600';
+        ctx.shadowBlur = 20 / scale;
+        ctx.beginPath();
+        ctx.arc(0, 0, currentRange, -halfAngle, halfAngle);
+        ctx.stroke();
+        
+        ctx.globalAlpha = al * 0.25;
+        const gradient = ctx.createRadialGradient(0, 0, currentRange * 0.7, 0, 0, currentRange);
+        gradient.addColorStop(0, 'rgba(255, 170, 85, 0)');
+        gradient.addColorStop(0.7, 'rgba(255, 170, 85, 0.3)');
+        gradient.addColorStop(1, 'rgba(255, 170, 85, 0.5)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, currentRange, -halfAngle, halfAngle);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.restore();
+      }
+    }
     // Arcos de HP e stamina nas COSTAS: 1Â° por cada 2 de HP/Stamina mÃ¡ximos
     function drawHUD2D(p, a, scale) {
       if (p.dead) return;

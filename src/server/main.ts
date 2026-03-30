@@ -435,8 +435,8 @@ io.on('connection', (socket: Socket) => {
       tx = target.stateRelay.x; ty = target.stateRelay.y;
     }
 
-    const fx = from.x || from.stateRelay?.x || 0;
-    const fy = from.y || from.stateRelay?.y || 0;
+    const fx = data.shooterX ?? from.x ?? from.stateRelay?.x ?? 0;
+    const fy = data.shooterY ?? from.y ?? from.stateRelay?.y ?? 0;
 
     if (tx !== undefined && ty !== undefined && Math.hypot(fx - tx, fy - ty) > MAX_HIT_RANGE) return;
 

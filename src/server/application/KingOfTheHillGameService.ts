@@ -507,8 +507,12 @@ export class KingOfTheHillGameService implements IGameModeService {
         // Apply knockback if any
         if (p.knockbackX !== 0 || p.knockbackY !== 0) {
           const radius = AGENT_STATS[p.agentKey]?.radius || 14;
-          const newX = p.x + p.knockbackX;
-          const newY = p.y + p.knockbackY;
+          let newX = p.x + p.knockbackX;
+          let newY = p.y + p.knockbackY;
+          
+          // Clamp to world bounds FIRST to prevent teleport to corners
+          newX = Math.max(radius, Math.min(worldSize - radius, newX));
+          newY = Math.max(radius, Math.min(worldSize - radius, newY));
           
           // Check if knockback position is valid (not inside walls)
           if (!PhysicsUtils.isColliding(newX, newY, radius, room.mapData || {}, worldSize, 2.0)) {
