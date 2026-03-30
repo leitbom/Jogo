@@ -107,6 +107,8 @@ export class DeathmatchGameService implements IGameModeService {
     player.alive     = false;
     player.deathTime = Date.now();
     player.deaths++;
+    player.knockbackX = 0; // Reset knockback on death
+    player.knockbackY = 0; // Reset knockback on death
 
     const killer = killedBy ? room!.players.get(killedBy) : null;
     if (killer && killer.id !== socketId) {
@@ -176,6 +178,8 @@ export class DeathmatchGameService implements IGameModeService {
     p.x = sp.x;
     p.y = sp.y;
     p.pendingInputs = []; // Clear old inputs so they don't drag the player back
+    p.knockbackX = 0; // Ensure knockback is cleared on respawn
+    p.knockbackY = 0; // Ensure knockback is cleared on respawn
     
     if (this.security) this.security.resetPosition(p.id);
 

@@ -1827,7 +1827,7 @@
       shield: { type: 'shield', label: 'ESCUDO', hint: 'Q - ATIVAR', duration: 7.5, cooldown: 12, staminaCost: 20 },
       dash: { type: 'dash', label: 'DASH', hint: 'RMB - AVANCAR', range: 105, maxResets: 1, cooldown: 10, staminaCost: 30 },
       spin: { type: 'spin', label: 'CORTE GIRATORIO', hint: 'E - GIRAR', damage: 75, radius: 120, maxCharges: 2, rechargeTime: 8, staminaCost: 50, cooldown: 0.5 },
-      advance: { type: 'advance', label: 'AVANCO', hint: 'E - AVANCAR', range: 180, damage: 20, stunDuration: 1.5, maxCharges: 1, rechargeTime: 10, staminaCost: 35, cooldown: 1.0 },
+      advance: { type: 'advance', label: 'AVANCO', hint: 'E - AVANCAR', range: 180, damage: 20, stunDuration: 1.0, maxCharges: 1, rechargeTime: 10, staminaCost: 35, cooldown: 1.0 },
     });
 
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -2215,9 +2215,9 @@
       get radius() { return (AGENTS[this.agentKey] || AGENTS.fable).radius; },
     };
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     // Â§ 10 - INPUT
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     const keys = {};
     let mousePx = { x: 0, y: 0 }, mouseWorld = { x: WORLD / 2 + 100, y: WORLD / 2 };
     let mouseDown = false, mouseJustDown = false;
@@ -2248,9 +2248,9 @@
       window.addEventListener('resize', resize);
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     // Â§ 11 - MENU
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     function menuEnter() {
       // Agent selection happens in lobby - default to fable for now
       menuAgentKey = 'fable';
@@ -2258,9 +2258,9 @@
       document.getElementById('room-select').classList.add('active');
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     // Â§ 12 - NETWORK ADAPTER
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     let inputSeq = 0;
     let pendingInputs = [];
     let remoteSnapshots = [];
@@ -2274,7 +2274,7 @@
         if (!_lobbyBound) { _lobbyBound = true; bindLobbyEvents(); } 
         myId = socket.id;
         const ms = document.getElementById('menu-status');
-        if (ms) { ms.textContent = 'â— LIGADO'; ms.style.color = '#2ecc71'; }
+        if (ms) { ms.textContent = 'â—  LIGADO'; ms.style.color = '#2ecc71'; }
         afterConnect && afterConnect(); 
       });
       socket.on('connect_error', () => { showRoomMsg('Erro de ligacao - tenta novamente'); showRoomSelect(); });
@@ -2376,15 +2376,12 @@
         }
       });
       
-      // Stun effect from Advance (E) or other sources
       socket.on('stun_effect', data => {
         if (data.id === myId && !player.dead) {
-          player.stunDeadline = Clock.deadline(data.duration);
-        }
-        // Also update remote player visual state for stun stars
-        const rp = remotePlayers[data.id];
-        if (rp) {
-          rp.stunDeadline = Clock.deadline(data.duration);
+          playerStunDeadline = Clock.deadline(data.duration);
+        } else {
+          const rp = remotePlayers[data.id];
+          if (rp) rp.stunDeadline = Clock.deadline(data.duration);
         }
       });
 
@@ -2404,6 +2401,8 @@
           ammoReserve = data.ammoReserve;
           player.dead = false;
           player.respawnDeadline = null;
+          player.knockbackEffect = null;
+          playerStunDeadline = null;
           isSpectating = false;
           hideDeathScreen();
           updateVitalsHUD();
@@ -2475,11 +2474,15 @@
           SoundManager.play('shoot_knife', 0.6, false, {x: data.x, y: data.y});
           spawnAdvanceParticles(data.x, data.y, data.angle, 180);
         } else if (data.type === 'advance_hit') {
-          SoundManager.play('deploy', 0.7, false, {x: data.x, y: data.y});
-          const aoeRadius = data.r || 14 * 2;
+          SoundManager.play('grenade_explode', 0.8, false, {x: data.x, y: data.y});
+          const aoeRadius = 58;
           for(let i=0; i<3; i++) setTimeout(()=> {
-            const wave = { x: data.x, y: data.y, r: aoeRadius * (0.5 + i*0.25), life: 0.2, maxLife: 0.2, color: 'rgba(230,126,34,0.4)' };
-            flashRings.push({ ...wave, timer: 0.2 });
+            flashRings.push({ 
+               x: data.x, y: data.y, 
+               r: aoeRadius * (0.6 + i*0.4), 
+               timer: 0.3, maxTimer: 0.3, 
+               color: i === 0 ? 'rgba(0,255,255,0.5)' : 'rgba(255,255,255,0.25)' 
+            });
           }, i*50);
           spawnAdvanceHitParticles(data.x, data.y, aoeRadius);
         }
@@ -2500,7 +2503,7 @@
       socket.on('kill_event', data => { if (data.killer === myId) { myKills++; updateKD(); addKF('KILL - ' + data.cause); } });
       socket.on('disconnect', () => { 
         const ms = document.getElementById('menu-status');
-        if (ms) { ms.textContent = 'â— DESLIGADO'; ms.style.color = '#ff4400'; }
+        if (ms) { ms.textContent = 'â—  DESLIGADO'; ms.style.color = '#ff4400'; }
       });
 
       // --- Survival events ---
@@ -2630,9 +2633,9 @@
       });
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     // Â§ 13 - GAME FLOW
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     function startGame(data) {
       // console.log("[Engine] startGame started", data);
 
@@ -2832,9 +2835,9 @@
     function updateKD() { document.getElementById('kd-k').textContent = 'K: ' + myKills; document.getElementById('kd-d').textContent = 'M: ' + myDeaths; }
     function resize() { const asp = 16 / 9; let w = window.innerWidth, h = window.innerHeight; if (w / h > asp) w = h * asp; else h = w / asp; canvas.width = BASE_W; canvas.height = BASE_H; canvas.style.width = Math.round(w) + 'px'; canvas.style.height = Math.round(h) + 'px'; W = BASE_W; H = BASE_H; }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     // Â§ SURVIVAL HELPERS
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
 
     function showSurvivalHUD() {
       document.getElementById('sv-timer').style.display = 'block';
@@ -2920,15 +2923,15 @@
       if (winners.length === 0) {
         titleEl.textContent = 'EMPATE'; titleEl.className = 'tie';
       } else if (isTie && currentGameMode !== 'deathmatch') {
-        titleEl.textContent = 'ðŸ† EMPATE'; titleEl.className = 'tie';
+        titleEl.textContent = 'ðŸ † EMPATE'; titleEl.className = 'tie';
       } else if (currentGameMode === 'deathmatch') {
         const wid = winners[0]; const ws = stats[wid];
-        titleEl.textContent = 'ðŸ† VITORIA: ' + (ws?.name || '?');
+        titleEl.textContent = 'ðŸ † VITORIA: ' + (ws?.name || '?');
         titleEl.className = '';
       } else {
         const wid = winners[0]; const ws = stats[wid];
         const agent = AGENTS[ws?.agentKey];
-        titleEl.textContent = 'ðŸ† VENCEDOR: ' + (agent ? agent.name : ws?.name || '?');
+        titleEl.textContent = 'ðŸ † VENCEDOR: ' + (agent ? agent.name : ws?.name || '?');
         titleEl.className = '';
       }
       // Build stats table
@@ -2987,9 +2990,9 @@
     });
 
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     // Â§ 14 - GAME LOOP
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     let _lastTime = performance.now();
     function loop(ts) {
       const dt = Math.min((ts - _lastTime) / 1000, .05); _lastTime = ts;
@@ -3028,9 +3031,9 @@
       requestAnimationFrame(loop);
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     // Â§ 15 - UPDATE SYSTEMS
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     function update(dt) { 
       updatePlayer(dt); 
       updateRemotePlayers(dt);
@@ -3198,8 +3201,6 @@
       p.lastAngle = p.angle;
 
       if (p.towerRecharging && Clock.expired(p.towerRechargeDeadline)) { p.towerRecharging = false; p.towerRechargeDeadline = null; }
-      if (p.shieldActive && Clock.expired(p.shieldDeadline)) { p.shieldActive = false; p.shieldDeadline = null; p.shieldCooldownDeadline = Clock.deadline(ABILITIES.shield.cooldown); }
-      if (p.shieldCooldownDeadline && Clock.expired(p.shieldCooldownDeadline)) p.shieldCooldownDeadline = null;
       if (p.camViewCooldownDeadline && Clock.expired(p.camViewCooldownDeadline)) p.camViewCooldownDeadline = null;
       // Nykora Recharge
       if (p.agentKey === 'nykora') {
@@ -3277,8 +3278,8 @@
         if (!fateCam && !fateCamProj) tryPlaceCam(1);
         else if (fateCam) { if (p.camViewCooldownDeadline && !Clock.expired(p.camViewCooldownDeadline)) return; p.viewMode = (p.viewMode === 1) ? 0 : 1; if(p.viewMode !== 0) player.lightOn = false; p.camViewCooldownDeadline = Clock.deadline(ABILITIES.camera.viewSwitchCooldown); document.getElementById('cam-view-banner').style.display = p.viewMode !== 0 ? 'block' : 'none'; }
       } else if (a.slot_q === 'shield') {
-        if (p.shieldActive) { const used = ABILITIES.shield.duration - Clock.remaining(p.shieldDeadline); p.shieldActive = false; p.shieldDeadline = null; p.shieldCooldownDeadline = Clock.deadline(ABILITIES.shield.cooldown * (used / ABILITIES.shield.duration)); }
-        else { if (p.shieldCooldownDeadline && !Clock.expired(p.shieldCooldownDeadline)) return; if (p.stamina < ABILITIES.shield.staminaCost) return; p.stamina = Math.max(0, p.stamina - ABILITIES.shield.staminaCost); p.shieldActive = true; p.shieldDeadline = Clock.deadline(ABILITIES.shield.duration); p.shieldCooldownDeadline = null; }
+        if (p.shieldActive) { p.shieldActive = false; p.shieldDeadline = null; }
+        else { if (p.stamina < ABILITIES.shield.staminaCost) return; p.stamina = Math.max(0, p.stamina - ABILITIES.shield.staminaCost); p.shieldActive = true; p.shieldDeadline = Clock.deadline(ABILITIES.shield.duration); }
       }
     }
     function onKeyT() { const p = player; if (p.dead) return; const a = p.agent; if (a && a.slot_t === 'tower') tryUseAbility('tower'); }
@@ -3417,8 +3418,8 @@
         p.invisible = false;
         p.intangible = false;
         
-        // Calculate area of effect (2x radius)
-        const aoeRadius = p.radius * 2;
+        // Calculate area of effect (Perfect State: 58px)
+        const aoeRadius = 58;
         
         // Check for enemies in range
         const hitEnemies = [];
@@ -3430,29 +3431,30 @@
           }
         }
         
-        // Send ability hit to server (as dmg events)
+        // Send ability hit to server (as avanco_land event)
         if (hitEnemies.length > 0 && socket && socket.connected) {
-          for (const rid of hitEnemies) {
-            socket.emit('dmg', {
-              to: rid,
-              dmg: 25,
-              cause: 'AVANCO',
-              stunDuration: 1.0,
-              x: p.x,
-              y: p.y
-            });
-          }
+          socket.emit('event', {
+            type: 'avanco_land',
+            hits: hitEnemies,
+            x: p.x,
+            y: p.y
+          });
         }
         
         // Visual effects (relayed to all)
         if (socket && socket.connected) socket.emit('vfx', { type: 'advance_hit', x: p.x, y: p.y, r: aoeRadius });
-        playSound('deploy', 0.8);
+        playSound('grenade_explode', 0.9);
+        screenShake = Math.max(screenShake, 14);
         
-        // Expansion wave effect (local visual)
+        // Expansion wave effect (Perfect State: Multi-layer Cyan)
         for(let i=0; i<3; i++) setTimeout(()=> {
-          const wave = { x: p.x, y: p.y, r: aoeRadius * (0.6 + i*0.3), life: 0.25, maxLife: 0.25, color: 'rgba(230,126,34,0.5)' };
-          flashRings.push({ ...wave, timer: 0.25 });
-        }, i*60);
+          flashRings.push({ 
+             x: p.x, y: p.y, 
+             r: aoeRadius * (0.6 + i*0.4), 
+             timer: 0.35, maxTimer: 0.35, 
+             color: i === 0 ? 'rgba(0,255,255,0.6)' : 'rgba(255,255,255,0.3)' 
+          });
+        }, i*50);
         spawnAdvanceHitParticles(p.x, p.y, aoeRadius);
         
       }, 160); // 160ms for 150ms dash to ensure position is final
@@ -3516,7 +3518,7 @@
       p.dashTargetX = p.x + Math.cos(ang) * recoilDist;
       p.dashTargetY = p.y + Math.sin(ang) * recoilDist;
       p.dashRemaining = 0.16;
-      p.recoilCooldown = Clock.deadline(1.5); // 1.5s cooldown
+      p.recoilCooldown = Clock.deadline(10.0); // 10s cooldown
       
       if (socket && socket.connected) {
         socket.emit('vfx', { type: 'recoil_blast', x: p.x, y: p.y, angle: p.angle });
@@ -3740,7 +3742,7 @@
       const p = player, a = p.agent, wd = WEAPONS.sxs_shotgun;
       const ml = (wd.muzzleLen || 1.6) * a.radius;
       const x = a.radius + ml;
-      const coneRange = 160;
+      const coneRange = 116;
       const coneAngle = Math.PI * 70 / 180;
       const tip = barrelTip(p, a);
 
@@ -3787,13 +3789,6 @@
         }
       }
 
-      // Shield on hit for Recoil (RMB)
-      if (isRecoil && totalDamageDealt > 0) {
-        // Shield gained = Total damage dealt in this shot
-        p.shieldHp = Math.min(100, (p.shieldHp || 0) + totalDamageDealt);
-        p.shieldActive = true;
-        p.shieldDeadline = Clock.deadline(4); // 4s shield
-      }
       
       // Common Shotgun Core Updates
       p.ammo--;
@@ -3890,8 +3885,8 @@
         const b = bullets[i]; b.life -= dt; if (b.life <= 0) { bullets.splice(i, 1); continue; }
         b.trail.push({ x: b.x, y: b.y }); if (b.trail.length > 6) b.trail.shift();
         const nx = b.x + b.vx * dt, ny = b.y + b.vy * dt;
-        if (fateCam && Math.hypot(nx - fateCam.x, ny - fateCam.y) < 10) { fateCam.hp = 0; spawnImpact(nx, ny, '#66ccff'); addKF('CAM1 DESTRUÃDA'); bullets.splice(i, 1); continue; }
-        if (fateCam2 && Math.hypot(nx - fateCam2.x, ny - fateCam2.y) < 10) { fateCam2.hp = 0; spawnImpact(nx, ny, '#44ffaa'); addKF('CAM2 DESTRUÃDA'); bullets.splice(i, 1); continue; }
+        if (fateCam && Math.hypot(nx - fateCam.x, ny - fateCam.y) < 10) { fateCam.hp = 0; spawnImpact(nx, ny, '#66ccff'); addKF('CAM1 DESTRUÃ DA'); bullets.splice(i, 1); continue; }
+        if (fateCam2 && Math.hypot(nx - fateCam2.x, ny - fateCam2.y) < 10) { fateCam2.hp = 0; spawnImpact(nx, ny, '#44ffaa'); addKF('CAM2 DESTRUÃ DA'); bullets.splice(i, 1); continue; }
         if (fateTower && Math.hypot(nx - fateTower.x, ny - fateTower.y) < 14 && b.owner !== 'tower') { fateTower.hp -= b.damage; spawnImpact(nx, ny, b.color); bullets.splice(i, 1); continue; }
         // --- SHIELD REFLECTION -----------------------------------------------------
         // CenÃ¡rio A: bala inimiga (remote_vis) atinge o escudo do Foul LOCAL
@@ -4089,11 +4084,11 @@
     let hmTimer = 0;
     function showHitMark(bs) { const el = document.getElementById('hitmarker'); if (el) el.className = 'show' + (bs ? ' bs' : ''); hmTimer = .15; }
     function tickHM(dt) { if (hmTimer > 0) { hmTimer -= dt; if (hmTimer <= 0) { const el = document.getElementById('hitmarker'); if (el) el.className = ''; } } }
-    function addKF(cause) { const kf = document.getElementById('killfeed'); if (!kf) return; const d = document.createElement('div'); const cls = cause === 'BACKSTAB' ? 'bs' : (cause === 'EXPLOSÃƒO' || cause === 'EXPLOS&Atilde;O' ? 'expl' : (cause === 'FLASH' ? 'flash' : (cause.includes('CAM') ? 'cam' : (cause.includes('TORRE') ? 'tow' : (cause.includes('REFLEX') ? 'ref' : 'kill'))))); d.className = 'kf-line kf-' + cls; const icons = { BACKSTAB: 'W- BACKSTAB!', 'EXPLOSÃƒO': 'ðŸ’¥ EXPLOS&Atilde;O', FLASH: 'âš¡ FLASH', REFLEX: 'ðŸ›¡ REFLEX' }; d.textContent = icons[cause] || (cause.includes('CAM') ? 'ðŸ“· ' + cause : cause.includes('TORRE') ? 'ðŸ— ' + cause : 'âœ– ' + cause); kf.prepend(d); setTimeout(() => d.remove(), 3600); }
+    function addKF(cause) { const kf = document.getElementById('killfeed'); if (!kf) return; const d = document.createElement('div'); const cls = cause === 'BACKSTAB' ? 'bs' : (cause === 'EXPLOSÃƒO' || cause === 'EXPLOS&Atilde;O' ? 'expl' : (cause === 'FLASH' ? 'flash' : (cause.includes('CAM') ? 'cam' : (cause.includes('TORRE') ? 'tow' : (cause.includes('REFLEX') ? 'ref' : 'kill'))))); d.className = 'kf-line kf-' + cls; const icons = { BACKSTAB: 'W- BACKSTAB!', 'EXPLOSÃƒO': 'ðŸ’¥ EXPLOS&Atilde;O', FLASH: 'âš¡ FLASH', REFLEX: 'ðŸ›¡ REFLEX' }; d.textContent = icons[cause] || (cause.includes('CAM') ? 'ðŸ“· ' + cause : cause.includes('TORRE') ? 'ðŸ — ' + cause : 'âœ– ' + cause); kf.prepend(d); setTimeout(() => d.remove(), 3600); }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     // Â§ 16 - RENDER
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     let frameCount = 0;
     function render(dt) {
       if (!ctx || !W || !H || isNaN(W) || isNaN(H)) return;
@@ -4394,8 +4389,8 @@
         drawMuzzFX(sc);
         if (p.agentKey === 'naac') drawShotgunCone(p, sc);
         drawPlayer(p, a, sc);
+        drawStunStars(p, sc);
         if (p.shieldActive) drawShield(p, sc);
-        if (p.stunDeadline && !Clock.expired(p.stunDeadline)) drawStunStars(p, sc);
         if (p.meleeTimer > 0 && (p.activeWeapon === 'knife' || p.activeWeapon === 'sword')) drawMeleeArc(p, a, sc);
       }
       drawHUD2D(p, a, sc);
@@ -4547,6 +4542,57 @@
         }
         ctx.globalAlpha = 1.0;
       }
+    }
+
+    function drawShotgunCone(p, scale) {
+      if (p.dead || p.activeWeapon !== 'sxs_shotgun') return;
+      const coneRange = 116;
+      const coneAngle = Math.PI * 70 / 180;
+      
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+      
+      // Main semi-transparent cone
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = 'rgba(255, 170, 85, 0.4)';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, coneRange, -coneAngle/2, coneAngle/2);
+      ctx.closePath();
+      ctx.fill();
+
+      // Simple outline
+      ctx.globalAlpha = 0.8;
+      ctx.strokeStyle = 'rgba(255, 170, 85, 0.8)';
+      ctx.lineWidth = 1.5 / scale;
+      ctx.beginPath();
+      ctx.arc(0, 0, coneRange, -coneAngle/2, coneAngle/2);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawStunStars(p, scale) {
+      const deadline = p === player ? playerStunDeadline : p.stunDeadline;
+      if (!deadline || Clock.expired(deadline)) return;
+      
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      const t = Date.now() / 1000;
+      ctx.fillStyle = '#f1c40f';
+      for(let i=0; i<3; i++) {
+        const ang = t * 10 + i * (Math.PI * 2 / 3);
+        const r = 24 / scale;
+        const sx = Math.cos(ang) * r;
+        const sy = Math.sin(ang) * r * 0.5; // Ellipse
+        ctx.beginPath();
+        ctx.arc(sx, sy - 30/scale, 3/scale, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
     }
 
     // BUG-FIX: FOV cone sempre visivel (sem filtro de Ã¢ngulo local)
@@ -4827,40 +4873,10 @@
       ctx.restore();
     }
     
-    function drawStunStars(p, scale) {
-      if (!p.stunDeadline || Clock.expired(p.stunDeadline)) return;
-      const now = performance.now() / 1000;
-      const r = p.radius || 14;
-      const starCount = 3;
-      const orbitRadius = r + 10 / scale;
-      const orbitHeight = r + 15 / scale;
-      ctx.save();
-      ctx.translate(p.x, p.y - orbitHeight);
-      for (let i = 0; i < starCount; i++) {
-        const ang = now * 6 + (i / starCount) * Math.PI * 2;
-        const sx = Math.cos(ang) * orbitRadius;
-        const sy = Math.sin(ang) * orbitRadius * 0.3;
-        ctx.fillStyle = '#f1c40f';
-        ctx.shadowColor = '#f1c40f';
-        ctx.shadowBlur = 5 / scale;
-        ctx.beginPath();
-        for (let j = 0; j < 8; j++) {
-          const san = j * Math.PI / 4;
-          const sr = (j % 2 === 0) ? 5 / scale : 2 / scale;
-          ctx.lineTo(sx + Math.cos(san) * sr, sy + Math.sin(san) * sr);
-        }
-        ctx.closePath();
-        ctx.fill();
-      }
-      ctx.restore();
-    }
     
     function drawShotgunCone(p, scale) {
       if (p.dead || p.activeWeapon !== 'sxs_shotgun') return;
-      const wd = WEAPONS.sxs_shotgun;
-      const ml = (wd.muzzleLen || 1.6) * p.radius;
-      const x = p.radius + ml;
-      const coneRange = 160;
+      const coneRange = 116;
       const coneAngle = Math.PI * 70 / 180;
       
       ctx.save();
@@ -4871,40 +4887,41 @@
       ctx.globalAlpha = 0.3;
       ctx.fillStyle = 'rgba(255, 170, 85, 0.4)';
       ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.arc(0, 0, x + coneRange, -coneAngle/2, coneAngle/2);
-      ctx.lineTo(x * Math.cos(coneAngle/2), x * Math.sin(coneAngle/2)); // Close to muzzle
-      ctx.arc(0, 0, x, coneAngle/2, -coneAngle/2, true);
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, coneRange, -coneAngle/2, coneAngle/2);
       ctx.closePath();
       ctx.fill();
 
-      // Dotted arcs for zones
+      // Simple outline
       ctx.globalAlpha = 0.8;
       ctx.strokeStyle = 'rgba(255, 170, 85, 0.8)';
       ctx.lineWidth = 1.5 / scale;
-      ctx.setLineDash([5 / scale, 5 / scale]);
-
-      const drawArc = (radius) => {
-        ctx.beginPath();
-        ctx.arc(0, 0, x + radius, -coneAngle/2, coneAngle/2);
-        ctx.stroke();
-      };
-
-      drawArc(40);  // Zone 1 boundary: 40px
-      drawArc(120); // Zone 2 boundary: 120px
-      drawArc(160); // Zone 3 boundary: 160px
-
-      // Side lines
-      ctx.setLineDash([]);
       ctx.beginPath();
-      ctx.moveTo(x, 0);
-      const fx = Math.cos(coneAngle/2);
-      const fy = Math.sin(coneAngle/2);
-      ctx.lineTo((x + coneRange) * fx, (x + coneRange) * fy);
-      ctx.moveTo(x, 0);
-      ctx.lineTo((x + coneRange) * fx, -(x + coneRange) * fy);
+      ctx.arc(0, 0, coneRange, -coneAngle/2, coneAngle/2);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
       ctx.stroke();
 
+      ctx.restore();
+    }
+
+    function drawStunStars(p, scale) {
+      const deadline = p === player ? playerStunDeadline : p.stunDeadline;
+      if (!deadline || Clock.expired(deadline)) return;
+      
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      const t = Date.now() / 1000;
+      ctx.fillStyle = '#f1c40f';
+      for(let i=0; i<3; i++) {
+        const ang = t * 10 + i * (Math.PI * 2 / 3);
+        const r = 24 / scale;
+        const sx = Math.cos(ang) * r;
+        const sy = Math.sin(ang) * r * 0.5; // Ellipse
+        ctx.beginPath();
+        ctx.arc(sx, sy - 30/scale, 3/scale, 0, Math.PI*2);
+        ctx.fill();
+      }
       ctx.restore();
     }
     function drawMeleeArc(p, a, scale) {
