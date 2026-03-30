@@ -160,7 +160,6 @@ export class SecurityGuard {
       _crouching:   Boolean(d['_crouching']),
       shieldHp:     clamp(Number(d['shieldHp']) || 0, 0, 200),
       intangible:   Boolean(d['intangible']),
-      stunDeadline: Number(d['stunDeadline']) || 0,
       lightOn:      Boolean(d['lightOn']),
       activeWeapon: typeof d['activeWeapon'] === 'string' ? d['activeWeapon'] : 'ak47',
       viewMode:     Number(d['viewMode']) || 0,

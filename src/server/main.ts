@@ -327,6 +327,11 @@ io.on('connection', (socket: Socket) => {
             target.stunDeadline = Date.now() + 1000;
             io.to(rid).emit('take_dmg', { dmg: 25, cause: 'AVANCO', from: socket.id });
             socket.to(room.code).emit('peer_hurt', { id: rid, x: target.x, y: target.y });
+            // Emit stun effect to all clients
+            io.to(room.code).emit('stun_effect', { 
+              id: rid, 
+              duration: 1.0 
+            });
           }
         }
       }
@@ -453,7 +458,7 @@ io.on('connection', (socket: Socket) => {
     }
     
     // Apply shotgun-specific effects
-    if (cause === 'SHOTGUN' && data.shotgunEffect) {
+    if ((cause === 'SHOTGUN' || cause === 'RECUO') && data.shotgunEffect) {
       if (data.shotgunEffect === 'critical_knockback') {
         // Calculate knockback direction (away from shooter)
         const angle = Math.atan2(ty - fy, tx - fx);

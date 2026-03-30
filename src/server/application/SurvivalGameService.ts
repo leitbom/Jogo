@@ -90,6 +90,8 @@ export class SurvivalGameService implements IGameModeService {
       p.spawnTime     = now;
       p.deathTime     = null;
       p.winner        = false;
+      p.knockbackX    = 0;
+      p.knockbackY    = 0;
       if (this.security) this.security.resetPosition(p.id);
     }
 
@@ -118,6 +120,8 @@ export class SurvivalGameService implements IGameModeService {
     player.alive     = false;
     player.deathTime = Date.now();
     player.deaths++;
+    player.knockbackX = 0; // Reset knockback on death
+    player.knockbackY = 0; // Reset knockback on death
 
     const killer = killedBy ? room!.players.get(killedBy) : null;
     if (killer?.alive) killer.kills++;
@@ -411,7 +415,6 @@ export class SurvivalGameService implements IGameModeService {
            y: p.y,
            angle: p.angle,
            lastProcessedSeq: p.lastProcessedSeq,
-           stunDeadline: p.stunDeadline,
            shieldActive: p.shieldActive,
            shieldHp: p.shieldHp,
            visual: p.stateRelay
