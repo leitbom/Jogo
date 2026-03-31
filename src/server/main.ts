@@ -434,7 +434,7 @@ io.on('connection', (socket: Socket) => {
         tx = closest.players[data.to].x;
         ty = closest.players[data.to].y;
       }
-    } else if (target.stateRelay) {
+    } else if (target.stateRelay && typeof target.stateRelay.x === 'number' && typeof target.stateRelay.y === 'number') {
       tx = target.stateRelay.x; ty = target.stateRelay.y;
     }
 
@@ -463,53 +463,62 @@ io.on('connection', (socket: Socket) => {
       }
     }
 
-    io.to(data.to).emit('take_dmg', { dmg, cause, from: socket.id, shotgunEffect: data.shotgunEffect, shooterX: fx, shooterY: fy });
-    if (tx !== undefined && ty !== undefined) socket.to(room.code).emit('peer_hurt', { id: data.to, x: tx, y: ty });
-    logger.info(`[dmg] ${socket.id.slice(0, 6)}→${data.to.slice(0, 6)} ${dmg} (${cause})`);
-    
-    // Apply stun if specified (for Naac abilities)
-    if (data.stunDuration && typeof data.stunDuration === 'number' && data.stunDuration > 0) {
-      target.stunDeadline = Date.now() + (data.stunDuration * 1000);
-      io.to(room.code).emit('stun_effect', { 
-        id: data.to, 
-        duration: data.stunDuration 
-      });
-    }
-    
-    // Apply shotgun-specific effects
+    // Apply shotgun-specific effects BEFORE take_dmg
     if ((cause === 'SHOTGUN' || cause === 'RECUO') && data.shotgunEffect) {
       if (data.shotgunEffect === 'critical_knockback') {
-        const shooterX = fx;
-        const shooterY = fy;
-        const targetX = tx;
-        const targetY = ty;
-        
-        if (typeof shooterX !== 'number' || typeof shooterY !== 'number' ||
-            typeof targetX !== 'number' || typeof targetY !== 'number' ||
-            !isFinite(shooterX) || !isFinite(shooterY) ||
-            !isFinite(targetX) || !isFinite(targetY)) {
-          logger.warn(`[knockback] Invalid coordinates - aborting`);
-          return;
+        const kbRadius = AGENT_STATS[target.agentKey]?.radius || 14;
+        const worldSize = (room.mapData?.size?.width) || (room.mapData?.worldSize) || 2048;
+        const kbDist = 98;
+        const angle = Math.atan2(target.y - fy, target.x - fx);
+        const dx = Math.cos(angle) * kbDist;
+        const dy = Math.sin(angle) * kbDist;
+        const steps = Math.ceil(kbDist / 4);
+        const sdx = dx / steps, sdy = dy / steps;
+
+        for (let s = 0; s < steps; s++) {
+          const nnx = target.x + sdx, nny = target.y + sdy;
+          const cx = Math.max(kbRadius, Math.min(worldSize - kbRadius, nnx));
+          const cy = Math.max(kbRadius, Math.min(worldSize - kbRadius, nny));
+          if (!PhysicsUtils.isColliding(cx, cy, kbRadius, room.mapData || {}, worldSize, 2.0)) {
+            target.x = cx; target.y = cy;
+          } else {
+            const cxO = Math.max(kbRadius, Math.min(worldSize - kbRadius, nnx));
+            if (!PhysicsUtils.isColliding(cxO, target.y, kbRadius, room.mapData || {}, worldSize, 2.0)) {
+              target.x = cxO;
+            } else {
+              const cyO = Math.max(kbRadius, Math.min(worldSize - kbRadius, nny));
+              if (!PhysicsUtils.isColliding(target.x, cyO, kbRadius, room.mapData || {}, worldSize, 2.0)) {
+                target.y = cyO;
+              }
+            }
+            break;
+          }
         }
-        
-        const angle = Math.atan2(targetY - shooterY, targetX - shooterX);
-        const knockbackDist = 140;
-        target.knockbackX = Math.cos(angle) * knockbackDist;
-        target.knockbackY = Math.sin(angle) * knockbackDist;
-        
-        io.to(room.code).emit('knockback', { 
-          id: data.to, 
-          x: target.knockbackX,
-          y: target.knockbackY,
+        target.knockbackX = 0;
+        target.knockbackY = 0;
+
+        io.to(room.code).emit('knockback', {
+          id: data.to,
+          x: dx,
+          y: dy,
           duration: 0.3
         });
       } else if (data.shotgunEffect === 'slow') {
         target.slowDeadline = Date.now() + 1500;
-        io.to(room.code).emit('slow_effect', { 
-          id: data.to, 
+        io.to(room.code).emit('slow_effect', {
+          id: data.to,
           duration: 1.5
         });
       }
+    }
+
+    io.to(data.to).emit('take_dmg', { dmg, cause, from: socket.id, shotgunEffect: data.shotgunEffect, shooterX: fx, shooterY: fy });
+    if (tx !== undefined && ty !== undefined) socket.to(room.code).emit('peer_hurt', { id: data.to, x: tx, y: ty });
+    logger.info(`[dmg] ${socket.id.slice(0, 6)}->${data.to.slice(0, 6)} ${dmg} (${cause})`);
+    
+    if (data.stunDuration && typeof data.stunDuration === 'number' && data.stunDuration > 0) {
+      target.stunDeadline = Date.now() + (data.stunDuration * 1000);
+      io.to(room.code).emit('stun_effect', { id: data.to, duration: data.stunDuration });
     }
   });
 

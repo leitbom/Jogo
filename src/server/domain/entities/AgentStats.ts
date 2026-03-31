@@ -70,7 +70,7 @@ export const DMG_RANGES: Readonly<Record<string, [number, number]>> = {
   DASH: [0, 0],
   SPIN: [30, 80],
   SANGRAMENTO: [4, 6],
-  SHOTGUN: [15, 85],
+  SHOTGUN: [15, 80],
   'AVANCO': [15, 30],
   RECUO: [15, 85],
 };

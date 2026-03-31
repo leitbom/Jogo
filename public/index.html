@@ -2388,6 +2388,23 @@
         
         applyDmg(player, data.dmg, data.cause || 'BALA');
         
+        if (data.shotgunEffect === 'critical_knockback' && data.shooterX !== undefined && data.shooterY !== undefined) {
+          const kbAngle = Math.atan2(player.y - data.shooterY, player.x - data.shooterX);
+          const kbDist = 98;
+          const r = player.radius || 14;
+          let bestDist = 0;
+          for (let d = 4; d <= kbDist; d += 4) {
+            const tx = player.x + Math.cos(kbAngle) * d;
+            const ty = player.y + Math.sin(kbAngle) * d;
+            if (!Physics.hitWalls(tx, ty, r + 2)) { bestDist = d; }
+            else break;
+          }
+          if (bestDist > 0) {
+            player.x += Math.cos(kbAngle) * bestDist;
+            player.y += Math.sin(kbAngle) * bestDist;
+          }
+        }
+        
         if (!player.dead && data.shotgunEffect === 'slow') {
           playerSlow = 0.6;
           playerSlowDeadline = Clock.deadline(1.5);
@@ -3789,6 +3806,14 @@
           rp.lastX = rp.x;
           rp.lastY = rp.y;
 
+          if (rp.knockbackEffect && (Date.now() - rp.knockbackEffect.startTime) < rp.knockbackEffect.duration) {
+            rp.angle = state0.angle + (state1.angle - state0.angle) * alpha;
+            if (state1.visual) Object.assign(rp, state1.visual);
+            if (state1.shieldActive !== undefined) rp.shieldActive = state1.shieldActive;
+            if (state1.shieldHp !== undefined) rp.shieldHp = state1.shieldHp;
+            continue;
+          }
+
           rp.x = state0.x + (state1.x - state0.x) * alpha;
           rp.y = state0.y + (state1.y - state0.y) * alpha;
           
@@ -3808,6 +3833,14 @@
           if (id === myId) continue;
           if (!remotePlayers[id]) remotePlayers[id] = { x: state1.x, y: state1.y, angle: state1.angle };
           const rp = remotePlayers[id];
+          
+          if (rp.knockbackEffect && (Date.now() - rp.knockbackEffect.startTime) < rp.knockbackEffect.duration) {
+            if (state1.visual) Object.assign(rp, state1.visual);
+            if (state1.shieldActive !== undefined) rp.shieldActive = state1.shieldActive;
+            if (state1.shieldHp !== undefined) rp.shieldHp = state1.shieldHp;
+            continue;
+          }
+
           rp.lastX = rp.x;
           rp.lastY = rp.y;
           rp.x = state1.x;
@@ -3865,10 +3898,10 @@
         if (Math.abs(angToE) <= coneAngle / 2) {
           // In cone! Calculate zone damage based on 4 equidistant arcs
           let dmg, effect;
-          if (dist <= 40) {
-            dmg = 85;
+          if (dist <= 60) {
+            dmg = 80;
             effect = 'critical_knockback';
-          } else if (dist <= 80) {
+          } else if (dist <= 100) {
             dmg = 55;
             effect = 'normal';
           } else if (dist <= 120) {
@@ -5034,11 +5067,11 @@
       
       ctx.strokeStyle = 'rgba(255, 100, 100, 0.7)';
       ctx.lineWidth = 2 / scale;
-      drawZoneArc(40);
+      drawZoneArc(60);
       
       ctx.strokeStyle = 'rgba(255, 180, 80, 0.5)';
       ctx.lineWidth = 1.5 / scale;
-      drawZoneArc(80);
+      drawZoneArc(100);
       drawZoneArc(120);
       
       ctx.strokeStyle = 'rgba(255, 200, 100, 0.4)';
