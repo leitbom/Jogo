@@ -128,6 +128,8 @@
       transition: width 0.15s ease;
     }
     #hud-armor-fill { background: #3498db; }
+    #hud-hp-fill { background: #2ecc71; }
+    #hud-stamina-fill { background: #f1c40f; }
 
     /* â•â• CENTER ZONE: Abilities â•â• */
     #hud-abilities {
@@ -1594,6 +1596,14 @@
     <!-- LEFT: Vitals -->
     <div id="hud-vitals">
       <div id="hud-agent-badge">FABLE</div>
+      <div class="hud-stat-row" id="hud-hp-row">
+        <div class="hud-stat-label">HP <span id="hud-hp-val">100</span></div>
+        <div class="hud-bar-track"><div class="hud-bar-fill" id="hud-hp-fill" style="width:100%"></div></div>
+      </div>
+      <div class="hud-stat-row" id="hud-stamina-row">
+        <div class="hud-stat-label">STAMINA <span id="hud-stamina-val">100</span></div>
+        <div class="hud-bar-track"><div class="hud-bar-fill" id="hud-stamina-fill" style="width:100%"></div></div>
+      </div>
       <div class="hud-stat-row" id="hud-armor-row">
         <div class="hud-stat-label">ARMOR <span id="hud-armor-val">50</span></div>
         <div class="hud-bar-track"><div class="hud-bar-fill" id="hud-armor-fill" style="width:100%"></div></div>
@@ -1885,7 +1895,7 @@
       naac: {
         name: 'NAAC', color: '#e67e22', radius: 14, zoom: 680, speed: 235, runSpeed: 350, crouchSpeed: 120,
         staminaDrain: 16, staminaRegen: 16, staminaMax: 150, fovAngle: 80, fovAngleRun: 60, fovAngleCrouch: 95, fovDist: 750,
-        hp: 120, armor: 75, weapon: 'sxs_shotgun', slot_e: 'advance', slot_q: null, slot_t: null, hpRegenPerSecond: 10, hpRegenDelayMs: 2000,
+        hp: 120, armor: 50, weapon: 'sxs_shotgun', slot_e: 'advance', slot_q: null, slot_t: null, hpRegenPerSecond: 10, hpRegenDelayMs: 2000,
         sprite: {
           idle: { src: 'assets/agents/naac_idle.svg', frames: 4, speed: 0.15 },
           walk: { src: 'assets/agents/naac_walk.svg', frames: 8, speed: 0.1 },
@@ -2357,13 +2367,33 @@
       // Knockback effect from shotgun critical hit
       socket.on('knockback', data => {
         if (data.id === myId && !player.dead) {
-          // Apply visual knockback effect
-          const duration = data.duration || 0.3;
+          const kbAngle = Math.atan2(data.y, data.x);
+          const kbDist = Math.hypot(data.x, data.y);
+          if (kbDist > 1) {
+            player.x += Math.cos(kbAngle) * 15;
+            player.y += Math.sin(kbAngle) * 15;
+          }
           player.knockbackEffect = {
             x: data.x,
             y: data.y,
             startTime: Date.now(),
-            duration: duration * 1000
+            duration: (data.duration || 0.3) * 1000
+          };
+        }
+        // Also apply visual knockback to remote players
+        const rp = remotePlayers[data.id];
+        if (rp && !rp.dead) {
+          const kbAngle = Math.atan2(data.y, data.x);
+          const kbDist = Math.hypot(data.x, data.y);
+          if (kbDist > 1) {
+            rp.x += Math.cos(kbAngle) * 15;
+            rp.y += Math.sin(kbAngle) * 15;
+          }
+          rp.knockbackEffect = {
+            x: data.x,
+            y: data.y,
+            startTime: Date.now(),
+            duration: (data.duration || 0.3) * 1000
           };
         }
       });
@@ -5281,7 +5311,16 @@
       if (armorFill && maxArmor > 0) armorFill.style.width = Math.round((curArmor / maxArmor) * 100) + '%';
 
       const staPct  = Math.max(0, Math.min(1, (p.stamina || 0) / (a && a.staminaMax ? a.staminaMax : 100)));
-      // HP/Stamina bars are now on player back; removed from bottom HUD as requested.
+
+      const hpVal = document.getElementById('hud-hp-val');
+      if (hpVal) hpVal.textContent = Math.round(p.hp);
+      const hpFill = document.getElementById('hud-hp-fill');
+      if (hpFill) hpFill.style.width = Math.round((p.hp / p.maxHp) * 100) + '%';
+
+      const staVal = document.getElementById('hud-stamina-val');
+      if (staVal) staVal.textContent = Math.round(p.stamina);
+      const staFill = document.getElementById('hud-stamina-fill');
+      if (staFill) staFill.style.width = Math.round(staPct * 100) + '%';
 
       // â”€â”€ Weapon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const wd      = WEAPONS[p.activeWeapon] || WEAPONS.knife;
