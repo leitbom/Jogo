@@ -30,6 +30,7 @@ import {
   AGENT_STATS,
 } from './domain/entities/AgentStats';
 import { toPublicPlayer } from './domain/entities/Player';
+import { PhysicsUtils } from './domain/utils/PhysicsUtils';
 
 // ── Infrastructure ──────────────────────────────────────────────
 const app = express();
@@ -447,6 +448,21 @@ io.on('connection', (socket: Socket) => {
     from.shotsHit++;
     target.lastDamageTime = Date.now();
 
+    // Shield check: Foul's shield blocks damage from front 180°
+    if (target.shieldActive && target.shieldHp > 0) {
+      const sAngle = target.stateRelay?.angle ?? target.angle ?? 0;
+      const dx2 = fx - (tx ?? 0), dy2 = fy - (ty ?? 0);
+      const angToShooter = Math.atan2(dy2, dx2);
+      let diff = angToShooter - sAngle;
+      while (diff > Math.PI) diff -= 2 * Math.PI;
+      while (diff < -Math.PI) diff += 2 * Math.PI;
+      if (Math.abs(diff) <= Math.PI / 2) {
+        io.to(room.code).emit('peer_vfx', { id: data.to, type: 'shield_block', x: tx, y: ty });
+        logger.info(`[shield] ${data.to.slice(0,6)} blocked ${dmg} from front`);
+        return;
+      }
+    }
+
     io.to(data.to).emit('take_dmg', { dmg, cause, from: socket.id, shotgunEffect: data.shotgunEffect, shooterX: fx, shooterY: fy });
     if (tx !== undefined && ty !== undefined) socket.to(room.code).emit('peer_hurt', { id: data.to, x: tx, y: ty });
     logger.info(`[dmg] ${socket.id.slice(0, 6)}→${data.to.slice(0, 6)} ${dmg} (${cause})`);
@@ -477,14 +493,39 @@ io.on('connection', (socket: Socket) => {
         }
         
         const angle = Math.atan2(targetY - shooterY, targetX - shooterX);
-        const knockbackDist = 100;
-        target.knockbackX = Math.cos(angle) * knockbackDist;
-        target.knockbackY = Math.sin(angle) * knockbackDist;
+        const knockbackDist = 140;
+        const kbX = Math.cos(angle) * knockbackDist;
+        const kbY = Math.sin(angle) * knockbackDist;
+        const kbRadius = AGENT_STATS[target.agentKey]?.radius || 14;
+        const worldSize = (room.mapData?.size?.width) || (room.mapData?.worldSize) || 2048;
+        const kbSteps = Math.ceil(knockbackDist / 4);
+        const sdx = kbX / kbSteps, sdy = kbY / kbSteps;
+        for (let s = 0; s < kbSteps; s++) {
+          const nnx = target.x + sdx, nny = target.y + sdy;
+          const cx = Math.max(kbRadius, Math.min(worldSize - kbRadius, nnx));
+          const cy = Math.max(kbRadius, Math.min(worldSize - kbRadius, nny));
+          if (!PhysicsUtils.isColliding(cx, cy, kbRadius, room.mapData || {}, worldSize, 2.0)) {
+            target.x = cx; target.y = cy;
+          } else {
+            const cxO = Math.max(kbRadius, Math.min(worldSize - kbRadius, nnx));
+            if (!PhysicsUtils.isColliding(cxO, target.y, kbRadius, room.mapData || {}, worldSize, 2.0)) {
+              target.x = cxO;
+            } else {
+              const cyO = Math.max(kbRadius, Math.min(worldSize - kbRadius, nny));
+              if (!PhysicsUtils.isColliding(target.x, cyO, kbRadius, room.mapData || {}, worldSize, 2.0)) {
+                target.y = cyO;
+              }
+            }
+            break;
+          }
+        }
+        target.knockbackX = 0;
+        target.knockbackY = 0;
         
         io.to(room.code).emit('knockback', { 
           id: data.to, 
-          x: target.knockbackX, 
-          y: target.knockbackY,
+          x: kbX,
+          y: kbY,
           duration: 0.3
         });
       } else if (data.shotgunEffect === 'slow') {

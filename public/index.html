@@ -528,7 +528,7 @@
       position: fixed;
       inset: 0;
       background: #06060a;
-      display: flex;
+      display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
@@ -649,8 +649,8 @@
     #room-select {
       position: fixed;
       inset: 0;
+      display: flex;
       background: #06060a;
-      display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
@@ -1895,7 +1895,7 @@
       naac: {
         name: 'NAAC', color: '#e67e22', radius: 14, zoom: 680, speed: 235, runSpeed: 350, crouchSpeed: 120,
         staminaDrain: 16, staminaRegen: 16, staminaMax: 150, fovAngle: 80, fovAngleRun: 60, fovAngleCrouch: 95, fovDist: 750,
-        hp: 120, armor: 50, weapon: 'sxs_shotgun', slot_e: 'advance', slot_q: null, slot_t: null, hpRegenPerSecond: 10, hpRegenDelayMs: 2000,
+        hp: 100, armor: 50, weapon: 'sxs_shotgun', slot_e: 'advance', slot_q: null, slot_t: null, hpRegenPerSecond: 10, hpRegenDelayMs: 2000,
         sprite: {
           idle: { src: 'assets/agents/naac_idle.svg', frames: 4, speed: 0.15 },
           walk: { src: 'assets/agents/naac_walk.svg', frames: 8, speed: 0.1 },
@@ -2152,6 +2152,7 @@
     let fateTower = null, towerBlasts = [];
     let bullets = [], particles = [], hitNums = [], grenades = [], explosions = [], flashRings = [], shotgunWaves = [], muzzFX = null;
     let screenShake = 0, playerBlind = 0, playerSlow = 0, playerSlowDeadline = null, playerBlindDeadline = null;
+    let lastShieldBlockTime = 0;
     let remoteFlashEffects = {}; // {rid: {slow:bool, blind:bool, deadline:ts}}
     let remoteBleedTimers = {};
     let echoPulses = [];
@@ -2263,10 +2264,9 @@
     // § 11 - MENU
     // ════════════════════════════════════════════════════════════════════════════════
     function menuEnter() {
-      // Agent selection happens in lobby - default to fable for now
       menuAgentKey = 'fable';
       document.getElementById('menu').style.display = 'none';
-      document.getElementById('room-select').classList.add('active');
+      showRoomSelect();
     }
 
     // ════════════════════════════════════════════════════════════════════════════════
@@ -2302,6 +2302,9 @@
           player.x = svState.x;
           player.y = svState.y;
           
+          const res = Physics.resolveWallCollision(player.x, player.y, player.agent.radius);
+          player.x = res.x; player.y = res.y;
+          
           // Remove inputs that the server already processed
           pendingInputs = pendingInputs.filter(inp => inp.seq > svState.lastProcessedSeq);
           
@@ -2313,15 +2316,34 @@
             const safeDt = Math.min(inp.dt, 50);
 
             if (isDashing && vs.dashStartX !== undefined) {
-               // Absolute trajectory re-prediction for zero-drift
                const f = 1 - Math.max(0, vs.dashRemaining / 0.15);
-               player.x = vs.dashStartX + (vs.dashTargetX - vs.dashStartX) * f;
-               player.y = vs.dashStartY + (vs.dashTargetY - vs.dashStartY) * f;
+               const dx2 = vs.dashStartX + (vs.dashTargetX - vs.dashStartX) * f;
+               const dy2 = vs.dashStartY + (vs.dashTargetY - vs.dashStartY) * f;
+               if (!Physics.hitWalls(dx2, dy2, player.agent.radius + 2)) {
+                 player.x = dx2; player.y = dy2;
+               }
             } else {
-               player.x += inp.dx * speed * (safeDt / 1000);
-               player.y += inp.dy * speed * (safeDt / 1000);
+               const totalDx = inp.dx * speed * (safeDt / 1000);
+               const totalDy = inp.dy * speed * (safeDt / 1000);
+               const stepSz = 2;
+               const stps = Math.max(1, Math.ceil(Math.max(Math.abs(totalDx), Math.abs(totalDy)) / stepSz));
+               const ssdx = totalDx / stps, ssdy = totalDy / stps;
+               const br = player.agent.radius + 2;
+               for (let s = 0; s < stps; s++) {
+                 const nnx = player.x + ssdx, nny = player.y + ssdy;
+                 if (!Physics.hitWalls(nnx, nny, br)) {
+                   player.x = nnx; player.y = nny;
+                 } else {
+                   if (!Physics.hitWalls(nnx, player.y, br)) player.x = nnx;
+                   else if (!Physics.hitWalls(player.x, nny, br)) player.y = nny;
+                   break;
+                 }
+               }
             }
           }
+          
+          const resolved = Physics.resolveWallCollision(player.x, player.y, player.agent.radius);
+          player.x = resolved.x; player.y = resolved.y;
           
           // Apply visual knockback effect if active
           if (player.knockbackEffect) {
@@ -2344,6 +2366,23 @@
       socket.on('take_dmg', data => {
         if (player.dead) return;
         if (!isFinite(data.dmg) || data.dmg <= 0) return;
+
+        if (player.agentKey === 'foul' && player.shieldActive && player.shieldHp > 0) {
+          let sx = data.shooterX, sy = data.shooterY;
+          if ((sx === undefined || sy === undefined) && data.from && remotePlayers[data.from]) {
+            sx = remotePlayers[data.from].x;
+            sy = remotePlayers[data.from].y;
+          }
+          if (sx !== undefined && sy !== undefined) {
+            let diff = Math.atan2(sy - player.y, sx - player.x) - player.angle;
+            while (diff > Math.PI) diff -= 2 * Math.PI;
+            while (diff < -Math.PI) diff += 2 * Math.PI;
+            if (Math.abs(diff) <= Math.PI / 2) { lastShieldBlockTime = performance.now(); return; }
+          }
+        }
+
+        if (performance.now() - lastShieldBlockTime < 200) return;
+
         lastHitter = data.from || null;
         lastCause = data.cause || 'BALA';
         
@@ -2370,21 +2409,21 @@
         const kbDist = Math.hypot(data.x, data.y);
         if (kbDist > 1) {
           const pushDist = Math.min(kbDist, 120);
-          if (data.id === myId && !player.dead) {
-            player.x += Math.cos(kbAngle) * pushDist;
-            player.y += Math.sin(kbAngle) * pushDist;
-            player.knockbackEffect = {
-              x: data.x,
-              y: data.y,
-              startTime: Date.now(),
-              duration: (data.duration || 0.3) * 1000
-            };
-          }
-          const rp = remotePlayers[data.id];
-          if (rp && !rp.dead) {
-            rp.x += Math.cos(kbAngle) * pushDist;
-            rp.y += Math.sin(kbAngle) * pushDist;
-            rp.knockbackEffect = {
+          const tgt = (data.id === myId) ? player : remotePlayers[data.id];
+          if (tgt && !tgt.dead) {
+            const r = tgt.radius || 14;
+            let bestDist = 0;
+            for (let d = 4; d <= pushDist; d += 4) {
+              const tx = tgt.x + Math.cos(kbAngle) * d;
+              const ty = tgt.y + Math.sin(kbAngle) * d;
+              if (!Physics.hitWalls(tx, ty, r + 2)) { bestDist = d; }
+              else break;
+            }
+            if (bestDist > 0) {
+              tgt.x += Math.cos(kbAngle) * bestDist;
+              tgt.y += Math.sin(kbAngle) * bestDist;
+            }
+            tgt.knockbackEffect = {
               x: data.x,
               y: data.y,
               startTime: Date.now(),
@@ -2438,6 +2477,7 @@
           player.respawnDeadline = null;
           isSpectating = false;
           hideDeathScreen();
+          updateSpectatorHUD();
           updateVitalsHUD();
           updateWeaponHUD();
           if (camera) {
@@ -2507,7 +2547,7 @@
           SoundManager.play('shoot_knife', 0.6, false, {x: data.x, y: data.y});
           spawnAdvanceParticles(data.x, data.y, data.angle, 180);
         } else if (data.type === 'advance_hit') {
-          SoundManager.play('deploy', 0.7, false, {x: data.x, y: data.y});
+          SoundManager.play('grenade_explode', 0.7, false, {x: data.x, y: data.y});
           const aoeRadius = data.r || 14 * 2;
           for(let i=0; i<3; i++) setTimeout(()=> {
             const wave = { x: data.x, y: data.y, r: aoeRadius * (0.5 + i*0.25), life: 0.2, maxLife: 0.2, color: 'rgba(230,126,34,0.4)' };
@@ -2674,7 +2714,7 @@
 
       // Hide all pre-game screens
       document.getElementById('menu').style.display = 'none';
-      document.getElementById('room-select').classList.remove('active');
+      hideRoomSelect();
       hideLobby();
       hideEndgame();
       gameState = 'playing';
@@ -3000,6 +3040,8 @@
     }
     function hideDeathScreen() {
       document.getElementById('death-screen').classList.remove('active');
+      document.getElementById('death-respawn').style.display = 'none';
+      document.getElementById('sv-spectate').style.display = 'none';
       canvas.style.filter = '';
     }
 
@@ -3169,14 +3211,27 @@
         if (consuming) { p.stamina = Math.max(0, p.stamina - a.staminaDrain * dt); p.staminaIdleTimer = 0; if (p.stamina === 0) p.canRun = false; }
         else { p.staminaIdleTimer += dt; if (p.staminaIdleTimer >= STAMINA_REGEN_DELAY) p.stamina = Math.min(a.staminaMax, p.stamina + a.staminaRegen * dt); if (!p.canRun && p.stamina >= STAMINA_RUN_THRESHOLD) p.canRun = true; }
         const speed = (running && len > 0 ? a.runSpeed : crouch ? a.crouchSpeed : a.speed) * (playerSlow > 0 ? 1 - ABILITIES.flash.slowAmount : 1);
-        const nx = p.x + dx * speed * dt, ny = p.y + dy * speed * dt;
-        // Check before move — prevent any penetration
-        if (!Physics.hitWalls(nx, ny, a.radius + 2)) {
-          p.x = nx; p.y = ny;
-        } else {
-          if (!Physics.hitWalls(nx, p.y, a.radius + 2)) p.x = nx;
-          else if (!Physics.hitWalls(p.x, ny, a.radius + 2)) p.y = ny;
+        const totalDx = dx * speed * dt, totalDy = dy * speed * dt;
+        const stepSize = 2;
+        const steps = Math.max(1, Math.ceil(Math.max(Math.abs(totalDx), Math.abs(totalDy)) / stepSize));
+        const sdx = totalDx / steps, sdy = totalDy / steps;
+        const br = a.radius + 2;
+        for (let s = 0; s < steps; s++) {
+          const nnx = p.x + sdx, nny = p.y + sdy;
+          if (!Physics.hitWalls(nnx, nny, br)) {
+            p.x = nnx; p.y = nny;
+          } else {
+            const canX = !Physics.hitWalls(nnx, p.y, br);
+            const canY = !Physics.hitWalls(p.x, nny, br);
+            if (canX && canY) {
+              if (Math.abs(sdx) >= Math.abs(sdy)) p.x = nnx; else p.y = nny;
+            } else if (canX) { p.x = nnx; }
+            else if (canY) { p.y = nny; }
+            break;
+          }
         }
+        const resolved = Physics.resolveWallCollision(p.x, p.y, a.radius);
+        p.x = resolved.x; p.y = resolved.y;
         p._running = running && len > 0; p._crouching = crouch;
 
         // --- Sound: Footstep loops ---
@@ -3497,7 +3552,7 @@
         
         // Visual effects (relayed to all)
         if (socket && socket.connected) socket.emit('vfx', { type: 'advance_hit', x: p.x, y: p.y, r: aoeRadius });
-        playSound('deploy', 0.8);
+        playSound('grenade_explode', 0.7);
         
         // Expansion wave effect (local visual)
         for(let i=0; i<3; i++) setTimeout(()=> {
@@ -3651,13 +3706,10 @@
 
     // Combat
     function applyDmg(tgt, raw, cause) {
-      // BUG-FIX: mortos nao recebem dano
       if (!tgt || tgt.dead) return;
-      // Naac advance ability: intangible during dash
       if (tgt.intangible) return;
       if (!isFinite(raw) || isNaN(raw) || raw <= 0) return;
       
-      // Check if shield is active (Foul shield only)
       if (tgt.shieldActive && tgt.shieldHp > 0) {
         const absorbed = Math.min(raw, tgt.shieldHp);
         tgt.shieldHp -= absorbed;
@@ -3666,14 +3718,13 @@
           tgt.shieldActive = false;
           tgt.shieldDeadline = null;
         }
-        // If all damage absorbed, return
         if (raw <= 0) return;
       }
       
       const ar = tgt.armor || 0, dmg = Math.max(1, Math.round(raw * (1 - ar / (ar + 50))));
       if (!isFinite(tgt.hp) || isNaN(tgt.hp)) tgt.hp = tgt.maxHp;
-      const absorbed = raw - dmg;
-      tgt.armor = Math.max(0, Math.round((tgt.armor || 0) - absorbed));
+      const absorbedByArmor = raw - dmg;
+      tgt.armor = Math.max(0, Math.round((tgt.armor || 0) - absorbedByArmor));
       tgt.hp = Math.round(tgt.hp) - dmg; tgt.hitFlash = .12;
       tgt.lastDamageTime = performance.now();
       if (tgt.x !== undefined) spawnHitNum(tgt.x, tgt.y - (tgt.radius || 14) - 10, dmg, cause === 'BACKSTAB');
@@ -3686,7 +3737,7 @@
           document.getElementById('death-screen').classList.add('active');
           canvas.style.filter = 'grayscale(1) brightness(0.55)';
           
-          if (currentGameMode === 'deathmatch' || currentGameMode === 'koth') {
+          if (currentGameMode === 'deathmatch' || currentGameMode === 'king_of_the_hill') {
             const respawnTime = gameModeConfig.respawnTimeS || 3;
             document.getElementById('death-respawn').style.display = 'block';
             let timeLeft = respawnTime;
@@ -3994,8 +4045,9 @@
         if (b.owner === 'remote_vis' && player.agentKey === 'foul' && player.shieldActive && !player.dead) {
           const ref = testShieldReflect(player.x, player.y, player.angle, player.agent.radius, b.x, b.y, nx, ny, b.vx, b.vy);
           if (ref) {
+            lastShieldBlockTime = performance.now();
             const rdmg = b.damage || 15;
-            bullets.push({ x: ref.px, y: ref.py, vx: ref.vx, vy: ref.vy, life: Math.max(b.life, 0.4), maxLife: Math.max(b.maxLife, 0.4), damage: rdmg, color: '#2ecc71', trail: [], wallPen: false, wallPenFactor: 1, wallPenCount: 0, owner: 'foul_reflected', ownerCrouched: false });
+            bullets.push({ x: ref.px, y: ref.py, vx: ref.vx, vy: ref.vy, life: Math.max(b.life, 0.4), maxLife: Math.max(b.maxLife, 0.4), damage: rdmg, color: '#2ecc71', trail: [], wallPen: false, wallPenFactor: 1, wallPenCount: 0, owner: 'foul_reflected', ownerCrouched: false, reflectedBy: myId, reflectCount: (b.reflectCount || 0) + 1 });
             spawnImpact(ref.px, ref.py, '#2ecc71'); addKF('REFLEX');
             if (socket && socket.connected) socket.emit('shot', { x: ref.px, y: ref.py, vx: ref.vx, vy: ref.vy, life: 0.4, color: '#2ecc71', wallPen: false, wallPenFactor: 1, damage: rdmg });
             bullets.splice(i, 1); continue;
@@ -4003,7 +4055,7 @@
         }
         // Cenário B: bala local (player/tower) atinge o escudo do Foul REMOTO
         // (verificado antes do hit de corpo - sem flag permanente, checa todo frame)
-        if (b.owner === 'player' || b.owner === 'tower') {
+        if ((b.owner === 'player' || b.owner === 'tower') && !(b.reflectCount >= 1)) {
           let reflected = false;
           for (const [, rs] of Object.entries(remotePlayers)) {
             if (!rs || rs.dead || rs.agentKey !== 'foul' || !rs.shieldActive) continue;
@@ -4053,8 +4105,7 @@
             } 
           }
         } else if (b.owner === 'foul_reflected') {
-          // BUG-FIX: ricochetes causam dano ao local E remotos
-          if (!player.dead && Math.hypot(nx - player.x, ny - player.y) < player.agent.radius + 3) { applyDmg(player, b.damage, 'REFLEX'); spawnImpact(nx, ny, '#2ecc71'); hit = true; }
+          if (!player.dead && b.reflectedBy !== myId && Math.hypot(nx - player.x, ny - player.y) < player.agent.radius + 3) { applyDmg(player, b.damage, 'REFLEX'); spawnImpact(nx, ny, '#2ecc71'); hit = true; }
           if (!hit && socket && socket.connected) { for (const [rid, rs] of Object.entries(remotePlayers)) { if (!rs || rs.dead) continue; if (Math.hypot(nx - rs.x, ny - rs.y) < (AGENTS[rs.agentKey]?.radius || 14) + 3) { socket.emit('dmg', { to: rid, dmg: b.damage, cause: 'REFLEX', clientTime: Date.now() }); spawnImpact(nx, ny, '#2ecc71'); showHitMark(false); hit = true; break; } } }
         }
         if (hit) { bullets.splice(i, 1); continue; }
@@ -5461,15 +5512,16 @@
     // ----------------------------------------------------------------------------
     // § 18 - BOOT
     // ----------------------------------------------------------------------------
-    window.addEventListener('load', () => {
-      if (!canvas) canvas = document.getElementById('c');
-      resize();
-      if (!ctx && canvas) ctx = canvas.getContext('2d');
-      if (ctx) ctx.imageSmoothingEnabled = false;
-      setupInput();
-      
-      // Pre-initialize assets for lobby and game
-      AssetManager.init({
+     window.addEventListener('load', () => {
+       if (!canvas) canvas = document.getElementById('c');
+       resize();
+       if (!ctx && canvas) ctx = canvas.getContext('2d');
+       if (ctx) ctx.imageSmoothingEnabled = false;
+       setupInput();
+       menuEnter();
+       
+       // Pre-initialize assets for lobby and game
+       AssetManager.init({
         images: [
           'agents/fable_idle.svg', 'agents/fable_walk.svg', 'agents/fable_dead.svg', 'agents/fable_crouch_walk.svg', 'agents/fable_reload.svg',
           'agents/fate_idle.svg', 'agents/fate_walk.svg', 'agents/fate_dead.svg', 'agents/fate_crouch_walk.svg', 'agents/fate_reload.svg',
@@ -5510,12 +5562,12 @@
 
     // --- Room Select ---
     function showRoomSelect() {
-      document.getElementById('room-select').classList.add('active');
+      document.getElementById('room-select').style.display = 'flex';
       document.getElementById('rs-connecting').classList.remove('active');
       document.getElementById('rs-msg').textContent = '';
     }
     function hideRoomSelect() {
-      document.getElementById('room-select').classList.remove('active');
+      document.getElementById('room-select').style.display = 'none';
       document.getElementById('rs-code-row').style.display = 'none';
     }
     function showRoomMsg(msg, isErr) {

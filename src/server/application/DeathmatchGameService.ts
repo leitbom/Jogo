@@ -185,8 +185,25 @@ export class DeathmatchGameService implements IGameModeService {
     p.stunDeadline = null;
     p.slowDeadline = null;
     p.lastDamageTime = null;
+    p.x = sp.x;
+    p.y = sp.y;
+    p.pendingInputs = [];
     if (this.security) this.security.resetPosition(p.id);
 
+    p.stateRelay = null;
+
+    p.shieldActive = false;
+    p.shieldHp = 0;
+
+    this.emitter.toRoom(room.code, 'game:respawn', {
+      id: p.id,
+      x: sp.x,
+      y: sp.y,
+      hp: p.hp,
+      armor: p.armor,
+      ammoCurrentMag: p.ammoCurrentMag,
+      ammoReserve: p.ammoReserve
+    });
     this.logger.info(`[respawn] ${p.id.slice(0,6)} at (${sp.x},${sp.y})`);
   }
 
@@ -354,32 +371,35 @@ export class DeathmatchGameService implements IGameModeService {
       for (const [id, p] of room.players) {
         if (!p.alive) continue;
         
-        // Apply knockback if any
         if (p.knockbackX !== 0 || p.knockbackY !== 0) {
           const radius = AGENT_STATS[p.agentKey]?.radius || 14;
-          let newX = p.x + p.knockbackX;
-          let newY = p.y + p.knockbackY;
-          
-          // Clamp to world bounds FIRST to prevent teleport to corners
-          newX = Math.max(radius, Math.min(worldSize - radius, newX));
-          newY = Math.max(radius, Math.min(worldSize - radius, newY));
-          
-          // Check if knockback position is valid (not inside walls)
-          if (!PhysicsUtils.isColliding(newX, newY, radius, room.mapData || {}, worldSize, 2.0)) {
-            p.x = newX;
-            p.y = newY;
-          } else {
-            // Try to slide along walls
-            if (!PhysicsUtils.isColliding(newX, p.y, radius, room.mapData || {}, worldSize, 2.0)) {
-              p.x = Math.max(radius, Math.min(worldSize - radius, newX));
-            } else if (!PhysicsUtils.isColliding(p.x, newY, radius, room.mapData || {}, worldSize, 2.0)) {
-              p.y = Math.max(radius, Math.min(worldSize - radius, newY));
+          const kbLen = Math.hypot(p.knockbackX, p.knockbackY);
+          const kbAngle = Math.atan2(p.knockbackY, p.knockbackX);
+          const stepSize = 4;
+          const steps = Math.max(1, Math.ceil(kbLen / stepSize));
+          const sdx = p.knockbackX / steps, sdy = p.knockbackY / steps;
+          let moved = 0;
+          for (let s = 0; s < steps; s++) {
+            const nnx = p.x + sdx, nny = p.y + sdy;
+            const cx = Math.max(radius, Math.min(worldSize - radius, nnx));
+            const cy = Math.max(radius, Math.min(worldSize - radius, nny));
+            if (!PhysicsUtils.isColliding(cx, cy, radius, room.mapData || {}, worldSize, 2.0)) {
+              p.x = cx; p.y = cy; moved++;
+            } else {
+              const cxOnly = Math.max(radius, Math.min(worldSize - radius, nnx));
+              if (!PhysicsUtils.isColliding(cxOnly, p.y, radius, room.mapData || {}, worldSize, 2.0)) {
+                p.x = cxOnly;
+              } else {
+                const cyOnly = Math.max(radius, Math.min(worldSize - radius, nny));
+                if (!PhysicsUtils.isColliding(p.x, cyOnly, radius, room.mapData || {}, worldSize, 2.0)) {
+                  p.y = cyOnly;
+                }
+              }
+              break;
             }
           }
-          
-          // Decay knockback
-          p.knockbackX *= 0.8;
-          p.knockbackY *= 0.8;
+          p.knockbackX *= 0.6;
+          p.knockbackY *= 0.6;
           if (Math.abs(p.knockbackX) < 0.1) p.knockbackX = 0;
           if (Math.abs(p.knockbackY) < 0.1) p.knockbackY = 0;
         }
