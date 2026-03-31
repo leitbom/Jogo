@@ -53,9 +53,9 @@
     }
 
 
-    /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    /* ════════════════════════════════════════════════════════
        UNIFIED BOTTOM HUD BAR
-       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+       ════════════════════════════════════════════════════════ */
     #hud-bar {
       position: fixed;
       bottom: 18px;
@@ -76,14 +76,14 @@
     }
     #hud-bar.active { display: flex; }
 
-    /* â”€â”€ Dividers between zones â”€â”€ */
+    /* ── Dividers between zones ── */
     .hud-divider {
       width: 1px;
       background: rgba(255,255,255,0.06);
       flex-shrink: 0;
     }
 
-    /* â•â• LEFT ZONE: Vitals â•â• */
+    /* ══ LEFT ZONE: Vitals ══ */
     #hud-vitals {
       display: flex;
       flex-direction: column;
@@ -131,7 +131,7 @@
     #hud-hp-fill { background: #2ecc71; }
     #hud-stamina-fill { background: #f1c40f; }
 
-    /* â•â• CENTER ZONE: Abilities â•â• */
+    /* ══ CENTER ZONE: Abilities ══ */
     #hud-abilities {
       display: flex;
       align-items: center;
@@ -207,7 +207,7 @@
       white-space: nowrap;
     }
 
-    /* â•â• RIGHT ZONE: Weapon â•â• */
+    /* ══ RIGHT ZONE: Weapon ══ */
     #hud-weapon {
       display: flex;
       flex-direction: column;
@@ -265,7 +265,7 @@
     }
 
 
-    /* â”€â”€ Map picker CSS â”€â”€ */
+    /* ── Map picker CSS ── */
     .lc-map {
       display: flex;
       align-items: center;
@@ -599,9 +599,9 @@
       padding: 1px 0;
     }
 
-    /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    /* ────────────────────────────────────────────────────────────────────────────
    LOBBY - Survival Mode
-   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+   ──────────────────────────────────────────────────────────────────────────── */
     @keyframes lobbyFadeIn {
       from {
         opacity: 0;
@@ -791,7 +791,7 @@
       }
     }
 
-    /* â”€â”€ Lobby screen â”€â”€ */
+    /* ── Lobby screen ── */
     #lobby-screen {
       position: fixed;
       inset: 0;
@@ -873,7 +873,7 @@
       letter-spacing: 2px;
     }
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Player list Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* â”€â”€ Player list â”€â”€ */
     .lc-players {
       display: flex;
       flex-direction: column;
@@ -957,7 +957,7 @@
       color: #282830;
     }
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Agent picker Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* â”€â”€ Agent picker â”€â”€ */
     .lc-pick {
       display: flex;
       justify-content: center;
@@ -1040,7 +1040,7 @@
       color: #556;
     }
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Buttons Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* â”€â”€ Buttons â”€â”€ */
     .lc-actions {
       display: flex;
       justify-content: center;
@@ -1097,7 +1097,7 @@
       letter-spacing: 1px;
     }
 
-    /* â”€â”€ Mode selector â”€â”€ */
+    /* ── Mode selector ── */
     .lc-modes {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -1152,7 +1152,7 @@
       letter-spacing: 1px;
     }
 
-    /* â”€â”€ Error toast â”€â”€ */
+    /* ── Error toast ── */
     .lc-err {
       background: rgba(233, 69, 96, .12);
       border: 1px solid #e94560;
@@ -1165,8 +1165,8 @@
       animation: errFade 3s ease forwards;
     }
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Countdown overlay Ã¢â€â‚¬Ã¢â€â‚¬ */
     /* â”€â”€ Countdown overlay â”€â”€ */
+    /* ── Countdown overlay ── */
     .lc-countdown {
       position: absolute;
       inset: 0;
@@ -1191,9 +1191,9 @@
       animation: countPulse .85s ease-out;
     }
 
-    /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    /* ────────────────────────────────────────────────────────────────────────────
    SURVIVAL HUD - In-game overlays
-   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+   ──────────────────────────────────────────────────────────────────────────── */
     @keyframes timerPulse {
       from {
         transform: scale(1.05)
@@ -1300,7 +1300,7 @@
     /* Ammo reserve HUD (replaces the /magazineMax display) */
     /* uses existing #wp-ammo - just updates the textContent */
 
-    /* â”€â”€ End Game Screen â”€â”€ */
+    /* ── End Game Screen ── */
     #endgame-screen {
       position: fixed;
       inset: 0;
@@ -1380,7 +1380,7 @@
     }
 
     table#eg-table tr.winner-row td:first-child::before {
-      content: 'ðŸ† ';
+      content: '🏆 ';
     }
 
     table#eg-table tr:not(:last-child) td {
@@ -1438,7 +1438,7 @@
   <div id="menu">
     <div id="menu-title">TACTICAL</div>
     <div id="menu-subtitle">SURVIVAL - MODO MULTIJOGADOR</div>
-    <div id="menu-status">â— DESLIGADO</div>
+    <div id="menu-status">● DESLIGADO</div>
     <button id="menu-enter" onclick="menuEnter()">ENTRAR</button>
     <div id="menu-msg">Escolhe o teu agente no lobby</div>
   </div>
@@ -1464,7 +1464,7 @@
       <div class="rs-spinner"></div>
       <div style="color:#555;font-size:11px;letter-spacing:3px;">A ligar...</div>
     </div>
-    <button id="rs-back">â† VOLTAR</button>
+    <button id="rs-back">← VOLTAR</button>
   </div>
 
   <!-- === Lobby Screen === -->
@@ -1565,7 +1565,7 @@
 
   <!-- --- End Game Screen --- -->
   <div id="endgame-screen">
-    <div id="eg-title">ðŸ† VENCEDOR</div>
+    <div id="eg-title">🏆 VENCEDOR</div>
     <div id="eg-subtitle">MODO SURVIVAL - FIM DE JOGO</div>
     <div class="eg-table-wrap">
       <table id="eg-table">
@@ -1589,9 +1589,9 @@
     </div>
   </div>
   <div id="kd"><span class="kd-k" id="kd-k">K: 0</span> <span class="kd-d" id="kd-d">M: 0</span></div>
-  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  <!-- ═══════════════════════════════════════════════════════
        UNIFIED BOTTOM HUD BAR
-       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+       ═══════════════════════════════════════════════════════ -->
   <div id="hud-bar">
     <!-- LEFT: Vitals -->
     <div id="hud-vitals">
@@ -1625,7 +1625,7 @@
   <div id="killfeed"></div>
   <div id="hitmarker"></div>
   <div id="flash-overlay"></div>
-  <div id="cam-view-banner">â— CAM VIEW</div>
+  <div id="cam-view-banner">● CAM VIEW</div>
   <div id="death-screen">
     <div id="death-title">ABATIDO</div>
     <div id="death-cause">-</div>
@@ -1645,11 +1645,11 @@
 
 
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 1 - CLOCK - timers baseados em timestamp real
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 1 - CLOCK - timers baseados em timestamp real
     //   Imunes a tab-hide / browser throttling.
     //   Todos os timers de habilidades usam este modulo.
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
     const Clock = Object.freeze({
       now: () => Date.now(),
       deadline: (secs) => Date.now() + secs * 1000,
@@ -1658,9 +1658,9 @@
       pct: (dl, dur) => Math.max(0, Math.min(1, Clock.remaining(dl) / dur)),
     });
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 1.1 - ASSET MANAGER - precarregamento hibrido
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 1.1 - ASSET MANAGER - precarregamento hibrido
+    // ════════════════════════════════════════════════════════════════════════════════
     const AssetManager = {
       images: {},
       failed: new Set(),
@@ -1814,9 +1814,9 @@
     }
 
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 2 - WEAPON REGISTRY - adicionar arma: inserir aqui
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 2 - WEAPON REGISTRY - adicionar arma: inserir aqui
+    // ════════════════════════════════════════════════════════════════════════════════
     const WEAPONS = Object.freeze({
       ak47: { name: 'AK-47', mode: 'AUTO - 600 RPM', damage: 28, fireRate: 10, magazineMax: 30, reloadTime: 2.4, automatic: true, spread: 0.04, spreadMove: 0.10, bulletSpeed: 1800, bulletRange: 900, bulletColor: '#ffdd88', recoilShake: 2.0, muzzleLen: 1.9 },
       deagle: { name: 'DESERT EAGLE', mode: 'SEMI - WALL PEN', damage: 75, fireRate: 2.5, magazineMax: 7, reloadTime: 2.0, automatic: false, spread: 0.008, spreadMove: 0.05, bulletSpeed: 2200, bulletRange: 1100, bulletColor: '#ffe0b0', recoilShake: 5.5, muzzleLen: 1.6, wallPen: true, wallPenFactor: 0.75 },
@@ -1826,9 +1826,9 @@
       sxs_shotgun: { name: 'SXS SHOTGUN', mode: 'SEMI - 2 CANOS', damage: 22, pelletsPerShot: 6, fireRate: 2, magazineMax: 3, reloadTime: 2.0, automatic: false, spread: 0.12, spreadMove: 0.18, bulletSpeed: 1400, bulletRange: 450, bulletColor: '#ffaa55', recoilShake: 6.0, muzzleLen: 1.6 },
     });
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 3 - ABILITY REGISTRY - adicionar habilidade: inserir aqui
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 3 - ABILITY REGISTRY - adicionar habilidade: inserir aqui
+    // ════════════════════════════════════════════════════════════════════════════════
     const ABILITIES = Object.freeze({
       he: { type: 'grenade', label: 'GRANADA HE', hint: 'E - LANCAR', damage: 100, blastRadius: 180, speed: 520, fuseTime: 1.2, maxCharges: 4, useInterval: 0.25, rechargeTime: 7.5, bounceDecay: 0.55, staminaCost: 20 },
       flash: { type: 'grenade', label: 'FLASH GREN', hint: 'E - LANCAR', blastRadius: 240, speed: 280, fuseTime: 1.5, blindDuration: 2.0, slowDuration: 2.0, slowAmount: 0.82, maxCharges: 2, useInterval: 2.0, rechargeTime: 20, bounceDecay: 0.60, staminaCost: 15 },
@@ -1840,9 +1840,9 @@
       advance: { type: 'advance', label: 'AVANCO', hint: 'E - AVANCAR', range: 180, damage: 20, stunDuration: 1.5, maxCharges: 1, rechargeTime: 10, staminaCost: 35, cooldown: 1.0 },
     });
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 4 - AGENT REGISTRY - adicionar agente: inserir aqui + HTML
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 4 - AGENT REGISTRY - adicionar agente: inserir aqui + HTML
+    // ════════════════════════════════════════════════════════════════════════════════
     const AGENTS = Object.freeze({
       fable: {
         name: 'FABLE', color: '#e74c3c', radius: 14, zoom: 700, speed: 225, runSpeed: 340, crouchSpeed: 115,
@@ -1906,9 +1906,9 @@
       },
     });
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 5 - WORLD CONFIG
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 5 - WORLD CONFIG
+    // ════════════════════════════════════════════════════════════════════════════════
     let WORLD = 2048;
     const TILE = 64, BASE_W = 960, BASE_H = 540;
     const STAMINA_RUN_THRESHOLD = 5, STAMINA_REGEN_DELAY = 1.0;
@@ -1922,9 +1922,9 @@
     let lobbyMap = null;
     let globalMapData = null;
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 6 - PHYSICS - funcÃµes puras de colisao e FOV
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 6 - PHYSICS - funcões puras de colisao e FOV
+    // ════════════════════════════════════════════════════════════════════════════════
     const Physics = {
       hitWalls(cx, cy, r, opts = { includeLow: true }, margin = 0.5) {
         const rm = r + margin;
@@ -2024,7 +2024,7 @@
 
         const checkWalls = (list, isFov = false) => {
           for (const w of list) {
-            // Se for cÃ¡lculo de FOV e a parede for janela ou marcada para nao projetar sombra, pulamos
+            // Se for cálculo de FOV e a parede for janela ou marcada para nao projetar sombra, pulamos
             if (isFov && (w.isWindow || w.noShadow)) continue;
 
             let hitT = null, hx, hy;
@@ -2081,21 +2081,21 @@
       ssect(ox, oy, ex, ey, ax, ay, bx, by) { const dx = ex - ox, dy = ey - oy, fx = bx - ax, fy = by - ay, d = dx * fy - dy * fx; if (Math.abs(d) < 1e-10) return null; const t = ((ax - ox) * fy - (ay - oy) * fx) / d, u = ((ax - ox) * dy - (ay - oy) * dx) / d; if (t >= 0 && t <= 1 && u >= 0 && u <= 1) return { x: ox + dx * t, y: oy + dy * t, t }; return null; },
     };
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 7 - SHIELD GEOMETRY
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 7 - SHIELD GEOMETRY
+    // ════════════════════════════════════════════════════════════════════════════════
     function shieldVerts(cx, cy, angle, r) {
-      // 5 faces â†’ 6 vÃ©rtices em arco de 180Â° Ã  frente do Foul
+      // 5 faces → 6 vértices em arco de 180° à frente do Foul
       const offsets = [-Math.PI / 2, -Math.PI / 3, -Math.PI / 9, Math.PI / 9, Math.PI / 3, Math.PI / 2];
       const scale = r * 2.2;
       return offsets.map(o => ({ x: cx + Math.cos(angle + o) * scale, y: cy + Math.sin(angle + o) * scale }));
     }
-    // Reflexao genÃ©rica pelo escudo do Foul.
-    // (sx,sy,sAngle,sRadius) = posicao/Ã¢ngulo/raio do portador do escudo
-    // (ox,oy)â†’(nx,ny) = segmento de movimento da bala; (bdx,bdy) = velocidade
+    // Reflexao genérica pelo escudo do Foul.
+    // (sx,sy,sAngle,sRadius) = posicao/ângulo/raio do portador do escudo
+    // (ox,oy)→(nx,ny) = segmento de movimento da bala; (bdx,bdy) = velocidade
     function testShieldReflect(sx, sy, sAngle, sRadius, ox, oy, nx, ny, bdx, bdy) {
       const verts = shieldVerts(sx, sy, sAngle, sRadius);
-      // Arco aberto: apenas os 5 segmentos entre vÃ©rtices consecutivos
+      // Arco aberto: apenas os 5 segmentos entre vértices consecutivos
       let best = null;
       for (let i = 0; i < verts.length - 1; i++) {
         const a = verts[i], b = verts[i + 1];
@@ -2115,9 +2115,9 @@
       return best;
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 8 - NETWORK STATE (and rendering context)
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 8 - NETWORK STATE (and rendering context)
+    // ════════════════════════════════════════════════════════════════════════════════
     let canvas = document.getElementById('c');
     let ctx = canvas ? canvas.getContext('2d') : null;
     let W = BASE_W, H = BASE_H;
@@ -2145,9 +2145,9 @@
 
     let loopStarted = false;
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 9 - GAME ENTITIES
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 9 - GAME ENTITIES
+    // ════════════════════════════════════════════════════════════════════════════════
     let fateCam = null, fateCamProj = null, fateCam2 = null, fateCamProj2 = null;
     let fateTower = null, towerBlasts = [];
     let bullets = [], particles = [], hitNums = [], grenades = [], explosions = [], flashRings = [], shotgunWaves = [], muzzFX = null;
@@ -2226,9 +2226,9 @@
       get radius() { return (AGENTS[this.agentKey] || AGENTS.fable).radius; },
     };
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 10 - INPUT
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 10 - INPUT
+    // ════════════════════════════════════════════════════════════════════════════════
     const keys = {};
     let mousePx = { x: 0, y: 0 }, mouseWorld = { x: WORLD / 2 + 100, y: WORLD / 2 };
     let mouseDown = false, mouseJustDown = false;
@@ -2259,9 +2259,9 @@
       window.addEventListener('resize', resize);
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 11 - MENU
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 11 - MENU
+    // ════════════════════════════════════════════════════════════════════════════════
     function menuEnter() {
       // Agent selection happens in lobby - default to fable for now
       menuAgentKey = 'fable';
@@ -2269,9 +2269,9 @@
       document.getElementById('room-select').classList.add('active');
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 12 - NETWORK ADAPTER
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 12 - NETWORK ADAPTER
+    // ════════════════════════════════════════════════════════════════════════════════
     let inputSeq = 0;
     let pendingInputs = [];
     let remoteSnapshots = [];
@@ -2285,7 +2285,7 @@
         if (!_lobbyBound) { _lobbyBound = true; bindLobbyEvents(); } 
         myId = socket.id;
         const ms = document.getElementById('menu-status');
-        if (ms) { ms.textContent = 'â— LIGADO'; ms.style.color = '#2ecc71'; }
+        if (ms) { ms.textContent = '● LIGADO'; ms.style.color = '#2ecc71'; }
         afterConnect && afterConnect(); 
       });
       socket.on('connect_error', () => { showRoomMsg('Erro de ligacao - tenta novamente'); showRoomSelect(); });
@@ -2366,35 +2366,31 @@
       
       // Knockback effect from shotgun critical hit
       socket.on('knockback', data => {
-        if (data.id === myId && !player.dead) {
-          const kbAngle = Math.atan2(data.y, data.x);
-          const kbDist = Math.hypot(data.x, data.y);
-          if (kbDist > 1) {
-            player.x += Math.cos(kbAngle) * 15;
-            player.y += Math.sin(kbAngle) * 15;
+        const kbAngle = Math.atan2(data.y, data.x);
+        const kbDist = Math.hypot(data.x, data.y);
+        if (kbDist > 1) {
+          const pushDist = Math.min(kbDist, 120);
+          if (data.id === myId && !player.dead) {
+            player.x += Math.cos(kbAngle) * pushDist;
+            player.y += Math.sin(kbAngle) * pushDist;
+            player.knockbackEffect = {
+              x: data.x,
+              y: data.y,
+              startTime: Date.now(),
+              duration: (data.duration || 0.3) * 1000
+            };
           }
-          player.knockbackEffect = {
-            x: data.x,
-            y: data.y,
-            startTime: Date.now(),
-            duration: (data.duration || 0.3) * 1000
-          };
-        }
-        // Also apply visual knockback to remote players
-        const rp = remotePlayers[data.id];
-        if (rp && !rp.dead) {
-          const kbAngle = Math.atan2(data.y, data.x);
-          const kbDist = Math.hypot(data.x, data.y);
-          if (kbDist > 1) {
-            rp.x += Math.cos(kbAngle) * 15;
-            rp.y += Math.sin(kbAngle) * 15;
+          const rp = remotePlayers[data.id];
+          if (rp && !rp.dead) {
+            rp.x += Math.cos(kbAngle) * pushDist;
+            rp.y += Math.sin(kbAngle) * pushDist;
+            rp.knockbackEffect = {
+              x: data.x,
+              y: data.y,
+              startTime: Date.now(),
+              duration: (data.duration || 0.3) * 1000
+            };
           }
-          rp.knockbackEffect = {
-            x: data.x,
-            y: data.y,
-            startTime: Date.now(),
-            duration: (data.duration || 0.3) * 1000
-          };
         }
       });
       
@@ -2536,7 +2532,7 @@
       socket.on('kill_event', data => { if (data.killer === myId) { myKills++; updateKD(); addKF('KILL - ' + data.cause); } });
       socket.on('disconnect', () => { 
         const ms = document.getElementById('menu-status');
-        if (ms) { ms.textContent = 'â— DESLIGADO'; ms.style.color = '#ff4400'; }
+        if (ms) { ms.textContent = '● DESLIGADO'; ms.style.color = '#ff4400'; }
       });
 
       // --- Survival events ---
@@ -2560,9 +2556,9 @@
           if (v) SoundManager.play('die', 0.8, false, {x: v.x, y: v.y});
         }
         // Update killfeed
-        if (killer_id === myId) { myKills++; updateKD(); addKF('âœ” KILL - ' + (cause || 'BALA')); }
+        if (killer_id === myId) { myKills++; updateKD(); addKF('✔ KILL - ' + (cause || 'BALA')); }
         else if (victim_id === myId) {/* local death handled by applyDmg */ }
-        else addKF('âœ” ' + (cause || ''));
+        else addKF('✔ ' + (cause || ''));
         // If spectating the victim, cycle to another target
         if (isSpectating && specTargetId === victim_id) {
           setTimeout(() => { if (remotePlayers[victim_id]) remotePlayers[victim_id].dead = true; cycleSpectatorTarget(); }, 300);
@@ -2577,7 +2573,7 @@
         setTimeout(() => showEndgame(winners, stats), 1500);
       });
 
-      // â”€â”€ KOTH events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── KOTH events ────────────────────────────────────────
       socket.on('game:score', ({ teamScores }) => {
         const sa = document.getElementById('koth-score-a');
         const sb = document.getElementById('koth-score-b');
@@ -2666,9 +2662,9 @@
       });
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 13 - GAME FLOW
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 13 - GAME FLOW
+    // ════════════════════════════════════════════════════════════════════════════════
     function startGame(data) {
       // console.log("[Engine] startGame started", data);
 
@@ -2700,7 +2696,7 @@
             path = 'maps/' + path;
           }
           
-          // Adiciona assets/ apenas se nao for da pasta maps/ ou jÃ¡ tiver assets/
+          // Adiciona assets/ apenas se nao for da pasta maps/ ou já tiver assets/
           if (!path.startsWith('maps/') && !path.startsWith('assets/')) {
             path = 'assets/' + path;
           }
@@ -2870,9 +2866,9 @@
     function updateKD() { document.getElementById('kd-k').textContent = 'K: ' + myKills; document.getElementById('kd-d').textContent = 'M: ' + myDeaths; }
     function resize() { const asp = 16 / 9; let w = window.innerWidth, h = window.innerHeight; if (w / h > asp) w = h * asp; else h = w / asp; canvas.width = BASE_W; canvas.height = BASE_H; canvas.style.width = Math.round(w) + 'px'; canvas.style.height = Math.round(h) + 'px'; W = BASE_W; H = BASE_H; }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ SURVIVAL HELPERS
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § SURVIVAL HELPERS
+    // ════════════════════════════════════════════════════════════════════════════════
 
     function showSurvivalHUD() {
       document.getElementById('sv-timer').style.display = 'block';
@@ -2958,15 +2954,15 @@
       if (winners.length === 0) {
         titleEl.textContent = 'EMPATE'; titleEl.className = 'tie';
       } else if (isTie && currentGameMode !== 'deathmatch') {
-        titleEl.textContent = 'ðŸ† EMPATE'; titleEl.className = 'tie';
+        titleEl.textContent = '🏆 EMPATE'; titleEl.className = 'tie';
       } else if (currentGameMode === 'deathmatch') {
         const wid = winners[0]; const ws = stats[wid];
-        titleEl.textContent = 'ðŸ† VITORIA: ' + (ws?.name || '?');
+        titleEl.textContent = '🏆 VITORIA: ' + (ws?.name || '?');
         titleEl.className = '';
       } else {
         const wid = winners[0]; const ws = stats[wid];
         const agent = AGENTS[ws?.agentKey];
-        titleEl.textContent = 'ðŸ† VENCEDOR: ' + (agent ? agent.name : ws?.name || '?');
+        titleEl.textContent = '🏆 VENCEDOR: ' + (agent ? agent.name : ws?.name || '?');
         titleEl.className = '';
       }
       // Build stats table
@@ -2988,7 +2984,7 @@
         const survMin = Math.floor(s.survival_time / 60);
         const survSec = String(s.survival_time % 60).padStart(2, '0');
         tr.innerHTML =
-          `<td>${escLobby(s.name)}${isMe ? ` <span style="color:#556;font-size:.7rem">vocÃª</span>` : ''}</td>` +
+          `<td>${escLobby(s.name)}${isMe ? ` <span style="color:#556;font-size:.7rem">você</span>` : ''}</td>` +
           `<td style="color:${agColor}">${agent ? agent.name : s.agentKey}</td>` +
           `<td>${s.kills}</td>` +
           `<td>${s.damage_dealt}</td>` +
@@ -3025,9 +3021,9 @@
     });
 
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 14 - GAME LOOP
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 14 - GAME LOOP
+    // ════════════════════════════════════════════════════════════════════════════════
     let _lastTime = performance.now();
     function loop(ts) {
       const dt = Math.min((ts - _lastTime) / 1000, .05); _lastTime = ts;
@@ -3066,9 +3062,9 @@
       requestAnimationFrame(loop);
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 15 - UPDATE SYSTEMS
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 15 - UPDATE SYSTEMS
+    // ════════════════════════════════════════════════════════════════════════════════
     function update(dt) { 
       updatePlayer(dt); 
       updateRemotePlayers(dt);
@@ -3126,8 +3122,8 @@
       }
       const sc = W / p._currentZoom;
       // --- Zoom direcional suave -------------------------------------------------
-      // N/S (+/-Ï€/2) = zoom minimo (afastado); E/W (0, Ï€) = zoom mÃ¡ximo (proximo)
-      // cos(2*angle): Eâ†’1, Nâ†’-1, Wâ†’1, Sâ†’-1
+      // N/S (+/-π/2) = zoom minimo (afastado); E/W (0, π) = zoom máximo (proximo)
+      // cos(2*angle): E→1, N→-1, W→1, S→-1
       const zBase = a.zoom, zAmp = zBase * 0.22;
       const zTarget = zBase - zAmp * Math.cos(2 * p.angle); // E/W=menor valor=mais zoom in
       const lerpSpeed = 3.5; // suavidade (3.5 = ~280ms para 90% do caminho)
@@ -3174,10 +3170,13 @@
         else { p.staminaIdleTimer += dt; if (p.staminaIdleTimer >= STAMINA_REGEN_DELAY) p.stamina = Math.min(a.staminaMax, p.stamina + a.staminaRegen * dt); if (!p.canRun && p.stamina >= STAMINA_RUN_THRESHOLD) p.canRun = true; }
         const speed = (running && len > 0 ? a.runSpeed : crouch ? a.crouchSpeed : a.speed) * (playerSlow > 0 ? 1 - ABILITIES.flash.slowAmount : 1);
         const nx = p.x + dx * speed * dt, ny = p.y + dy * speed * dt;
-        // Try full move first, then resolve via projection
-        p.x = nx; p.y = ny;
-        const resolved = Physics.resolveWallCollision(p.x, p.y, a.radius);
-        p.x = resolved.x; p.y = resolved.y;
+        // Check before move — prevent any penetration
+        if (!Physics.hitWalls(nx, ny, a.radius + 2)) {
+          p.x = nx; p.y = ny;
+        } else {
+          if (!Physics.hitWalls(nx, p.y, a.radius + 2)) p.x = nx;
+          else if (!Physics.hitWalls(p.x, ny, a.radius + 2)) p.y = ny;
+        }
         p._running = running && len > 0; p._crouching = crouch;
 
         // --- Sound: Footstep loops ---
@@ -3237,7 +3236,7 @@
         if (p.abilityCharges < abilDef.maxCharges) { if (!p.abilityRechargeDeadline) p.abilityRechargeDeadline = Clock.deadline(abilDef.rechargeTime); if (Clock.expired(p.abilityRechargeDeadline)) { p.abilityCharges++; p.abilityRechargeDeadline = p.abilityCharges < abilDef.maxCharges ? Clock.deadline(abilDef.rechargeTime) : null; } }
         else p.abilityRechargeDeadline = null;
       }
-      // BUG-FIX: cÃ¢mera/torre/escudo via Clock
+      // BUG-FIX: câmera/torre/escudo via Clock
       if (p.camRecharging && Clock.expired(p.camRechargeDeadline)) { p.camRecharging = false; p.camRechargeDeadline = null; }
       if (p.cam2Recharging && Clock.expired(p.cam2RechargeDeadline)) { p.cam2Recharging = false; p.cam2RechargeDeadline = null; }
       // Decay recoil
@@ -3687,22 +3686,21 @@
           document.getElementById('death-screen').classList.add('active');
           canvas.style.filter = 'grayscale(1) brightness(0.55)';
           
-          if (currentGameMode === 'deathmatch') {
+          if (currentGameMode === 'deathmatch' || currentGameMode === 'koth') {
             const respawnTime = gameModeConfig.respawnTimeS || 3;
             document.getElementById('death-respawn').style.display = 'block';
             let timeLeft = respawnTime;
             document.getElementById('death-respawn-time').textContent = timeLeft;
             const iv = setInterval(() => {
               timeLeft--;
-              if (timeLeft <= 0) {
+              if (timeLeft < 0) {
                 clearInterval(iv);
+                document.getElementById('death-respawn-time').textContent = '0';
               } else {
                 document.getElementById('death-respawn-time').textContent = timeLeft;
               }
             }, 1000);
-            // Hide screen and reset is handled by game:respawn event from server
           } else {
-            // Survival: enter spectator immediately, no respawn
             setTimeout(() => {
               document.getElementById('death-screen').classList.remove('active');
               enterSpectatorMode();
@@ -3953,7 +3951,7 @@
       const p = player, wd = WEAPONS[p.activeWeapon];
       if (!wd || p.reloading || p.activeWeapon === 'knife') return;
       if (p.ammo === wd.magazineMax) return; // already full
-      // Tactical reload (PRD Â§5): discard remaining rounds, pull from reserve
+      // Tactical reload (PRD §5): discard remaining rounds, pull from reserve
       if (ammoReserve <= 0) {
         // No reserve - play empty animation but no effect
         flashEmptyClip();
@@ -3988,11 +3986,11 @@
         const b = bullets[i]; b.life -= dt; if (b.life <= 0) { bullets.splice(i, 1); continue; }
         b.trail.push({ x: b.x, y: b.y }); if (b.trail.length > 6) b.trail.shift();
         const nx = b.x + b.vx * dt, ny = b.y + b.vy * dt;
-        if (fateCam && Math.hypot(nx - fateCam.x, ny - fateCam.y) < 10) { fateCam.hp = 0; spawnImpact(nx, ny, '#66ccff'); addKF('CAM1 DESTRUÃDA'); bullets.splice(i, 1); continue; }
-        if (fateCam2 && Math.hypot(nx - fateCam2.x, ny - fateCam2.y) < 10) { fateCam2.hp = 0; spawnImpact(nx, ny, '#44ffaa'); addKF('CAM2 DESTRUÃDA'); bullets.splice(i, 1); continue; }
+        if (fateCam && Math.hypot(nx - fateCam.x, ny - fateCam.y) < 10) { fateCam.hp = 0; spawnImpact(nx, ny, '#66ccff'); addKF('CAM1 DESTRUÍDA'); bullets.splice(i, 1); continue; }
+        if (fateCam2 && Math.hypot(nx - fateCam2.x, ny - fateCam2.y) < 10) { fateCam2.hp = 0; spawnImpact(nx, ny, '#44ffaa'); addKF('CAM2 DESTRUÍDA'); bullets.splice(i, 1); continue; }
         if (fateTower && Math.hypot(nx - fateTower.x, ny - fateTower.y) < 14 && b.owner !== 'tower') { fateTower.hp -= b.damage; spawnImpact(nx, ny, b.color); bullets.splice(i, 1); continue; }
         // --- SHIELD REFLECTION -----------------------------------------------------
-        // CenÃ¡rio A: bala inimiga (remote_vis) atinge o escudo do Foul LOCAL
+        // Cenário A: bala inimiga (remote_vis) atinge o escudo do Foul LOCAL
         if (b.owner === 'remote_vis' && player.agentKey === 'foul' && player.shieldActive && !player.dead) {
           const ref = testShieldReflect(player.x, player.y, player.angle, player.agent.radius, b.x, b.y, nx, ny, b.vx, b.vy);
           if (ref) {
@@ -4003,7 +4001,7 @@
             bullets.splice(i, 1); continue;
           }
         }
-        // CenÃ¡rio B: bala local (player/tower) atinge o escudo do Foul REMOTO
+        // Cenário B: bala local (player/tower) atinge o escudo do Foul REMOTO
         // (verificado antes do hit de corpo - sem flag permanente, checa todo frame)
         if (b.owner === 'player' || b.owner === 'tower') {
           let reflected = false;
@@ -4085,7 +4083,7 @@
           if (Math.hypot(g.x - player.x, g.y - player.y) < pr || Math.hypot(nx - player.x, ny - player.y) < pr) { detonate(g); grenades.splice(i, 1); continue; }
         }
 
-        const ref = null; // escudo NÃƒO reflecte granadas
+        const ref = null; // escudo NÃO reflecte granadas
         if (ref) { g.vx = ref.vx; g.vy = ref.vy; spawnImpact(ref.px, ref.py, '#2ecc71'); addKF('REFLEX'); continue; }
         const hLow = { includeLow: g.ownerCrouched };
         const hitX = Physics.hitWalls(nx, g.y, 5, hLow), hitY = Physics.hitWalls(g.x, ny, 5, hLow), hitB = Physics.hitWalls(nx, ny, 5, hLow);
@@ -4104,8 +4102,8 @@
         for (let i = 0; i < 32; i++) { const a = Math.random() * Math.PI * 2, s = 120 + Math.random() * 420; particles.push({ x: g.x, y: g.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .5 + Math.random() * .5, maxLife: 1, color: i % 3 === 0 ? '#ff8800' : i % 3 === 1 ? '#ffcc44' : '#ff4400', r: 3 + Math.random() * 5 }); }
         screenShake = Math.max(screenShake, 12);
         if (isOwner) {
-          if (!player.dead) { const d = Math.hypot(player.x - g.x, player.y - g.y); if (d <= def.blastRadius + player.radius) { const f = 1 - Math.max(0, (d - player.radius) / def.blastRadius); applyDmg(player, Math.round(def.damage * f), 'EXPLOSÃƒO'); } }
-          if (socket && socket.connected) { for (const [rid, rs] of Object.entries(remotePlayers)) { if (!rs || rs.dead) continue; const rr = AGENTS[rs.agentKey]?.radius || 14, d = Math.hypot(rs.x - g.x, rs.y - g.y); if (d > def.blastRadius + rr) continue; socket.emit('dmg', { to: rid, dmg: Math.round(def.damage * (1 - Math.max(0, (d - rr) / def.blastRadius))), cause: 'EXPLOSÃƒO', clientTime: Date.now() }); } socket.emit('vfx', { type: 'he_explode', x: g.x, y: g.y, r: def.blastRadius }); }
+          if (!player.dead) { const d = Math.hypot(player.x - g.x, player.y - g.y); if (d <= def.blastRadius + player.radius) { const f = 1 - Math.max(0, (d - player.radius) / def.blastRadius); applyDmg(player, Math.round(def.damage * f), 'EXPLOSÃO'); } }
+          if (socket && socket.connected) { for (const [rid, rs] of Object.entries(remotePlayers)) { if (!rs || rs.dead) continue; const rr = AGENTS[rs.agentKey]?.radius || 14, d = Math.hypot(rs.x - g.x, rs.y - g.y); if (d > def.blastRadius + rr) continue; socket.emit('dmg', { to: rid, dmg: Math.round(def.damage * (1 - Math.max(0, (d - rr) / def.blastRadius))), cause: 'EXPLOSÃO', clientTime: Date.now() }); } socket.emit('vfx', { type: 'he_explode', x: g.x, y: g.y, r: def.blastRadius }); }
         }
       } else if (g.type === 'flash') {
         SoundManager.play('grenade_explode', 0.5);
@@ -4129,7 +4127,7 @@
           }
           // Emitir para peers com info de intensidade por jogador
           if (socket && socket.connected) {
-            // Calcular se cada peer Ã© atingido de frente ou de costas - emitir individualmente
+            // Calcular se cada peer é atingido de frente ou de costas - emitir individualmente
             let hitCount = 0;
             for (const [rid, rs] of Object.entries(remotePlayers)) {
               if (!rs || rs.dead) continue;
@@ -4145,8 +4143,8 @@
               remoteFlashEffects[rid] = { slow: true, blind: inFOV, deadline: Clock.deadline(def.slowDuration) };
               hitCount++;
               // Feedback visual diferenciado: blind+slow vs so slow
-              if (inFOV) addKF('âš¡ FLASH - CEGO+SLOW');
-              else addKF('âš¡ FLASH - SLOW');
+              if (inFOV) addKF('⚡ FLASH - CEGO+SLOW');
+              else addKF('⚡ FLASH - SLOW');
               showHitMark(false);
             }
             socket.emit('vfx', { type: 'flash_explode', x: g.x, y: g.y, r: def.blastRadius });
@@ -4192,11 +4190,11 @@
     let hmTimer = 0;
     function showHitMark(bs) { const el = document.getElementById('hitmarker'); if (el) el.className = 'show' + (bs ? ' bs' : ''); hmTimer = .15; }
     function tickHM(dt) { if (hmTimer > 0) { hmTimer -= dt; if (hmTimer <= 0) { const el = document.getElementById('hitmarker'); if (el) el.className = ''; } } }
-    function addKF(cause) { const kf = document.getElementById('killfeed'); if (!kf) return; const d = document.createElement('div'); const cls = cause === 'BACKSTAB' ? 'bs' : (cause === 'EXPLOSÃƒO' || cause === 'EXPLOS&Atilde;O' ? 'expl' : (cause === 'FLASH' ? 'flash' : (cause.includes('CAM') ? 'cam' : (cause.includes('TORRE') ? 'tow' : (cause.includes('REFLEX') ? 'ref' : 'kill'))))); d.className = 'kf-line kf-' + cls; const icons = { BACKSTAB: 'W- BACKSTAB!', 'EXPLOSÃƒO': 'ðŸ’¥ EXPLOS&Atilde;O', FLASH: 'âš¡ FLASH', REFLEX: 'ðŸ›¡ REFLEX' }; d.textContent = icons[cause] || (cause.includes('CAM') ? 'ðŸ“· ' + cause : cause.includes('TORRE') ? 'ðŸ— ' + cause : 'âœ– ' + cause); kf.prepend(d); setTimeout(() => d.remove(), 3600); }
+    function addKF(cause) { const kf = document.getElementById('killfeed'); if (!kf) return; const d = document.createElement('div'); const cls = cause === 'BACKSTAB' ? 'bs' : (cause === 'EXPLOSÃO' || cause === 'EXPLOS&Atilde;O' ? 'expl' : (cause === 'FLASH' ? 'flash' : (cause.includes('CAM') ? 'cam' : (cause.includes('TORRE') ? 'tow' : (cause.includes('REFLEX') ? 'ref' : 'kill'))))); d.className = 'kf-line kf-' + cls; const icons = { BACKSTAB: 'W- BACKSTAB!', 'EXPLOSÃO': '💥 EXPLOS&Atilde;O', FLASH: '⚡ FLASH', REFLEX: '🛡 REFLEX' }; d.textContent = icons[cause] || (cause.includes('CAM') ? '📷 ' + cause : cause.includes('TORRE') ? '🏗 ' + cause : '✖ ' + cause); kf.prepend(d); setTimeout(() => d.remove(), 3600); }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 16 - RENDER
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 16 - RENDER
+    // ════════════════════════════════════════════════════════════════════════════════
     let frameCount = 0;
     function render(dt) {
       if (!ctx || !W || !H || isNaN(W) || isNaN(H)) return;
@@ -4320,7 +4318,7 @@
         });
       }
 
-      // Â§ 14.1 - Echolocation Detection (Style Rek'Sai)
+      // § 14.1 - Echolocation Detection (Style Rek'Sai)
       const canEcho = !p.lightOn || p.agentKey === 'nykora';
       if (canEcho && !p.dead) {
         for (const [rid, rs] of Object.entries(remotePlayers)) {
@@ -4408,7 +4406,7 @@
       ctx.fillRect(camX - 50, camY - 50, W / sc + 100, H / sc + 100);
       ctx.restore();
 
-      // Â§ 14.2 - Draw Echo Pulses (Piercing through Fog)
+      // § 14.2 - Draw Echo Pulses (Piercing through Fog)
       ctx.save();
       for (let i = echoPulses.length - 1; i >= 0; i--) {
         const ep = echoPulses[i];
@@ -4507,7 +4505,7 @@
       ctx.restore();
     }
 
-    // â”€â”€ KOTH Control Zone Rendering â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── KOTH Control Zone Rendering ──────────────────────────
     function drawControlZones(scale) {
       if (currentGameMode !== 'king_of_the_hill' || !controlZones.length) return;
       for (const zone of controlZones) {
@@ -4542,8 +4540,8 @@
       const c0 = Math.floor(camX / TILE), r0 = Math.floor(camY / TILE), c1 = Math.ceil((camX + W / scale) / TILE) + 1, r1 = Math.ceil((camY + H / scale) / TILE) + 1;
       
       if (mapBgImage && mapBgImage.complete) {
-        // Se a imagem for um tileset (contÃ©m "tileset" no nome), usamos o primeiro tile (64x64) como padrao de chao
-        // Caso contrÃ¡rio, mantemos o comportamento original de desenhar a imagem inteira no mundo
+        // Se a imagem for um tileset (contém "tileset" no nome), usamos o primeiro tile (64x64) como padrao de chao
+        // Caso contrário, mantemos o comportamento original de desenhar a imagem inteira no mundo
         const isTileset = globalMapData && globalMapData.image && globalMapData.image.includes('tileset');
         
         if (isTileset) {
@@ -4634,7 +4632,7 @@
           ctx.globalAlpha = Math.max(0, Math.min(1, (limit + 32 - dist) / 64));
         }
 
-        // Objetos baixos tÃªm um look mais detalhado
+        // Objetos baixos têm um look mais detalhado
         ctx.fillStyle = '#15151a'; ctx.strokeStyle = '#2a2a2f'; ctx.lineWidth = 1;
         if (w.shape === 'circle') { 
           ctx.beginPath(); ctx.arc(w.x, w.y, w.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); 
@@ -4653,9 +4651,9 @@
       }
     }
 
-    // BUG-FIX: FOV cone sempre visivel (sem filtro de Ã¢ngulo local)
+    // BUG-FIX: FOV cone sempre visivel (sem filtro de ângulo local)
     // BUG-FIX: Cor neutra (nao revela tipo de agente)
-    // BUG-FIX: Fate cone oculto quando usa cÃ¢mera
+    // BUG-FIX: Fate cone oculto quando usa câmera
     // BUG-FIX: Escudo Foul visivel para peers com geometria correcta
     function drawRemotePlayers(scale, dt) {
       for (const [rid, rs] of Object.entries(remotePlayers)) {
@@ -5169,14 +5167,14 @@
         ctx.restore();
       }
     }
-    // Arcos de HP e stamina nas COSTAS: 1Â° por cada 2 de HP/Stamina mÃ¡ximos
+    // Arcos de HP e stamina nas COSTAS: 1° por cada 2 de HP/Stamina máximos
     function drawHUD2D(p, a, scale) {
       if (p.dead) return;
       const r = p.radius * (p._crouching ? .9 : 1);
       const back = p.angle + Math.PI;
-      // arcSpan dinÃ¢mico: 1Â° por cada 2 de HP mÃ¡x / stamina mÃ¡x
-      const hpSpan = (a.hp / 2) * Math.PI / 180;  // ex: 120hp â†’ 60Â°
-      const stSpan = ((a.staminaMax || 100) / 2) * Math.PI / 180; // ex: 150st â†’ 75Â°
+      // arcSpan dinâmico: 1° por cada 2 de HP máx / stamina máx
+      const hpSpan = (a.hp / 2) * Math.PI / 180;  // ex: 120hp → 60°
+      const stSpan = ((a.staminaMax || 100) / 2) * Math.PI / 180; // ex: 150st → 75°
       const hpR = r + 6, stR = r + 11;
       const hf = Math.max(0, Math.min(1, p.hp / p.maxHp));
       const sf = Math.max(0, Math.min(1, p.stamina / (a.staminaMax || 100)));
@@ -5218,7 +5216,7 @@
       if (!tower) return; const td = ABILITIES.tower;
       ctx.save(); ctx.translate(tower.x, tower.y);
       const r = 19; // tamanho mundo fixo
-      const sides = 8, rot = Math.PI / 8; // octogono rodado 22.5Â° para ficar plano em baixo
+      const sides = 8, rot = Math.PI / 8; // octogono rodado 22.5° para ficar plano em baixo
       // --- Sombra
       ctx.fillStyle = 'rgba(0,0,0,.45)';
       ctx.beginPath(); for (let i = 0; i < sides; i++) { const a = i * Math.PI * 2 / sides + rot; ctx.lineTo(Math.cos(a) * (r + 2) + 2, Math.sin(a) * (r + 2) + 3); } ctx.closePath(); ctx.fill();
@@ -5280,9 +5278,9 @@
     function darken(hex, amt) { return adjustColor(hex, -amt); }
     function adjustColor(hex, amt) { const n = parseInt(hex.slice(1), 16); const r = Math.max(0, Math.min(255, (n >> 16) + amt)), g = Math.max(0, Math.min(255, ((n >> 8) & 0xff) + amt)), b = Math.max(0, Math.min(255, (n & 0xff) + amt)); return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`; }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    // Â§ 17 - HUD DOM  (unified bottom bar)
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ════════════════════════════════════════════════════════════════════════════════
+    // § 17 - HUD DOM  (unified bottom bar)
+    // ════════════════════════════════════════════════════════════════════════════════
     const AGENT_HUD_COLORS = { fable: '#e74c3c', fate: '#3498db', foul: '#2ecc71', nykora: '#9b59b6' };
 
     function updateHUDDOM() {
@@ -5294,7 +5292,7 @@
       const bar = document.getElementById('hud-bar');
       if (bar) bar.style.setProperty('--hud-color', agColor);
 
-      // â”€â”€ Vitals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Vitals ──────────────────────────────────────────────────────────────
       const badge = document.getElementById('hud-agent-badge');
       // Always use agentKey for name, ignore a.name to avoid stale agent object
       const agentName = AGENTS[p.agentKey]?.name || p.agentKey || 'AGENT';
@@ -5322,7 +5320,7 @@
       const staFill = document.getElementById('hud-stamina-fill');
       if (staFill) staFill.style.width = Math.round(staPct * 100) + '%';
 
-      // â”€â”€ Weapon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Weapon ──────────────────────────────────────────────────────────────
       const wd      = WEAPONS[p.activeWeapon] || WEAPONS.knife;
       const isMelee = p.activeWeapon === 'knife' || p.activeWeapon === 'sword';
 
@@ -5454,14 +5452,14 @@
       const l2 = document.getElementById('ctrl-line2');
       if (!l2) return;
       if      (p.agentKey === 'fable')  l2.innerHTML = '<b>R</b> recarregar &middot; <b>E</b> granada frag &middot; <b>SHIFT</b> correr';
-      else if (p.agentKey === 'fate')   l2.innerHTML = '<b>R</b> recarregar &middot; <b>E/Q</b> cÃ¢meras &middot; <b>T</b> torre';
+      else if (p.agentKey === 'fate')   l2.innerHTML = '<b>R</b> recarregar &middot; <b>E/Q</b> câmeras &middot; <b>T</b> torre';
       else if (p.agentKey === 'foul')   l2.innerHTML = '<b>R</b> recarregar &middot; <b>E</b> granada flash &middot; <b>Q</b> escudo';
       else if (p.agentKey === 'nykora') l2.innerHTML = '<b>R</b> recarregar &middot; <b>E</b> corte giratorio &middot; <b>RMB</b> dash';
       else if (p.agentKey === 'naac')   l2.innerHTML = '<b>R</b> recarregar &middot; <b>E</b> avan&ccedil;o &middot; <b>RMB</b> recuo (armadura)';
     }
 
     // ----------------------------------------------------------------------------
-    // Â§ 18 - BOOT
+    // § 18 - BOOT
     // ----------------------------------------------------------------------------
     window.addEventListener('load', () => {
       if (!canvas) canvas = document.getElementById('c');
@@ -5492,7 +5490,7 @@
       if (ctx) ctx.imageSmoothingEnabled = false;
     }
     // ----------------------------------------------------------------------------
-    // Â§ LOBBY - Survival Mode
+    // § LOBBY - Survival Mode
     // ----------------------------------------------------------------------------
 
     // -- Agent definitions for lobby UI --------------------------
@@ -5536,14 +5534,14 @@
       });
     });
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Room Select: [Entrar] Ã¢â€ â€™ show code input Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ Room Select: [Entrar] â†’ show code input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     document.getElementById('rs-join-btn').addEventListener('click', () => {
       const row = document.getElementById('rs-code-row');
       row.style.display = row.style.display === 'none' ? 'flex' : 'none';
       if (row.style.display === 'flex') document.getElementById('rs-code-input').focus();
     });
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Room Select: [OK] Ã¢â€ â€™ join room Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ Room Select: [OK] â†’ join room â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     document.getElementById('rs-join-confirm').addEventListener('click', doJoinRoom);
     document.getElementById('rs-code-input').addEventListener('keydown', e => { if (e.key === 'Enter') doJoinRoom(); });
     document.getElementById('rs-code-input').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
@@ -5559,7 +5557,7 @@
       });
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Room Select: [Voltar] Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ Room Select: [Voltar] â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     document.getElementById('rs-back').addEventListener('click', () => {
       hideRoomSelect();
       document.getElementById('menu').style.display = 'flex';
@@ -5567,7 +5565,7 @@
       if (socket) { socket.disconnect(); socket = null; }
     });
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Show / hide lobby Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ Show / hide lobby â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function showLobby(roomCode, myName) {
       hideRoomSelect();
       document.getElementById('lc-code-val').textContent = roomCode;
@@ -5578,7 +5576,7 @@
       document.getElementById('lobby-screen').classList.remove('active');
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Map fetching Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ Map fetching â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
     async function fetchMaps() {
@@ -5643,7 +5641,7 @@
       const autoReady = urlParams.get('ready') === '1';
 
       if (roomCode.length >= 4) {
-        // Hide main menu and go straight to connecting â†’ room join
+        // Hide main menu and go straight to connecting → room join
         const menu = document.getElementById('menu');
         if (menu) menu.style.display = 'none';
         showRoomSelect();
@@ -5679,7 +5677,7 @@
       }
     });
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Copy room code Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ Copy room code â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     document.getElementById('lc-copy').addEventListener('click', () => {
       const code = document.getElementById('lc-code-val').textContent;
       const url = window.location.origin + window.location.pathname + '?room=' + code;
@@ -5688,7 +5686,7 @@
       setTimeout(() => document.getElementById('lc-copy').textContent = 'COPIAR LINK', 1500);
     });
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Agent navigation Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ Agent navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function updateLobbyAgentUI() {
       const a = LOBBY_AGENTS[lobbyAgentIdx];
       const iconEl = document.getElementById('lc-agent-icon');
@@ -5729,7 +5727,7 @@
       socket.emit('lobby:select_agent', { agentKey: LOBBY_AGENTS[lobbyAgentIdx].key });
     });
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Ready button Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ Ready button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     document.getElementById('lc-ready').addEventListener('click', () => {
       const me = lobbyPlayers.find(p => p.id === lobbyMyId);
       if (!me) return;
@@ -5743,7 +5741,7 @@
       document.getElementById('lc-next').disabled = ready;
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Start button Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ Start button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     document.getElementById('lc-start').addEventListener('click', () => {
       const me = lobbyPlayers.find(p => p.id === lobbyMyId);
       if (!me?.isHost) return;
@@ -5759,7 +5757,7 @@
       document.getElementById('lc-hint').style.display = lobbyPlayers.length >= 4 ? 'none' : '';
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Render player list Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ Render player list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function renderLobbyPlayers() {
       const container = document.getElementById('lc-players');
       container.innerHTML = '';
@@ -5850,7 +5848,7 @@
     }
     function escLobby(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Lobby error toast Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // â”€â”€ Lobby error toast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function showLobbyErr(msg) {
       const el = document.createElement('div');
       el.className = 'lc-err'; el.textContent = msg;
@@ -5977,7 +5975,7 @@
     }
 
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ bindLobbyEvents is called from connectSocket after 'connect' Ã¢â€â‚¬
-    // (see connectSocket below Ã¢â‚¬â€ it calls bindLobbyEvents() on first connect)
+    // â”€â”€ bindLobbyEvents is called from connectSocket after 'connect' â”€
+    // (see connectSocket below â€” it calls bindLobbyEvents() on first connect)
 
   </script>

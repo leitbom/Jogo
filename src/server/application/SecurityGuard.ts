@@ -159,6 +159,7 @@ export class SecurityGuard {
       _running:     Boolean(d['_running']),
       _crouching:   Boolean(d['_crouching']),
       shieldHp:     clamp(Number(d['shieldHp']) || 0, 0, 200),
+      shieldActive: Boolean(d['shieldActive']),
       intangible:   Boolean(d['intangible']),
       lightOn:      Boolean(d['lightOn']),
       activeWeapon: typeof d['activeWeapon'] === 'string' ? d['activeWeapon'] : 'ak47',

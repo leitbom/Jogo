@@ -235,7 +235,9 @@ io.on('connection', (socket: Socket) => {
       if (!security.checkMovementSpeed(socket.id, st.x, st.y)) return;
     }
 
-    p.stateRelay = st;  // Buffer — the 30Hz game tick will broadcast
+    p.stateRelay = st;
+    p.shieldActive = !!st.shieldActive;
+    if (st.shieldActive) p.shieldHp = Number(st.shieldHp) || 0;
   });
 
   socket.on('cl_input', (input: any) => {
