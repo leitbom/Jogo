@@ -488,7 +488,11 @@ export class DeathmatchGameService implements IGameModeService {
           walked = true;
         }
 
-        if (latestVisual) p.stateRelay = latestVisual;
+        if (latestVisual) {
+          p.stateRelay = latestVisual;
+          if (typeof latestVisual.shieldActive === 'boolean') p.shieldActive = latestVisual.shieldActive;
+          if (typeof latestVisual.shieldHp === 'number') p.shieldHp = latestVisual.shieldHp;
+        }
 
         // Delta compression: only send fields if updated
          changedFields[id] = {

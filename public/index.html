@@ -2408,7 +2408,7 @@
         const kbAngle = Math.atan2(data.y, data.x);
         const kbDist = Math.hypot(data.x, data.y);
         if (kbDist > 1) {
-          const pushDist = Math.min(kbDist, 120);
+          const pushDist = Math.min(kbDist, 160);
           const tgt = (data.id === myId) ? player : remotePlayers[data.id];
           if (tgt && !tgt.dead) {
             const r = tgt.radius || 14;

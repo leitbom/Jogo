@@ -494,38 +494,13 @@ io.on('connection', (socket: Socket) => {
         
         const angle = Math.atan2(targetY - shooterY, targetX - shooterX);
         const knockbackDist = 140;
-        const kbX = Math.cos(angle) * knockbackDist;
-        const kbY = Math.sin(angle) * knockbackDist;
-        const kbRadius = AGENT_STATS[target.agentKey]?.radius || 14;
-        const worldSize = (room.mapData?.size?.width) || (room.mapData?.worldSize) || 2048;
-        const kbSteps = Math.ceil(knockbackDist / 4);
-        const sdx = kbX / kbSteps, sdy = kbY / kbSteps;
-        for (let s = 0; s < kbSteps; s++) {
-          const nnx = target.x + sdx, nny = target.y + sdy;
-          const cx = Math.max(kbRadius, Math.min(worldSize - kbRadius, nnx));
-          const cy = Math.max(kbRadius, Math.min(worldSize - kbRadius, nny));
-          if (!PhysicsUtils.isColliding(cx, cy, kbRadius, room.mapData || {}, worldSize, 2.0)) {
-            target.x = cx; target.y = cy;
-          } else {
-            const cxO = Math.max(kbRadius, Math.min(worldSize - kbRadius, nnx));
-            if (!PhysicsUtils.isColliding(cxO, target.y, kbRadius, room.mapData || {}, worldSize, 2.0)) {
-              target.x = cxO;
-            } else {
-              const cyO = Math.max(kbRadius, Math.min(worldSize - kbRadius, nny));
-              if (!PhysicsUtils.isColliding(target.x, cyO, kbRadius, room.mapData || {}, worldSize, 2.0)) {
-                target.y = cyO;
-              }
-            }
-            break;
-          }
-        }
-        target.knockbackX = 0;
-        target.knockbackY = 0;
+        target.knockbackX = Math.cos(angle) * knockbackDist;
+        target.knockbackY = Math.sin(angle) * knockbackDist;
         
         io.to(room.code).emit('knockback', { 
           id: data.to, 
-          x: kbX,
-          y: kbY,
+          x: target.knockbackX,
+          y: target.knockbackY,
           duration: 0.3
         });
       } else if (data.shotgunEffect === 'slow') {

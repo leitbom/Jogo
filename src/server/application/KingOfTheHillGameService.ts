@@ -621,7 +621,11 @@ export class KingOfTheHillGameService implements IGameModeService {
           walked = true;
         }
 
-        if (latestVisual) p.stateRelay = latestVisual;
+        if (latestVisual) {
+          p.stateRelay = latestVisual;
+          if (typeof latestVisual.shieldActive === 'boolean') p.shieldActive = latestVisual.shieldActive;
+          if (typeof latestVisual.shieldHp === 'number') p.shieldHp = latestVisual.shieldHp;
+        }
 
         changedFields[id] = {
            x: p.x,
