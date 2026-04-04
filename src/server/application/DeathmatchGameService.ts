@@ -72,6 +72,7 @@ export class DeathmatchGameService implements IGameModeService {
       p.maxArmor      = stats.armor;
       p.ammoCurrentMag = mag;
       p.ammoReserve   = mag;
+      p.kills         = 0;
       p.deaths        = 0;
       p.damageDealt   = 0;
       p.damageTaken   = 0;

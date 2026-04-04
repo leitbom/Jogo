@@ -207,6 +207,8 @@ export class LobbyService {
       p.ready = false;
       p.alive = true;
       p.winner = false;
+      p.kills = 0;
+      p.deaths = 0;
     }
     this.emitter.toRoom(room!.code, 'lobby:reset', {
       players: [...room!.players.values()].map(toPublicPlayer),

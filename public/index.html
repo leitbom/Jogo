@@ -2292,9 +2292,16 @@
       // --- In-game peers (scoped to room - sent by server after game:start) ---
       socket.on('peer_joined', data => { remotePlayers[data.id] = null; remoteDeployables[data.id] = { cam1: null, cam2: null, tower: null }; });
       socket.on('sv_state_update', snapshot => {
-        // Delta Compression handling + Interpolation buffer
         remoteSnapshots.push(snapshot);
         if (remoteSnapshots.length > 30) remoteSnapshots.shift();
+        
+        for (const [deadId] of Object.entries(remoteAliveMap)) {
+          if (remoteAliveMap[deadId] === false && remotePlayers[deadId]?.dead) {
+            for (const snap of remoteSnapshots) {
+              if (snap.data[deadId]) delete snap.data[deadId];
+            }
+          }
+        }
         
         // Server Reconciliation for local player
         if (snapshot.data[myId]) {
@@ -2605,23 +2612,39 @@
       });
 
       socket.on('game:kill', ({ killer_id, victim_id, cause }) => {
-        // Track alive status
         if (victim_id !== myId) remoteAliveMap[victim_id] = false;
-        // Play death sound for peer
         if (victim_id !== myId) {
           const v = remotePlayers[victim_id];
-          if (v) SoundManager.play('die', 0.8, false, {x: v.x, y: v.y});
+          if (v) {
+            v.dead = true;
+            SoundManager.play('die', 0.8, false, {x: v.x, y: v.y});
+            spawnDeathFx(v.x, v.y);
+          }
         }
-        // Update killfeed
         if (killer_id === myId) { myKills++; updateKD(); addKF('✔ KILL - ' + (cause || 'BALA')); }
         else if (victim_id === myId) {/* local death handled by applyDmg */ }
         else addKF('✔ ' + (cause || ''));
-        // If spectating the victim, cycle to another target
         if (isSpectating && specTargetId === victim_id) {
           setTimeout(() => { if (remotePlayers[victim_id]) remotePlayers[victim_id].dead = true; cycleSpectatorTarget(); }, 300);
         }
-        if (remotePlayers[victim_id]) remotePlayers[victim_id].dead = true;
         updateSurvivalHUD();
+      });
+
+      socket.on('peer_dead', ({ id, dead, x, y, angle }) => {
+        if (id === myId) return;
+        remoteAliveMap[id] = false;
+        if (!remotePlayers[id]) remotePlayers[id] = { x: x || 0, y: y || 0, angle: angle || 0 };
+        const rp = remotePlayers[id];
+        if (dead) {
+          if (!rp.dead) {
+            SoundManager.play('die', 0.8, false, {x: x ?? rp.x, y: y ?? rp.y});
+            spawnDeathFx(x ?? rp.x, y ?? rp.y);
+          }
+          rp.dead = true;
+          if (x !== undefined) rp.x = x;
+          if (y !== undefined) rp.y = y;
+          if (angle !== undefined) rp.angle = angle;
+        }
       });
 
       socket.on('game:end', ({ winners, stats }) => {
@@ -3125,6 +3148,11 @@
     // § 15 - UPDATE SYSTEMS
     // ════════════════════════════════════════════════════════════════════════════════
     function update(dt) { 
+      if (gameState !== 'playing') {
+        SoundManager.stop('walk');
+        SoundManager.stop('run');
+        return;
+      }
       updatePlayer(dt); 
       updateRemotePlayers(dt);
       updateBullets(dt); 
@@ -3188,7 +3216,8 @@
       const lerpSpeed = 3.5; // suavidade (3.5 = ~280ms para 90% do caminho)
       p._currentZoom += (zTarget - p._currentZoom) * Math.min(1, lerpSpeed * dt);
       // --------------------------------------------------------------------------
-      mouseWorld.x = mousePx.x / sc + (p.x - W / (2 * sc)); mouseWorld.y = mousePx.y / sc + (p.y - H / (2 * sc));
+      const rawWx = mousePx.x / sc + (p.x - W / (2 * sc)), rawWy = mousePx.y / sc + (p.y - H / (2 * sc));
+      mouseWorld.x = p.x + (rawWx - p.x) * 0.5; mouseWorld.y = p.y + (rawWy - p.y) * 0.5;
       const frozen = (p.viewMode !== 0 && (fateCam || fateCam2));
 
       const shift = keys['ShiftLeft'] || keys['ShiftRight'], crouch = keys['Space'];
@@ -3198,7 +3227,7 @@
         if (keys['KeyA'] || keys['ArrowLeft']) dx -= 1; if (keys['KeyD'] || keys['ArrowRight']) dx += 1;
       }
       const len = Math.sqrt(dx * dx + dy * dy); if (len > 0) { dx /= len; dy /= len; }
-      const running = shift && p.canRun, consuming = running && len > 0;
+      const running = shift && p.canRun && !crouch, consuming = running && len > 0;
 
       if (p.dashRemaining > 0) {
         p.dashRemaining -= dt;
@@ -3808,11 +3837,13 @@
 
           if (rp.knockbackEffect && (Date.now() - rp.knockbackEffect.startTime) < rp.knockbackEffect.duration) {
             rp.angle = state0.angle + (state1.angle - state0.angle) * alpha;
-            if (state1.visual) Object.assign(rp, state1.visual);
+            if (state1.visual) { const wasDead = rp.dead; Object.assign(rp, state1.visual); if (wasDead) rp.dead = true; }
             if (state1.shieldActive !== undefined) rp.shieldActive = state1.shieldActive;
             if (state1.shieldHp !== undefined) rp.shieldHp = state1.shieldHp;
             continue;
           }
+
+          if (rp.dead) continue;
 
           rp.x = state0.x + (state1.x - state0.x) * alpha;
           rp.y = state0.y + (state1.y - state0.y) * alpha;
@@ -3823,7 +3854,6 @@
           rp.angle = state0.angle + diff * alpha;
 
           if (state1.visual) Object.assign(rp, state1.visual);
-          // Copy shield state
           if (state1.shieldActive !== undefined) rp.shieldActive = state1.shieldActive;
           if (state1.shieldHp !== undefined) rp.shieldHp = state1.shieldHp;
         }
@@ -3835,11 +3865,13 @@
           const rp = remotePlayers[id];
           
           if (rp.knockbackEffect && (Date.now() - rp.knockbackEffect.startTime) < rp.knockbackEffect.duration) {
-            if (state1.visual) Object.assign(rp, state1.visual);
+            if (state1.visual) { const wasDead = rp.dead; Object.assign(rp, state1.visual); if (wasDead) rp.dead = true; }
             if (state1.shieldActive !== undefined) rp.shieldActive = state1.shieldActive;
             if (state1.shieldHp !== undefined) rp.shieldHp = state1.shieldHp;
             continue;
           }
+
+          if (rp.dead) continue;
 
           rp.lastX = rp.x;
           rp.lastY = rp.y;
@@ -3847,7 +3879,6 @@
           rp.y = state1.y;
           rp.angle = state1.angle;
           if (state1.visual) Object.assign(rp, state1.visual);
-          // Copy shield state
           if (state1.shieldActive !== undefined) rp.shieldActive = state1.shieldActive;
           if (state1.shieldHp !== undefined) rp.shieldHp = state1.shieldHp;
         }
@@ -6043,7 +6074,14 @@
       socket.on('lobby:reset', ({ players, roomCode, selectedMap }) => {
         hideEndgame();
         hideSurvivalHUD();
-        gameState = 'menu'; // reset so next startGame will re-init
+        gameState = 'menu';
+        SoundManager.stop('walk');
+        SoundManager.stop('run');
+        mouseDown = false;
+        mouseJustDown = false;
+        player.reloading = false;
+        player.fireCooldown = 0;
+        Object.keys(keys).forEach(k => keys[k] = false);
         lobbyPlayers = players;
         lobbyMap = selectedMap || lobbyMap;
         if (lobbyMap) document.getElementById('lc-map-select').value = lobbyMap;

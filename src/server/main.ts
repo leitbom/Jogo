@@ -400,6 +400,8 @@ io.on('connection', (socket: Socket) => {
     const target = room.players.get(data.to);
     if (!from?.alive || !target?.alive) return;
 
+    if (room.gameMode === 'king_of_the_hill' && from.team !== 'NONE' && target.team !== 'NONE' && from.team === target.team) return;
+
     // Validate cause string
     const cause = String(data.cause || 'BALA');
     if (!security.isValidCause(cause)) {
