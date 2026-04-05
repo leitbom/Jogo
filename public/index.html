@@ -3258,17 +3258,25 @@
         else { p.staminaIdleTimer += dt; if (p.staminaIdleTimer >= STAMINA_REGEN_DELAY) p.stamina = Math.min(a.staminaMax, p.stamina + a.staminaRegen * dt); if (!p.canRun && p.stamina >= STAMINA_RUN_THRESHOLD) p.canRun = true; }
         const speed = (running && len > 0 ? a.runSpeed : crouch ? a.crouchSpeed : a.speed) * (playerSlow > 0 ? 1 - ABILITIES.flash.slowAmount : 1);
         const totalDx = dx * speed * dt, totalDy = dy * speed * dt;
-        const stepSize = 2;
+        const stepSize = 1;
         const steps = Math.max(1, Math.ceil(Math.max(Math.abs(totalDx), Math.abs(totalDy)) / stepSize));
         const sdx = totalDx / steps, sdy = totalDy / steps;
         const br = a.radius + 2;
+        const playerOverlap = (cx, cy) => {
+          for (const rs of Object.values(remotePlayers)) {
+            if (!rs || rs.dead) continue;
+            if (Math.hypot(cx - rs.x, cy - rs.y) < a.radius + (AGENTS[rs.agentKey]?.radius || 14) + 20) return true;
+          }
+          return false;
+        };
         for (let s = 0; s < steps; s++) {
           const nnx = p.x + sdx, nny = p.y + sdy;
+          if (playerOverlap(nnx, nny)) break;
           if (!Physics.hitWalls(nnx, nny, br)) {
             p.x = nnx; p.y = nny;
           } else {
-            const canX = !Physics.hitWalls(nnx, p.y, br);
-            const canY = !Physics.hitWalls(p.x, nny, br);
+            const canX = !Physics.hitWalls(nnx, p.y, br) && !playerOverlap(nnx, p.y);
+            const canY = !Physics.hitWalls(p.x, nny, br) && !playerOverlap(p.x, nny);
             if (canX && canY) {
               if (Math.abs(sdx) >= Math.abs(sdy)) p.x = nnx; else p.y = nny;
             } else if (canX) { p.x = nnx; }
@@ -3278,6 +3286,19 @@
         }
         const resolved = Physics.resolveWallCollision(p.x, p.y, a.radius);
         p.x = resolved.x; p.y = resolved.y;
+        for (const rs of Object.values(remotePlayers)) {
+          if (!rs || rs.dead) continue;
+          const dxr = p.x - rs.x, dyr = p.y - rs.y;
+          const dist = Math.hypot(dxr, dyr);
+          const minDist = a.radius + (AGENTS[rs.agentKey]?.radius || 14);
+          if (dist < minDist && dist > 0.01) {
+            const push = minDist - dist + 0.5;
+            p.x += (dxr / dist) * push;
+            p.y += (dyr / dist) * push;
+          }
+        }
+        const resolved2 = Physics.resolveWallCollision(p.x, p.y, a.radius);
+        p.x = resolved2.x; p.y = resolved2.y;
         p._running = running && len > 0; p._crouching = crouch;
 
         // --- Sound: Footstep loops ---
@@ -3713,7 +3734,16 @@
         fateTower.fireCooldown -= dt;
         if (fateTower.fireCooldown <= 0 && fateTower.ammo > 0) {
           let closestRid = null, closestRs = null, closestDist = towerDef.range;
-          for (const [rid, rs] of Object.entries(remotePlayers)) { if (!rs || rs.dead) continue; const d = Math.hypot(rs.x - fateTower.x, rs.y - fateTower.y); if (d < closestDist) { closestDist = d; closestRid = rid; closestRs = rs; } }
+          for (const [rid, rs] of Object.entries(remotePlayers)) {
+            if (!rs || rs.dead) continue;
+            const d = Math.hypot(rs.x - fateTower.x, rs.y - fateTower.y);
+            if (d < closestDist) {
+              const hit = Physics.castRay(fateTower.x, fateTower.y, rs.x, rs.y);
+              const hitDist = Math.hypot(hit.x - fateTower.x, hit.y - fateTower.y);
+              if (hitDist < d - 5) continue;
+              closestDist = d; closestRid = rid; closestRs = rs;
+            }
+          }
           if (closestRid && closestRs) {
             fateTower.angle = Math.atan2(closestRs.y - fateTower.y, closestRs.x - fateTower.x);
             const ang = fateTower.angle + (Math.random() - .5) * 0.08;
@@ -4569,7 +4599,7 @@
       drawRemoteDeployables(sc);
       if (fateCam) drawCameraEntity(fateCam, sc, false);
       if (fateCam2) drawCameraEntity(fateCam2, sc, true);
-      if (fateTower) drawTowerEntity(fateTower, sc);
+      if (fateTower) drawTowerEntity(fateTower, sc, true);
       drawBullets(sc); drawParticles(); drawGrenades(sc); drawCamProj(sc); drawFlashRings(sc); drawExplosions(sc); drawTowerBlasts(sc);
       ctx.restore();
 
@@ -5327,7 +5357,7 @@
       ctx.beginPath(); ctx.arc(2.5, 0, 1.5, 0, Math.PI * 2); ctx.fillStyle = isSecond ? '#aaffcc' : '#66ccff'; ctx.fill();
       ctx.restore();
     }
-    function drawTowerEntity(tower, scale) {
+    function drawTowerEntity(tower, scale, isOwner = false) {
       if (!tower) return; const td = ABILITIES.tower;
       ctx.save(); ctx.translate(tower.x, tower.y);
       const r = 19; // tamanho mundo fixo
@@ -5364,9 +5394,13 @@
       const tf = (tower.timer || 0) / (tower.maxTimer || td.duration || 15);
       ctx.strokeStyle = 'rgba(0,180,255,.4)'; ctx.lineWidth = 1.5 / scale;
       ctx.beginPath(); ctx.arc(0, 0, r + 5 / scale, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * tf); ctx.stroke();
-      // --- Range circle subtil
-      ctx.globalAlpha = 0.04; ctx.strokeStyle = '#00ccff'; ctx.lineWidth = 1 / scale;
-      ctx.setLineDash([5 / scale, 5 / scale]); ctx.beginPath(); ctx.arc(0, 0, td.range, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+      // --- Range circle (owner only)
+      if (isOwner) {
+        ctx.globalAlpha = 0.06; ctx.fillStyle = '#00ccff';
+        ctx.beginPath(); ctx.arc(0, 0, td.range, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 0.25; ctx.strokeStyle = '#00ccff'; ctx.lineWidth = 1.5 / scale;
+        ctx.setLineDash([8 / scale, 6 / scale]); ctx.beginPath(); ctx.arc(0, 0, td.range, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+      }
       // --- Label
       ctx.fillStyle = 'rgba(0,200,255,.35)'; ctx.font = `${7 / scale}px Courier New`; ctx.textAlign = 'center'; ctx.fillText('TORRE', 0, r + 13 / scale);
       ctx.restore();

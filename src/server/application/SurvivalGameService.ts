@@ -18,6 +18,15 @@ import type { SecurityGuard } from './SecurityGuard';
 import type { IGameModeService } from '../domain/ports/in/IGameModeService';
 import { PhysicsUtils } from '../domain/utils/PhysicsUtils';
 
+function hitsPlayer(players: Map<string, any>, skipId: string, cx: number, cy: number, cr: number): boolean {
+  for (const [oid, op] of players) {
+    if (oid === skipId || !op.alive) continue;
+    const or2 = AGENT_STATS[op.agentKey as keyof typeof AGENT_STATS]?.radius || 14;
+    if (Math.hypot(cx - op.x, cy - op.y) < cr + or2 + 8) return true;
+  }
+  return false;
+}
+
 // ── Types ──────────────────────────────────────────────
 export interface PlayerStat {
   name: string;
@@ -392,17 +401,17 @@ export class SurvivalGameService implements IGameModeService {
             const ny = p.y + input.dy * speed * (safeDt / 1000);
             
             // Only move if no collision - prevent any penetration (using 2.0px buffer)
-            if (!PhysicsUtils.isColliding(nx, ny, radius, room.mapData || {}, worldSize, 2.0)) { 
+            if (!PhysicsUtils.isColliding(nx, ny, radius, room.mapData || {}, worldSize, 2.0) && !hitsPlayer(room.players, id, nx, ny, radius)) { 
               p.x = nx; p.y = ny; 
             }
             // If blocked, try sliding along walls but only if movement is valid
             else {
               // Check if we can move partially in X direction
-              if (!PhysicsUtils.isColliding(nx, p.y, radius, room.mapData || {}, worldSize, 2.0)) {
+              if (!PhysicsUtils.isColliding(nx, p.y, radius, room.mapData || {}, worldSize, 2.0) && !hitsPlayer(room.players, id, nx, p.y, radius)) {
                 p.x = nx;
               }
               // Check if we can move partially in Y direction
-              if (!PhysicsUtils.isColliding(p.x, ny, radius, room.mapData || {}, worldSize, 2.0)) {
+              if (!PhysicsUtils.isColliding(p.x, ny, radius, room.mapData || {}, worldSize, 2.0) && !hitsPlayer(room.players, id, p.x, ny, radius)) {
                 p.y = ny;
               }
             }
@@ -448,7 +457,25 @@ export class SurvivalGameService implements IGameModeService {
       historyBuffer.push({ time: now, players: snapshotPlayers });
       if (historyBuffer.length > 60) historyBuffer.shift();
 
-      if (Object.keys(changedFields).length > 0) {
+      // Post-movement: separate any overlapping players
+      const aliveIds: string[] = [];
+      for (const [id, p] of room.players) { if (p.alive) aliveIds.push(id); }
+      for (let i = 0; i < aliveIds.length; i++) {
+        for (let j = i + 1; j < aliveIds.length; j++) {
+          const a = room.players.get(aliveIds[i])!, b = room.players.get(aliveIds[j])!;
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const dist = Math.hypot(dx, dy);
+          const minDist = (AGENT_STATS[a.agentKey as keyof typeof AGENT_STATS]?.radius || 14) + (AGENT_STATS[b.agentKey as keyof typeof AGENT_STATS]?.radius || 14);
+          if (dist < minDist && dist > 0.01) {
+            const push = (minDist - dist) / 2 + 0.5;
+            const nx = dx / dist, ny = dy / dist;
+            a.x += nx * push; a.y += ny * push;
+            b.x -= nx * push; b.y -= ny * push;
+            if (changedFields[aliveIds[i]]) { changedFields[aliveIds[i]].x = a.x; changedFields[aliveIds[i]].y = a.y; }
+            if (changedFields[aliveIds[j]]) { changedFields[aliveIds[j]].x = b.x; changedFields[aliveIds[j]].y = b.y; }
+          }
+        }
+      }      if (Object.keys(changedFields).length > 0) {
         this.emitter.toRoom(room.code, 'sv_state_update', { t: now, data: changedFields });
       }
     }, intervalMs);
